@@ -1,0 +1,20 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<div class="pf-panel pf-panel--narrow">
+	<h1 class="pf-panel__title">{{ PF_TITLE }}</h1>
+	<div class="pf-alert pf-alert--warn" role="alert">
+		{{ pf.icon('alert') }}
+		<div>
+			<p><strong>{{ lang('PORTFOLIO_DELETE_ALBUM_BLOCKED', PF_ALBUM.name) }}</strong></p>
+			{% if PF_ACTIVE %}<p>{{ lang('PORTFOLIO_DELETE_ALBUM_PHOTOS_LEFT', PF_ACTIVE) }}</p>{% endif %}
+			{% if PF_CHILDREN_COUNT %}<p>{{ lang('PORTFOLIO_DELETE_ALBUM_CHILDREN_LEFT', PF_CHILDREN_COUNT) }}</p>{% endif %}
+			<p>{{ lang('PORTFOLIO_DELETE_ALBUM_HOWTO') }}</p>
+		</div>
+	</div>
+	<div class="pf-form__footer">
+		<a class="pf-btn pf-btn--primary" href="{{ U_PF_BACK }}">{{ pf.icon('left') }}{{ lang('PORTFOLIO_BACK_TO_ALBUM') }}</a>
+	</div>
+</div>
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

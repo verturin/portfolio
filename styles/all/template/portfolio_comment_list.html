@@ -1,0 +1,12 @@
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+{% for comment in PF_COMMENTS %}
+<li class="pf-comment" id="c{{ comment.id }}">
+	<span class="pf-avatar">{{ comment.avatar }}</span>
+	<div class="pf-comment__body">
+		<div class="pf-comment__head">{{ comment.user }}<time>{{ comment.time }}</time>
+			{% if comment.u_delete %}<a class="pf-comment__delete" href="{{ comment.u_delete }}" title="{{ lang('DELETE') }}">{{ pf.icon('trash') }}</a>{% endif %}
+		</div>
+		<div class="pf-comment__text">{{ comment.text }}</div>
+	</div>
+</li>
+{% endfor %}

@@ -1,0 +1,17 @@
+{# Lien et BBCode d'insertion dans les messages (fiche photo et aperçu rapide) #}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+{% if PF_EMBED %}
+<details class="pf-embed" data-pf-embed open>
+	<summary>{{ pf.icon('link') }}{{ lang('PORTFOLIO_EMBED_TITLE') }}</summary>
+	<p class="pf-muted pf-small-note">{{ lang('PORTFOLIO_EMBED_HELP') }}</p>
+	{% for item in PF_EMBED %}
+	<div class="pf-embed__row">
+		<label for="pf-embed-{{ PF_PHOTO.id }}-{{ item.key }}">{{ item.label }}</label>
+		<div class="pf-embed__field">
+			<input type="text" id="pf-embed-{{ PF_PHOTO.id }}-{{ item.key }}" class="pf-input" value="{{ item.code }}" readonly data-pf-copy-source onclick="this.select()">
+			<button type="button" class="pf-btn pf-btn--small" data-pf-copy data-done="{{ lang('PORTFOLIO_COPIED') }}">{{ lang('PORTFOLIO_COPY') }}</button>
+		</div>
+	</div>
+	{% endfor %}
+</details>
+{% endif %}

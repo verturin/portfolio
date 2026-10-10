@@ -1,0 +1,95 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<header class="pf-hero">
+	<div class="pf-hero__text">
+		<h1 class="pf-hero__title">{{ lang('PORTFOLIO') }}</h1>
+		<p class="pf-hero__lead">{{ lang('PORTFOLIO_INDEX_LEAD') }}</p>
+		<div class="pf-actions">
+			{% if U_PF_MINE %}<a class="pf-btn pf-btn--primary" href="{{ U_PF_MINE }}">{{ pf.icon('user') }}{{ lang('PORTFOLIO_MINE') }}</a>{% endif %}
+			{% if U_PF_CREATE %}<a class="pf-btn" href="{{ U_PF_CREATE }}">{{ pf.icon('plus') }}{{ lang('PORTFOLIO_NEW_ALBUM') }}</a>{% endif %}
+			{% if U_PF_CREATE_PUBLIC %}<a class="pf-btn" href="{{ U_PF_CREATE_PUBLIC }}">{{ pf.icon('globe') }}{{ lang('PORTFOLIO_NEW_PUBLIC_ALBUM') }}</a>{% endif %}
+		</div>
+	</div>
+	<dl class="pf-stats">
+		<div><dt>{{ lang('PORTFOLIO_STAT_PHOTOS') }}</dt><dd>{{ PF_STATS.photos }}</dd></div>
+		<div><dt>{{ lang('PORTFOLIO_STAT_ALBUMS') }}</dt><dd>{{ PF_STATS.albums }}</dd></div>
+		<div><dt>{{ lang('PORTFOLIO_STAT_RATINGS') }}</dt><dd>{{ PF_STATS.ratings }}</dd></div>
+		<div><dt>{{ lang('PORTFOLIO_STAT_COMMENTS') }}</dt><dd>{{ PF_STATS.comments }}</dd></div>
+	</dl>
+</header>
+
+{% if PF_MY_ALBUMS|length %}
+<section class="pf-section pf-section--mine">
+	<h2 class="pf-section__title">{{ pf.icon('user') }}{{ lang('PORTFOLIO_MY_ALBUMS') }}<a class="pf-section__more" href="{{ U_PF_MINE }}">{{ lang('PORTFOLIO_SEE_ALL') }}</a></h2>
+	<div class="pf-albums">
+		{% for album in PF_MY_ALBUMS %}{{ pf.album_card(album, false) }}{% endfor %}
+	</div>
+</section>
+{% endif %}
+
+{% if PF_SHARED|length %}
+<section class="pf-section">
+	<h2 class="pf-section__title">{{ pf.icon('share') }}{{ lang('PORTFOLIO_SHARED_WITH_ME') }}</h2>
+	<div class="pf-albums">
+		{% for album in PF_SHARED %}{{ pf.album_card(album, true) }}{% endfor %}
+	</div>
+</section>
+{% endif %}
+
+{% if PF_PUBLIC_ALBUMS|length %}
+<section class="pf-section">
+	<h2 class="pf-section__title">{{ pf.icon('globe') }}{{ lang('PORTFOLIO_PUBLIC_ALBUMS') }}</h2>
+	<div class="pf-albums">
+		{% for album in PF_PUBLIC_ALBUMS %}{{ pf.album_card(album, false) }}{% endfor %}
+	</div>
+</section>
+{% endif %}
+
+<section class="pf-section">
+	<h2 class="pf-section__title">{{ pf.icon('clock') }}{{ lang('PORTFOLIO_RECENT') }}</h2>
+	{% if PF_RECENT|length %}
+	<div class="pf-grid" data-pf-gallery>
+		{% for photo in PF_RECENT %}{{ pf.photo_card(photo, false) }}{% endfor %}
+	</div>
+	{% else %}
+	{{ pf.empty(lang('PORTFOLIO_NO_PHOTOS_YET'), 'image') }}
+	{% endif %}
+</section>
+
+{% if PF_TOP|length %}
+<section class="pf-section">
+	<h2 class="pf-section__title">{{ pf.icon('star') }}{{ lang('PORTFOLIO_TOP_RATED') }}</h2>
+	<div class="pf-grid pf-grid--compact" data-pf-gallery>
+		{% for photo in PF_TOP %}{{ pf.photo_card(photo, false) }}{% endfor %}
+	</div>
+</section>
+{% endif %}
+
+<div class="pf-columns">
+	{% if PF_MEMBER_ALBUMS|length %}
+	<section class="pf-section pf-columns__main">
+		<h2 class="pf-section__title">{{ pf.icon('folder') }}{{ lang('PORTFOLIO_MEMBER_ALBUMS') }}<a class="pf-section__more" href="{{ U_PF_MEMBERS }}">{{ lang('PORTFOLIO_SEE_ALL') }}</a></h2>
+		<div class="pf-albums">
+			{% for album in PF_MEMBER_ALBUMS %}{{ pf.album_card(album, true) }}{% endfor %}
+		</div>
+	</section>
+	{% endif %}
+
+	{% if PF_TOP_USERS|length %}
+	<aside class="pf-section pf-columns__side">
+		<h2 class="pf-section__title">{{ pf.icon('users') }}{{ lang('PORTFOLIO_TOP_CONTRIBUTORS') }}</h2>
+		<ul class="pf-people">
+			{% for member in PF_TOP_USERS %}
+			<li>
+				<span class="pf-avatar">{{ member.avatar }}</span>
+				<span class="pf-people__name">{{ member.name }}</span>
+				<a class="pf-people__count" href="{{ member.url }}">{{ lang('PORTFOLIO_PHOTO_COUNT', member.photos) }}</a>
+			</li>
+			{% endfor %}
+		</ul>
+	</aside>
+	{% endif %}
+</div>
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

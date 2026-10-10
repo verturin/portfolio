@@ -1,0 +1,11 @@
+Subject: [Portfolio] Alert: mass photo deletion
+
+Hello {USERNAME},
+
+The member {USERNAME_DELETER} deleted {PHOTO_COUNT} photos in less than {MINUTES} minutes on “{SITENAME}”.
+
+The photos are safe in the portfolio trash: nothing is erased without your approval.
+Check whether it is a mistake and restore if needed:
+{U_ACP_TRASH}
+
+{EMAIL_SIG}

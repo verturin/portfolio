@@ -1,0 +1,11 @@
+Subject: [Portfolio] Alerte : suppression massive de photos
+
+Bonjour {USERNAME},
+
+Le membre {USERNAME_DELETER} a supprimé {PHOTO_COUNT} photos en moins de {MINUTES} minutes sur « {SITENAME} ».
+
+Les photos sont en sécurité dans la corbeille du portfolio : rien n’est effacé sans votre validation.
+Vérifiez s’il s’agit d’une erreur et restaurez si besoin :
+{U_ACP_TRASH}
+
+{EMAIL_SIG}

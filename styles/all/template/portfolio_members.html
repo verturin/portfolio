@@ -1,0 +1,26 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<header class="pf-head">
+	<h1 class="pf-head__title">{{ lang('PORTFOLIO_MEMBERS') }}</h1>
+	<p class="pf-head__sub">{{ lang('PORTFOLIO_MEMBERS_COUNT', PF_MEMBERS_TOTAL) }}</p>
+</header>
+
+{% if PF_MEMBERS|length %}
+<ul class="pf-member-cards">
+	{% for member in PF_MEMBERS %}
+	<li class="pf-member-card">
+		<span class="pf-avatar pf-avatar--lg">{{ member.avatar }}</span>
+		<span class="pf-member-card__name">{{ member.name }}</span>
+		<span class="pf-member-card__meta">{{ lang('PORTFOLIO_ALBUM_COUNT', member.albums) }} · {{ lang('PORTFOLIO_PHOTO_COUNT', member.photos) }}</span>
+		{% if member.last %}<span class="pf-member-card__date">{{ pf.icon('clock') }}{{ member.last }}</span>{% endif %}
+		<a class="pf-btn pf-btn--small" href="{{ member.url }}">{{ lang('PORTFOLIO_VIEW_PORTFOLIO') }}</a>
+	</li>
+	{% endfor %}
+</ul>
+{{ pf.pagination(PF_PAGINATION) }}
+{% else %}
+{{ pf.empty(lang('PORTFOLIO_NO_MEMBERS'), 'users') }}
+{% endif %}
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

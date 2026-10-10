@@ -1,0 +1,35 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<header class="pf-head">
+	<h1 class="pf-head__title">{{ lang('PORTFOLIO_QUEUE') }}</h1>
+	<p class="pf-head__sub">{{ lang('PORTFOLIO_QUEUE_LEAD', PF_TOTAL) }}</p>
+</header>
+
+{% if PF_ITEMS|length %}
+<form method="post" action="{{ U_PF_ACTION }}" id="pf-bulk" data-pf-bulk data-confirm-delete="{{ lang('PORTFOLIO_BULK_DELETE_CONFIRM') }}">
+	<div class="pf-bulk">
+		<label class="pf-check"><input type="checkbox" data-pf-select-all> {{ lang('PORTFOLIO_SELECT_ALL') }}</label>
+		<span class="pf-bulk__count" data-pf-count data-label="{{ lang('PORTFOLIO_SELECTED_COUNT') }}">0</span>
+		<select name="action" class="pf-input pf-input--inline" data-pf-bulk-action>
+			<option value="approve">{{ lang('PORTFOLIO_BULK_APPROVE') }}</option>
+			<option value="delete">{{ lang('PORTFOLIO_BULK_DISAPPROVE') }}</option>
+		</select>
+		<button type="submit" class="pf-btn pf-btn--primary pf-btn--small">{{ lang('PORTFOLIO_APPLY') }}</button>
+		{{ S_FORM_TOKEN }}
+	</div>
+	<div class="pf-grid is-selecting" data-pf-gallery>
+		{% for photo in PF_ITEMS %}
+		<div class="pf-queue-card">
+			{{ pf.photo_card(photo|merge({'can_select': true}), true) }}
+			<small>{{ photo.user }} · {% if photo.album_url %}<a href="{{ photo.album_url }}">{{ photo.album_name }}</a>{% endif %}</small>
+		</div>
+		{% endfor %}
+	</div>
+</form>
+{{ pf.pagination(PF_PAGINATION) }}
+{% else %}
+{{ pf.empty(lang('PORTFOLIO_QUEUE_EMPTY'), 'inbox') }}
+{% endif %}
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

@@ -1,0 +1,9 @@
+Subject: Your photo “{PHOTO_TITLE}” has been approved
+
+Hello {USERNAME},
+
+Your photo “{PHOTO_TITLE}” has been approved and is now visible in the portfolio of “{SITENAME}”.
+
+{U_PHOTO}
+
+{EMAIL_SIG}

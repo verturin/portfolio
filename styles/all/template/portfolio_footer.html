@@ -1,0 +1,14 @@
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+	<div class="pf-lightbox" id="pf-lightbox" hidden role="dialog" aria-modal="true" aria-label="{{ lang('PORTFOLIO_LIGHTBOX') }}">
+		<button type="button" class="pf-lightbox__btn pf-lightbox__close" data-pf-close aria-label="{{ lang('PORTFOLIO_CLOSE') }}">{{ pf.icon('close') }}</button>
+		<button type="button" class="pf-lightbox__btn pf-lightbox__prev" data-pf-prev aria-label="{{ lang('PREVIOUS') }}">{{ pf.icon('left') }}</button>
+		<figure class="pf-lightbox__stage">
+			<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
+			<figcaption><span class="pf-lightbox__count"></span><span class="pf-lightbox__title"></span><a class="pf-lightbox__more" href="#">{{ lang('PORTFOLIO_DETAILS') }}</a></figcaption>
+		</figure>
+		<button type="button" class="pf-lightbox__btn pf-lightbox__next" data-pf-next aria-label="{{ lang('NEXT') }}">{{ pf.icon('right') }}</button>
+		<aside class="pf pf-lightbox__panel" data-pf-panel hidden aria-live="polite"></aside>
+	</div>
+</div>
+{% INCLUDEJS '@verturin_portfolio/js/portfolio.js' %}
+{% include 'overall_footer.html' %}

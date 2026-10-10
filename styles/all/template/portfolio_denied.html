@@ -1,0 +1,36 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<div class="pf-panel pf-panel--narrow pf-denied">
+	<span class="pf-denied__icon">{{ pf.icon('lock') }}</span>
+	<h1 class="pf-panel__title">{{ PF_TITLE }}</h1>
+
+	{% if PF_DENIED.reason == 'friends' %}
+		<p>{{ lang('PORTFOLIO_DENIED_FRIENDS', PF_DENIED.owner) }}</p>
+		<p class="pf-muted">{{ lang('PORTFOLIO_DENIED_FRIENDS_HOWTO', PF_DENIED.owner_name) }}</p>
+	{% elseif PF_DENIED.reason == 'groups_friends' %}
+		<p>{{ lang('PORTFOLIO_DENIED_GROUPS_FRIENDS', PF_DENIED.owner) }}</p>
+		<p class="pf-muted">{{ lang('PORTFOLIO_DENIED_FRIENDS_HOWTO', PF_DENIED.owner_name) }}</p>
+	{% elseif PF_DENIED.reason == 'groups' %}
+		<p>{{ lang('PORTFOLIO_DENIED_GROUPS') }}</p>
+	{% elseif PF_DENIED.reason == 'private' %}
+		<p>{{ lang('PORTFOLIO_DENIED_PRIVATE', PF_DENIED.owner) }}</p>
+		<p class="pf-muted">{{ lang('PORTFOLIO_DENIED_PRIVATE_HOWTO', PF_DENIED.owner_name) }}</p>
+	{% elseif PF_DENIED.reason == 'reserved' %}
+		<p>{{ lang('PORTFOLIO_DENIED_RESERVED') }}</p>
+	{% elseif PF_DENIED.is_photo %}
+		<p>{{ lang('PORTFOLIO_DENIED_PHOTO_STATUS') }}</p>
+	{% else %}
+		<p>{{ lang('PORTFOLIO_NO_ACCESS') }}</p>
+	{% endif %}
+
+	<div class="pf-actions pf-denied__actions">
+		{% if PF_DENIED.u_pm and PF_DENIED.reason in ['friends', 'groups_friends', 'private'] %}
+		<a class="pf-btn pf-btn--primary" href="{{ PF_DENIED.u_pm }}">{{ pf.icon('comment') }}{{ lang(PF_DENIED.reason == 'private' ? 'PORTFOLIO_ASK_ACCESS' : 'PORTFOLIO_ASK_FRIEND', PF_DENIED.owner_name) }}</a>
+		{% endif %}
+		{% if PF_DENIED.u_owner %}<a class="pf-btn" href="{{ PF_DENIED.u_owner }}">{{ pf.icon('user') }}{{ lang('PORTFOLIO_OF', PF_DENIED.owner_name) }}</a>{% endif %}
+		<a class="pf-btn pf-btn--ghost" href="{{ U_PF_INDEX }}">{{ pf.icon('home') }}{{ lang('PORTFOLIO_HOME') }}</a>
+	</div>
+</div>
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

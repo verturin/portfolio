@@ -1,0 +1,110 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<header class="pf-head pf-head--album">
+	{% if PF_ALBUM.cover_medium %}<div class="pf-head__backdrop" style="background-image:url('{{ PF_ALBUM.cover_medium }}')"></div>{% endif %}
+	<div class="pf-head__text">
+		<h1 class="pf-head__title">{{ PF_ALBUM.name }}</h1>
+		<p class="pf-head__sub">
+			{% if PF_ALBUM.owner %}<a href="{{ PF_ALBUM.owner_url }}">{{ pf.icon('user') }}{{ PF_ALBUM.owner }}</a>{% else %}<span>{{ pf.icon('globe') }}{{ lang('PORTFOLIO_PUBLIC_ALBUM') }}</span>{% endif %}
+			<span>{{ pf.icon('image') }}{{ lang('PORTFOLIO_PHOTO_COUNT', PF_PHOTO_TOTAL) }}</span>
+			{% if PF_ALBUM.visibility == 4 %}<span class="pf-badge">{{ pf.icon('users') }}{{ lang('PORTFOLIO_VIS_FRIENDS') }}</span>{% elseif PF_ALBUM.visibility == 3 %}<span class="pf-badge">{{ pf.icon('lock') }}{{ lang('PORTFOLIO_VIS_PRIVATE') }}</span>{% elseif PF_ALBUM.visibility == 2 %}<span class="pf-badge">{{ pf.icon('users') }}{{ lang('PORTFOLIO_VIS_GROUPS') }}</span>{% elseif PF_ALBUM.visibility == 1 %}<span class="pf-badge">{{ pf.icon('user') }}{{ lang('PORTFOLIO_VIS_REGISTERED') }}</span>{% endif %}
+			{% if PF_ALBUM.locked %}<span class="pf-badge pf-badge--warn">{{ pf.icon('shield') }}{{ lang('PORTFOLIO_LOCKED') }}</span>{% endif %}
+			{% if PF_ALBUM.role >= 1 and PF_ALBUM.role <= 3 %}<span class="pf-badge pf-badge--accent">{{ pf.icon('share') }}{{ lang('PORTFOLIO_SHARED_BADGE') }}</span>{% endif %}
+		</p>
+		{% if PF_ALBUM_DESC %}<div class="pf-head__desc">{{ PF_ALBUM_DESC }}</div>{% endif %}
+	</div>
+	<div class="pf-actions">
+		{% if U_PF_UPLOAD %}<a class="pf-btn pf-btn--primary" href="{{ U_PF_UPLOAD }}">{{ pf.icon('upload') }}{{ lang('PORTFOLIO_ADD_PHOTOS') }}</a>{% endif %}
+		{% if U_PF_SUBALBUM %}<a class="pf-btn" href="{{ U_PF_SUBALBUM }}">{{ pf.icon('folder') }}{{ lang('PORTFOLIO_NEW_SUBALBUM') }}</a>{% endif %}
+		{% if U_PF_EDIT or U_PF_MEMBERS_MANAGE or U_PF_DELETE or U_PF_EXPORT %}
+		<details class="pf-menu">
+			<summary class="pf-btn pf-menu__toggle" aria-label="{{ lang('PORTFOLIO_MORE') }}" title="{{ lang('PORTFOLIO_MORE') }}">{{ pf.icon('more') }}</summary>
+			<div class="pf-menu__list">
+				{% if U_PF_EDIT %}<a href="{{ U_PF_EDIT }}">{{ pf.icon('edit') }}{{ lang('PORTFOLIO_EDIT_ALBUM') }}</a>{% endif %}
+				{% if U_PF_MEMBERS_MANAGE %}<a href="{{ U_PF_MEMBERS_MANAGE }}">{{ pf.icon('users') }}{{ lang('PORTFOLIO_ALBUM_MEMBERS') }}</a>{% endif %}
+				{% if U_PF_EXPORT %}<a href="{{ U_PF_EXPORT }}">{{ pf.icon('download') }}{{ lang('PORTFOLIO_EXPORT_ALBUM') }}</a>{% endif %}
+				{% if U_PF_DELETE %}<a class="is-danger" href="{{ U_PF_DELETE }}">{{ pf.icon('trash') }}{{ lang('PORTFOLIO_DELETE_ALBUM') }}</a>{% endif %}
+			</div>
+		</details>
+		{% endif %}
+	</div>
+</header>
+
+<nav class="pf-albumnav" aria-label="{{ lang('PORTFOLIO_ALBUM_NAV') }}">
+	<a class="pf-btn pf-btn--ghost pf-btn--small" href="{{ PF_NAV.up.url }}" title="{{ lang('PORTFOLIO_UP_LEVEL') }}">{{ pf.icon('up') }}{{ PF_NAV.up.name }}</a>
+	{% if PF_NAV.count > 1 %}
+	<div class="pf-albumnav__siblings">
+		{% if PF_NAV.prev %}<a class="pf-btn pf-btn--small" href="{{ PF_NAV.prev.url }}" rel="prev" data-pf-key="ArrowLeft" title="{{ lang('PORTFOLIO_PREV_ALBUM') }}">{{ pf.icon('left') }}<span>{{ PF_NAV.prev.name }}</span></a>{% else %}<span class="pf-btn pf-btn--small is-disabled">{{ pf.icon('left') }}<span>{{ lang('PORTFOLIO_PREV_ALBUM') }}</span></span>{% endif %}
+		<span class="pf-albumnav__pos">{{ lang('PORTFOLIO_ALBUM_POSITION', PF_NAV.position, PF_NAV.count) }}</span>
+		{% if PF_NAV.next %}<a class="pf-btn pf-btn--small" href="{{ PF_NAV.next.url }}" rel="next" data-pf-key="ArrowRight" title="{{ lang('PORTFOLIO_NEXT_ALBUM') }}"><span>{{ PF_NAV.next.name }}</span>{{ pf.icon('right') }}</a>{% else %}<span class="pf-btn pf-btn--small is-disabled"><span>{{ lang('PORTFOLIO_NEXT_ALBUM') }}</span>{{ pf.icon('right') }}</span>{% endif %}
+	</div>
+	{% endif %}
+</nav>
+
+{% if PF_NAV.tree|length %}
+<details class="pf-tree"{% if PF_NAV.tree|length <= 12 %} open{% endif %}>
+	<summary>{{ pf.icon('tree') }}{{ lang('PORTFOLIO_ALBUM_TREE') }}</summary>
+	<ul>
+		{% for node in PF_NAV.tree %}
+		<li style="--pf-depth: {{ node.depth }}"{% if node.current %} class="is-current"{% endif %}>
+			<a href="{{ node.url }}"{% if node.current %} aria-current="page"{% endif %}>{{ pf.icon('folder') }}<span>{{ node.name }}</span><small>{{ node.photos }}</small></a>
+		</li>
+		{% endfor %}
+	</ul>
+</details>
+{% endif %}
+
+{% if PF_CHILDREN|length %}
+<section class="pf-section">
+	<h2 class="pf-section__title">{{ pf.icon('folder') }}{{ lang('PORTFOLIO_SUBALBUMS') }}</h2>
+	<div class="pf-albums pf-albums--compact">
+		{% for album in PF_CHILDREN %}{{ pf.album_card(album, false) }}{% endfor %}
+	</div>
+</section>
+{% endif %}
+
+<section class="pf-section">
+	<div class="pf-bar">
+		<div class="pf-chips" role="tablist" aria-label="{{ lang('PORTFOLIO_SORT') }}">
+			{% for sort in PF_SORTS %}<a class="pf-chip{% if sort.active %} is-active{% endif %}" href="{{ sort.url }}">{{ sort.label }}</a>{% endfor %}
+		</div>
+		{% if PF_CAN_BULK %}
+		<button type="button" class="pf-btn pf-btn--ghost pf-btn--small" data-pf-select-toggle>{{ pf.icon('select') }}{{ lang('PORTFOLIO_SELECT_MODE') }}</button>
+		{% endif %}
+	</div>
+
+	{% if PF_CAN_BULK %}
+	<form id="pf-bulk" class="pf-bulk" method="post" action="{{ U_PF_BULK }}" hidden data-pf-bulk data-confirm-delete="{{ lang('PORTFOLIO_BULK_DELETE_CONFIRM') }}">
+		<label class="pf-check"><input type="checkbox" data-pf-select-all> {{ lang('PORTFOLIO_SELECT_ALL') }}</label>
+		<span class="pf-bulk__count" data-pf-count data-label="{{ lang('PORTFOLIO_SELECTED_COUNT') }}">0</span>
+		<select name="action" class="pf-input pf-input--inline" data-pf-bulk-action>
+			<option value="delete">{{ lang('PORTFOLIO_BULK_TRASH') }}</option>
+			{% if PF_MOVE_TARGETS|length %}<option value="move">{{ lang('PORTFOLIO_BULK_MOVE') }}</option>{% endif %}
+			{% if PF_CAN_APPROVE %}<option value="approve">{{ lang('PORTFOLIO_BULK_APPROVE') }}</option>{% endif %}
+		</select>
+		{% if PF_MOVE_TARGETS|length %}
+		<select name="target_album" class="pf-input pf-input--inline" data-pf-bulk-target hidden>
+			{% for target in PF_MOVE_TARGETS %}<option value="{{ target.id }}">{{ target.name }}{% if target.owner %} ({{ target.owner }}){% endif %}</option>{% endfor %}
+		</select>
+		{% endif %}
+		<button type="submit" class="pf-btn pf-btn--primary pf-btn--small">{{ lang('PORTFOLIO_APPLY') }}</button>
+		{{ S_FORM_TOKEN }}
+	</form>
+	{% endif %}
+
+	{% if PF_PHOTOS|length %}
+	<div class="pf-grid" data-pf-gallery>
+		{% for photo in PF_PHOTOS %}{{ pf.photo_card(photo, PF_CAN_BULK) }}{% endfor %}
+	</div>
+	{{ pf.pagination(PF_PAGINATION) }}
+	{% else %}
+	<div class="pf-empty">
+		{{ pf.icon('image') }}
+		<p>{{ lang('PORTFOLIO_ALBUM_EMPTY') }}</p>
+		{% if U_PF_UPLOAD %}<a class="pf-btn pf-btn--primary" href="{{ U_PF_UPLOAD }}">{{ pf.icon('upload') }}{{ lang('PORTFOLIO_ADD_PHOTOS') }}</a>{% endif %}
+	</div>
+	{% endif %}
+</section>
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

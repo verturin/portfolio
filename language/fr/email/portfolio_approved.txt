@@ -1,0 +1,9 @@
+Subject: Votre photo « {PHOTO_TITLE} » a été validée
+
+Bonjour {USERNAME},
+
+Votre photo « {PHOTO_TITLE} » a été validée par l’équipe et est maintenant visible dans le portfolio de « {SITENAME} ».
+
+{U_PHOTO}
+
+{EMAIL_SIG}

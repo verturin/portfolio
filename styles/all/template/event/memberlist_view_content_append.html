@@ -1,0 +1,20 @@
+{% if U_PORTFOLIO_PROFILE %}
+<div class="panel bg1 pf-profile-panel">
+	<div class="inner">
+		<h3 class="pf-profile-panel__title">
+			<span><i class="icon fa-camera fa-fw" aria-hidden="true"></i> {{ lang('PORTFOLIO_PROFILE_RECENT', PORTFOLIO_PROFILE_NAME) }}</span>
+			<a class="button" href="{{ U_PORTFOLIO_PROFILE }}"><span>{{ lang('PORTFOLIO_PROFILE_SEE_ALL', PORTFOLIO_PROFILE_PHOTOS) }}</span> <i class="icon fa-chevron-right fa-fw" aria-hidden="true"></i></a>
+		</h3>
+		{% if PORTFOLIO_PROFILE_RECENT|length %}
+		<div class="pf-profile-strip">
+			{% for photo in PORTFOLIO_PROFILE_RECENT %}
+			<a class="pf-profile-strip__item" href="{{ photo.url }}" title="{{ photo.title }}">
+				<img src="{{ photo.thumb }}" alt="{{ photo.title }}" loading="lazy" decoding="async">
+				<span class="pf-profile-strip__title">{{ photo.title }}</span>
+			</a>
+			{% endfor %}
+		</div>
+		{% endif %}
+	</div>
+</div>
+{% endif %}

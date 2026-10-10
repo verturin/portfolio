@@ -1,0 +1,37 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<header class="pf-head">
+	<h1 class="pf-head__title">{{ lang('PORTFOLIO_TRASH') }}</h1>
+	<p class="pf-head__sub">{{ lang('PORTFOLIO_TRASH_LEAD') }}</p>
+</header>
+
+{% if PF_ITEMS|length %}
+<ul class="pf-trash">
+	{% for item in PF_ITEMS %}
+	<li class="pf-trash__item">
+		<a class="pf-trash__thumb" href="{{ item.url }}"><img src="{{ item.thumb }}" alt="" loading="lazy"></a>
+		<div class="pf-trash__info">
+			<a class="pf-trash__title" href="{{ item.url }}">{{ item.title }}</a>
+			<small>{% if item.album_missing %}<span class="pf-badge pf-badge--warn">{{ lang('PORTFOLIO_ALBUM_GONE') }}</span>{% else %}{{ pf.icon('folder') }}{{ item.album_name }}{% endif %}</small>
+			<small>{{ lang('PORTFOLIO_TRASHED_BY', item.deleted_by, item.deleted_time) }}</small>
+			{% if item.reason %}<small>{{ lang('PORTFOLIO_REASON') }} : {{ item.reason }}</small>{% endif %}
+		</div>
+		{% if item.u_restore %}
+		<form method="post" action="{{ item.u_restore }}" class="pf-trash__actions">
+			{% if item.album_missing %}
+			<select name="target_album" class="pf-input pf-input--inline" aria-label="{{ lang('PORTFOLIO_RESTORE_INTO') }}">{% for target in PF_TARGETS %}<option value="{{ target.id }}">{{ target.name }}</option>{% endfor %}</select>
+			{% endif %}
+			<button type="submit" name="restore" value="1" class="pf-btn pf-btn--primary pf-btn--small">{{ pf.icon('restore') }}{{ lang('PORTFOLIO_RESTORE') }}</button>
+			{{ S_FORM_TOKEN }}
+		</form>
+		{% endif %}
+	</li>
+	{% endfor %}
+</ul>
+{{ pf.pagination(PF_PAGINATION) }}
+{% else %}
+{{ pf.empty(lang('PORTFOLIO_TRASH_EMPTY'), 'trash') }}
+{% endif %}
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

@@ -1,0 +1,61 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<header class="pf-head pf-head--page">
+	<div class="pf-head__text">
+		<h1 class="pf-head__title">{{ PF_PAGE.title }}</h1>
+		{% if PF_PAGE.desc %}<div class="pf-head__desc">{{ PF_PAGE.desc }}</div>{% endif %}
+		{% if PF_PROTECTED %}<p class="pf-head__sub">{{ pf.icon('shield') }}{{ lang('PORTFOLIO_PROTECTED_NOTE') }}</p>{% endif %}
+	</div>
+	{% if U_PF_UPLOAD or PF_PAGE_ALBUM %}
+	<div class="pf-actions">
+		{% if U_PF_UPLOAD %}<a class="pf-btn pf-btn--primary" href="{{ U_PF_UPLOAD }}">{{ pf.icon('upload') }}{{ lang('PORTFOLIO_PAGE_ADD_PHOTO') }}</a>{% endif %}
+		{% if PF_PAGE_ALBUM %}<a class="pf-btn" href="{{ PF_PAGE_ALBUM.url }}">{{ pf.icon('folder') }}{{ lang('PORTFOLIO_PAGE_OPEN_ALBUM') }}</a>{% endif %}
+	</div>
+	{% endif %}
+</header>
+
+{% if PF_PAGE.type == 'albums' %}
+<section class="pf-section">
+	{% if PF_ALBUMS|length %}
+	<div class="pf-albums">
+		{% for album in PF_ALBUMS %}{{ pf.album_card(album, true) }}{% endfor %}
+	</div>
+	{{ pf.pagination(PF_PAGINATION) }}
+	{% else %}
+	{{ pf.empty(lang('PORTFOLIO_NO_ALBUMS'), 'folder') }}
+	{% endif %}
+</section>
+{% elseif PF_PAGE.type == 'comments' %}
+<section class="pf-section">
+	{% if PF_COMMENTS|length %}
+	<ol class="pf-page-comments">
+		{% for comment in PF_COMMENTS %}
+		<li class="pf-page-comment">
+			<a class="pf-page-comment__photo" href="{{ comment.photo.url }}" title="{{ comment.photo.title }}"><img src="{{ comment.photo.thumb }}" alt="{{ comment.photo.title }}" loading="lazy"></a>
+			<div class="pf-page-comment__body">
+				<div class="pf-comment__head"><span class="pf-avatar">{{ comment.avatar }}</span>{{ comment.user }}<time>{{ comment.time }}</time></div>
+				<div class="pf-comment__text">{{ comment.text }}</div>
+				<a class="pf-page-comment__more" href="{{ comment.url }}">{{ lang('PORTFOLIO_PAGE_ON_PHOTO', comment.photo.title) }}</a>
+			</div>
+		</li>
+		{% endfor %}
+	</ol>
+	{% else %}
+	{{ pf.empty(lang('PORTFOLIO_NO_COMMENTS_YET'), 'comment') }}
+	{% endif %}
+</section>
+{% else %}
+<section class="pf-section">
+	{% if PF_PHOTOS|length %}
+	<div class="pf-grid" data-pf-gallery>
+		{% for photo in PF_PHOTOS %}{{ pf.photo_card(photo, false) }}{% endfor %}
+	</div>
+	{% if PF_PAGINATION %}{{ pf.pagination(PF_PAGINATION) }}{% endif %}
+	{% else %}
+	{{ pf.empty(lang('PORTFOLIO_NO_PHOTOS_YET'), 'image') }}
+	{% endif %}
+</section>
+{% endif %}
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

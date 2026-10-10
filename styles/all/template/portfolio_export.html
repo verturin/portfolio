@@ -1,0 +1,53 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<div class="pf-panel pf-panel--narrow">
+	<h1 class="pf-panel__title">{{ pf.icon('download') }}{{ PF_TITLE }}</h1>
+
+	{% if PF_DONE %}
+	<div class="pf-alert pf-alert--success" role="status">{{ pf.icon('check') }}<div><p><strong>{{ lang('PORTFOLIO_EXPORT_READY') }}</strong></p><p>{{ lang('PORTFOLIO_EXPORT_READY_EXPLAIN', PF_TTL) }}</p></div></div>
+	{% endif %}
+
+	{{ pf.errors(PF_ERRORS) }}
+
+	{% if not PF_ZIP_OK %}
+	<div class="pf-alert pf-alert--error">{{ pf.icon('alert') }}<div><p>{{ lang('PORTFOLIO_ZIP_MISSING') }}</p></div></div>
+	{% else %}
+	<form method="post" action="{{ U_PF_ACTION }}" class="pf-export-box">
+		<div>
+			<strong>{% if PF_EXPORT_ALBUM %}{{ lang('PORTFOLIO_EXPORT_OF_ALBUM', PF_EXPORT_ALBUM) }}{% else %}{{ lang('PORTFOLIO_EXPORT_ALL') }}{% endif %}</strong>
+			<small>{{ lang('PORTFOLIO_ALBUM_COUNT', PF_EXPORT_ALBUMS) }} · {{ lang('PORTFOLIO_PHOTO_COUNT', PF_EXPORT_PHOTOS) }}</small>
+			<small>{{ lang('PORTFOLIO_EXPORT_EXPLAIN') }}</small>
+			{% if PF_DAILY_LEFT >= 0 %}<small>{{ lang('PORTFOLIO_EXPORT_DAILY_LEFT', PF_DAILY_LEFT) }}</small>{% endif %}
+		</div>
+		<button type="submit" name="create" value="1" class="pf-btn pf-btn--primary"{% if PF_DAILY_LEFT == 0 %} disabled{% endif %} data-pf-busy="{{ lang('PORTFOLIO_EXPORT_WORKING') }}">{{ pf.icon('download') }}{{ lang('PORTFOLIO_EXPORT_CREATE') }}</button>
+		{{ S_FORM_TOKEN }}
+	</form>
+	{% if PF_EXPORT_ALBUM %}<p class="pf-muted"><a href="{{ U_PF_ACTION_ALL }}">{{ lang('PORTFOLIO_EXPORT_SWITCH_ALL') }}</a></p>{% endif %}
+	{% endif %}
+
+	<h2 class="pf-section__title">{{ pf.icon('inbox') }}{{ lang('PORTFOLIO_EXPORT_MY_LINKS') }}</h2>
+	{% if PF_EXPORTS|length %}
+	<form method="post" action="{{ U_PF_ACTION_ALL }}">
+	<ul class="pf-list">
+		{% for export in PF_EXPORTS %}
+		<li class="pf-list__item">
+			<span class="pf-list__main">{{ export.name }}<small>{{ lang('PORTFOLIO_PHOTO_COUNT', export.photos) }} · {{ export.size }} · {{ lang('PORTFOLIO_EXPORT_CREATED_ON', export.created) }} · {{ lang('PORTFOLIO_EXPORT_EXPIRES_ON', export.expires) }}{% if export.downloads %} · {{ lang('PORTFOLIO_EXPORT_DOWNLOADS', export.downloads) }}{% endif %}</small></span>
+			<span class="pf-actions">
+				<a class="pf-btn pf-btn--primary pf-btn--small" href="{{ export.url }}">{{ pf.icon('download') }}{{ lang('PORTFOLIO_DOWNLOAD_ZIP') }}</a>
+				<button type="submit" name="delete" value="{{ export.token }}" class="pf-btn pf-btn--ghost pf-btn--small is-danger" title="{{ lang('DELETE') }}">{{ pf.icon('trash') }}</button>
+			</span>
+		</li>
+		{% endfor %}
+	</ul>
+	{{ S_FORM_TOKEN }}
+	</form>
+	<p class="pf-muted">{{ lang('PORTFOLIO_EXPORT_LINKS_PRIVATE') }}</p>
+	{% else %}
+	<p class="pf-muted">{{ lang('PORTFOLIO_EXPORT_NONE') }}</p>
+	{% endif %}
+
+	<div class="pf-form__footer"><a class="pf-btn pf-btn--ghost" href="{{ U_PF_BACK }}">{{ pf.icon('left') }}{{ lang('BACK_TO_PREV') }}</a></div>
+</div>
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

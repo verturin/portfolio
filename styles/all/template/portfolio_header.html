@@ -1,0 +1,23 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio.css' %}
+{% include 'overall_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+<div class="pf" id="pf"{% if PF_GRID_SIZE %} style="--pf-thumb: {{ PF_GRID_SIZE }}px; --pf-thumb-compact: {{ (PF_GRID_SIZE * 0.76)|round }}px"{% endif %}>
+	<nav class="pf-toolbar" aria-label="{{ lang('PORTFOLIO') }}">
+		<a class="pf-toolbar__brand" href="{{ U_PF_INDEX }}">{{ pf.icon('image') }}<span>{{ lang('PORTFOLIO') }}</span></a>
+		<div class="pf-toolbar__links">
+			<a class="pf-tab" href="{{ U_PF_INDEX }}">{{ pf.icon('home') }}<span>{{ lang('PORTFOLIO_HOME') }}</span></a>
+			<a class="pf-tab" href="{{ U_PF_MEMBERS }}">{{ pf.icon('users') }}<span>{{ lang('PORTFOLIO_MEMBERS') }}</span></a>
+			{% if U_PF_MINE %}<a class="pf-tab" href="{{ U_PF_MINE }}">{{ pf.icon('user') }}<span>{{ lang('PORTFOLIO_MINE') }}</span></a>{% endif %}
+			{% if U_PF_SHARING %}<a class="pf-tab" href="{{ U_PF_SHARING }}">{{ pf.icon('share') }}<span>{{ lang('PORTFOLIO_SHARING') }}</span></a>{% endif %}
+			{% if U_PF_TRASH %}<a class="pf-tab" href="{{ U_PF_TRASH }}">{{ pf.icon('trash') }}<span>{{ lang('PORTFOLIO_TRASH') }}</span></a>{% endif %}
+			{% if U_PF_QUEUE %}<a class="pf-tab" href="{{ U_PF_QUEUE }}">{{ pf.icon('inbox') }}<span>{{ lang('PORTFOLIO_QUEUE') }}</span>{% if PF_QUEUE_COUNT %}<b class="pf-count">{{ PF_QUEUE_COUNT }}</b>{% endif %}</a>{% endif %}
+		</div>
+	</nav>
+
+	{% if PF_CRUMBS|length > 1 %}
+	<ol class="pf-crumbs">
+		{% for crumb in PF_CRUMBS %}
+		<li>{% if not loop.last %}<a href="{{ crumb.url }}">{{ crumb.name }}</a>{% else %}<span aria-current="page">{{ crumb.name }}</span>{% endif %}</li>
+		{% endfor %}
+	</ol>
+	{% endif %}

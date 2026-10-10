@@ -1,0 +1,22 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio.css' %}
+{% include 'overall_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+<div class="pf">
+	<div class="pf-panel pf-panel--narrow">
+		<h1 class="pf-panel__title">{{ pf.icon('trash') }}{{ lang('PORTFOLIO_DELETE_PHOTO') }}</h1>
+		<p>{{ MESSAGE_TEXT }}</p>
+		<p class="pf-note">{{ pf.icon('restore') }}{{ lang('PORTFOLIO_TRASH_SAFETY') }}</p>
+		<form id="confirm" action="{{ S_CONFIRM_ACTION }}" method="post" class="pf-form">
+			<div class="pf-field">
+				<label for="pf-reason">{{ lang('PORTFOLIO_REASON_OPTIONAL') }}</label>
+				<input type="text" id="pf-reason" name="reason" class="pf-input" maxlength="255">
+			</div>
+			<div class="pf-form__footer">
+				<input type="submit" name="cancel" value="{{ lang('NO') }}" class="pf-btn pf-btn--ghost">
+				<input type="submit" name="confirm" value="{{ YES_VALUE }}" class="pf-btn pf-btn--primary is-danger">
+			</div>
+			{{ S_HIDDEN_FIELDS }}
+		</form>
+	</div>
+</div>
+{% include 'overall_footer.html' %}

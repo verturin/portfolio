@@ -1,0 +1,21 @@
+/* Portfolio — styles chargés sur tout le forum : BBCode [portfolio] et bloc du profil (v1.6.0) */
+
+/* BBCode [portfolio=mini|medium|large] */
+.pf-bb { display: inline-block; max-width: 100%; line-height: 0; border-radius: 8px; overflow: hidden; vertical-align: top; }
+.pf-bb .pf-bb__img { display: block; max-width: 100%; height: auto; border-radius: 8px; }
+.pf-bb-mini .pf-bb__img { width: 160px; height: 160px; object-fit: cover; }
+.pf-bb-medium .pf-bb__img { max-width: min(640px, 100%); }
+.pf-bb-large { display: block; width: fit-content; }
+.pf-bb-large .pf-bb__img { max-width: 100%; }
+.pf-bb:hover .pf-bb__img { opacity: .92; }
+
+/* Profil : dernières photos du membre */
+.pf-profile-panel__title { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.pf-profile-panel__title .button { font-size: 12px; }
+.pf-profile-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.pf-profile-strip__item { position: relative; display: block; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #e9edf2; }
+.pf-profile-strip__item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s ease; }
+.pf-profile-strip__item:hover img { transform: scale(1.05); }
+.pf-profile-strip__title { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 8px 6px; color: #fff; font-size: 11px; line-height: 1.3;
+	background: linear-gradient(to top, rgba(0,0,0,.65), transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-profile-strip__item:hover .pf-profile-strip__title { text-decoration: none; }

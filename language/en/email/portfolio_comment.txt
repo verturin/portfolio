@@ -1,0 +1,10 @@
+Subject: New comment on your photo “{PHOTO_TITLE}”
+
+Hello {USERNAME},
+
+{AUTHOR_NAME} commented on your photo “{PHOTO_TITLE}” in the portfolio of “{SITENAME}”.
+
+View the comment:
+{U_PHOTO}
+
+{EMAIL_SIG}

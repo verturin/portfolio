@@ -1,0 +1,165 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+{% if PF_PHOTO.trashed %}
+<div class="pf-alert pf-alert--warn" role="status">
+	{{ pf.icon('trash') }}
+	<div>
+		<p><strong>{{ lang('PORTFOLIO_IN_TRASH') }}</strong> {{ lang('PORTFOLIO_TRASHED_BY', PF_PHOTO.deleted_by, PF_PHOTO.deleted_time) }}</p>
+		{% if PF_PHOTO.deleted_reason %}<p>{{ lang('PORTFOLIO_REASON') }} : {{ PF_PHOTO.deleted_reason }}</p>{% endif %}
+		<p>{{ lang('PORTFOLIO_TRASH_EXPLAIN') }}</p>
+		{% if U_PF_RESTORE %}
+		<form method="post" action="{{ U_PF_RESTORE }}" class="pf-inline-form">
+			{% if PF_TARGETS|length %}
+			<label>{{ lang('PORTFOLIO_RESTORE_INTO') }}
+				<select name="target_album" class="pf-input pf-input--inline">{% for target in PF_TARGETS %}<option value="{{ target.id }}">{{ target.name }}</option>{% endfor %}</select>
+			</label>
+			{% endif %}
+			<button type="submit" name="restore" value="1" class="pf-btn pf-btn--primary pf-btn--small">{{ pf.icon('restore') }}{{ lang('PORTFOLIO_RESTORE') }}</button>
+			{{ S_FORM_TOKEN_RESTORE }}
+		</form>
+		{% endif %}
+	</div>
+</div>
+{% elseif PF_PHOTO.pending %}
+<div class="pf-alert pf-alert--info" role="status">
+	{{ pf.icon('clock') }}
+	<div><p>{{ lang('PORTFOLIO_PENDING_EXPLAIN') }}</p>{% if U_PF_APPROVE %}<p><a class="pf-btn pf-btn--primary pf-btn--small" href="{{ U_PF_APPROVE }}">{{ pf.icon('check') }}{{ lang('PORTFOLIO_APPROVE') }}</a></p>{% endif %}</div>
+</div>
+{% endif %}
+
+<article class="pf-viewer">
+	<div class="pf-viewer__stage" data-pf-gallery>
+		{% if U_PF_PREV %}<a class="pf-viewer__nav pf-viewer__nav--prev" href="{{ U_PF_PREV }}" rel="prev" data-pf-key="ArrowLeft" aria-label="{{ lang('PREVIOUS') }}">{{ pf.icon('left') }}</a>{% endif %}
+		<a class="pf-viewer__image" href="{{ PF_PHOTO.medium }}" data-pf-lightbox="{{ PF_PHOTO.medium }}" data-pf-title="{{ PF_PHOTO.title }}" data-pf-url="">
+			<img src="{{ PF_PHOTO.medium }}" alt="{{ PF_PHOTO.title }}" width="{{ PF_PHOTO.width }}" height="{{ PF_PHOTO.height }}" decoding="async">
+			<span class="pf-viewer__zoom">{{ pf.icon('expand') }}</span>
+		</a>
+		{% if U_PF_NEXT %}<a class="pf-viewer__nav pf-viewer__nav--next" href="{{ U_PF_NEXT }}" rel="next" data-pf-key="ArrowRight" aria-label="{{ lang('NEXT') }}">{{ pf.icon('right') }}</a>{% endif %}
+		{% if PF_COUNT %}<span class="pf-viewer__pos">{{ PF_POSITION }} / {{ PF_COUNT }}</span>{% endif %}
+	</div>
+
+	<aside class="pf-viewer__side">
+		<h1 class="pf-viewer__title">{{ PF_PHOTO.title }}</h1>
+		<div class="pf-author">
+			<span class="pf-avatar">{{ PF_PHOTO.avatar }}</span>
+			<span>{{ PF_PHOTO.user }}<small><time datetime="{{ PF_PHOTO.time_iso }}">{{ PF_PHOTO.time }}</time></small></span>
+		</div>
+
+		{% if PF_PHOTO.desc %}<div class="pf-viewer__desc">{{ PF_PHOTO.desc }}</div>{% endif %}
+
+		{% include '@verturin_portfolio/portfolio_photo_social.html' %}
+
+		<dl class="pf-meta">
+			<div><dt>{{ pf.icon('eye') }}{{ lang('PORTFOLIO_VIEWS') }}</dt><dd>{{ PF_PHOTO.views }}</dd></div>
+			<div><dt>{{ pf.icon('comment') }}{{ lang('PORTFOLIO_COMMENTS') }}</dt><dd>{{ PF_PHOTO.comments }}</dd></div>
+			<div><dt>{{ pf.icon('image') }}{{ lang('PORTFOLIO_DIMENSIONS') }}</dt><dd>{{ PF_PHOTO.width }} × {{ PF_PHOTO.height }}</dd></div>
+			<div><dt>{{ pf.icon('download') }}{{ lang('PORTFOLIO_FILESIZE') }}</dt><dd>{{ PF_PHOTO.filesize }} · {{ PF_PHOTO.ext }}</dd></div>
+			{% if PF_ALBUM %}<div><dt>{{ pf.icon('folder') }}{{ lang('PORTFOLIO_ALBUM') }}</dt><dd><a href="{{ PF_ALBUM.url }}">{{ PF_ALBUM.name }}</a></dd></div>{% endif %}
+		</dl>
+
+		{% if PF_NO_DOWNLOAD %}<p class="pf-muted pf-small-note">{{ pf.icon('lock') }}{{ lang('PORTFOLIO_DOWNLOAD_DISABLED') }}</p>{% endif %}
+
+		{% if U_PF_DOWNLOAD %}<div class="pf-actions pf-actions--stack"><a class="pf-btn" href="{{ U_PF_DOWNLOAD }}">{{ pf.icon('download') }}{{ lang('PORTFOLIO_DOWNLOAD') }}</a></div>{% endif %}
+
+		{% include '@verturin_portfolio/portfolio_embed.html' %}
+
+		{% if PF_OWNER_SIDE %}
+		<section class="pf-tools" aria-label="{{ lang('PORTFOLIO_TOOLS') }}">
+			<h2 class="pf-tools__title">{{ pf.icon('edit') }}{{ lang('PORTFOLIO_TOOLS') }}</h2>
+			{% if PF_PHOTO.exif_stripped %}<p class="pf-privacy">{{ pf.icon('shield') }}{{ lang('PORTFOLIO_EXIF_REMOVED') }}</p>{% endif %}
+			{% if PF_WM_SKIPPED %}<p class="pf-muted pf-small-note">{{ pf.icon('eye') }}{{ lang('PORTFOLIO_WM_OWNER_NOTE') }}</p>{% endif %}
+
+			{% if PF_ROTATE|length %}
+			<div class="pf-rotate" data-pf-rotate-bar data-msg-error="{{ lang('PORTFOLIO_ROTATE_FAILED') }}">
+				<span class="pf-rotate__label">{{ pf.icon('rotate') }}{{ lang('PORTFOLIO_ROTATE') }}</span>
+				<a class="pf-btn pf-btn--small" href="{{ PF_ROTATE.left }}" data-pf-rotate-btn title="{{ lang('PORTFOLIO_ROTATE_LEFT') }}" rel="nofollow">↺ 90°</a>
+				<a class="pf-btn pf-btn--small" href="{{ PF_ROTATE.right }}" data-pf-rotate-btn title="{{ lang('PORTFOLIO_ROTATE_RIGHT') }}" rel="nofollow">↻ 90°</a>
+				<a class="pf-btn pf-btn--small" href="{{ PF_ROTATE.flip }}" data-pf-rotate-btn title="{{ lang('PORTFOLIO_ROTATE_FLIP') }}" rel="nofollow">180°</a>
+			</div>
+			{% endif %}
+
+			{% if U_PF_MOVE %}
+			<form class="pf-move" method="post" action="{{ U_PF_MOVE }}">
+				<label for="pf-move-target">{{ pf.icon('folder') }}{{ lang('PORTFOLIO_MOVE_TO') }}</label>
+				<div class="pf-move__row">
+					<select id="pf-move-target" name="target_album" class="pf-input pf-input--inline">{% for target in PF_MOVE_TARGETS %}<option value="{{ target.id }}">{{ target.name }}{% if target.owner %} ({{ target.owner }}){% endif %}</option>{% endfor %}</select>
+					<button type="submit" class="pf-btn pf-btn--small">{{ lang('PORTFOLIO_MOVE') }}</button>
+				</div>
+				{{ S_FORM_TOKEN_MOVE }}
+			</form>
+			{% endif %}
+
+			<div class="pf-actions pf-actions--stack">
+				{% if U_PF_EDIT %}<a class="pf-btn" href="{{ U_PF_EDIT }}">{{ pf.icon('edit') }}{{ lang('PORTFOLIO_EDIT_PHOTO') }}</a>{% endif %}
+				{% if U_PF_COVER %}{% if PF_PHOTO.is_cover %}<span class="pf-btn is-disabled" title="{{ lang('PORTFOLIO_SET_COVER_EXPLAIN') }}">{{ pf.icon('cover') }}{{ lang('PORTFOLIO_IS_COVER') }}</span>{% else %}<a class="pf-btn" href="{{ U_PF_COVER }}" title="{{ lang('PORTFOLIO_SET_COVER_EXPLAIN') }}">{{ pf.icon('cover') }}{{ lang('PORTFOLIO_SET_COVER') }}</a>{% endif %}{% endif %}
+				{% if U_PF_DELETE %}<a class="pf-btn is-danger" href="{{ U_PF_DELETE }}">{{ pf.icon('trash') }}{{ lang('PORTFOLIO_DELETE_PHOTO') }}</a>{% endif %}
+			</div>
+		</section>
+		{% elseif U_PF_EDIT or U_PF_DELETE %}
+		<details class="pf-tools pf-tools--mod">
+			<summary>{{ pf.icon('shield') }}{{ lang('PORTFOLIO_MODERATION') }}</summary>
+			<p class="pf-muted pf-small-note">{{ lang('PORTFOLIO_MODERATION_EXPLAIN') }}</p>
+			<div class="pf-actions pf-actions--stack">
+				{% if U_PF_EDIT %}<a class="pf-btn" href="{{ U_PF_EDIT }}">{{ pf.icon('edit') }}{{ lang('PORTFOLIO_EDIT_PHOTO') }}</a>{% endif %}
+				{% if U_PF_DELETE %}<a class="pf-btn is-danger" href="{{ U_PF_DELETE }}">{{ pf.icon('trash') }}{{ lang('PORTFOLIO_DELETE_PHOTO') }}</a>{% endif %}
+			</div>
+		</details>
+		{% endif %}
+	</aside>
+</article>
+
+{% if PF_ALBUM and PF_COUNT %}
+<nav class="pf-photonav" aria-label="{{ lang('PORTFOLIO_PHOTO_NAV') }}">
+	<a class="pf-btn pf-btn--ghost" href="{{ U_PF_BACK_ALBUM }}">{{ pf.icon('grid') }}{{ lang('PORTFOLIO_BACK_TO_ALBUM') }}</a>
+	<div class="pf-photonav__steps">
+		{% if U_PF_FIRST %}<a class="pf-btn pf-btn--icon" href="{{ U_PF_FIRST }}" title="{{ lang('PORTFOLIO_FIRST_PHOTO') }}" aria-label="{{ lang('PORTFOLIO_FIRST_PHOTO') }}">{{ pf.icon('first') }}</a>{% else %}<span class="pf-btn pf-btn--icon is-disabled" aria-hidden="true">{{ pf.icon('first') }}</span>{% endif %}
+		{% if U_PF_PREV %}<a class="pf-btn" href="{{ U_PF_PREV }}" rel="prev">{{ pf.icon('left') }}<span>{{ lang('PORTFOLIO_PREV_PHOTO') }}</span></a>{% else %}<span class="pf-btn is-disabled">{{ pf.icon('left') }}<span>{{ lang('PORTFOLIO_PREV_PHOTO') }}</span></span>{% endif %}
+		<span class="pf-photonav__pos">{{ lang('PORTFOLIO_PHOTO_POSITION', PF_POSITION, PF_COUNT) }}</span>
+		{% if U_PF_NEXT %}<a class="pf-btn pf-btn--primary" href="{{ U_PF_NEXT }}" rel="next"><span>{{ lang('PORTFOLIO_NEXT_PHOTO') }}</span>{{ pf.icon('right') }}</a>{% else %}<span class="pf-btn is-disabled"><span>{{ lang('PORTFOLIO_NEXT_PHOTO') }}</span>{{ pf.icon('right') }}</span>{% endif %}
+		{% if U_PF_LAST %}<a class="pf-btn pf-btn--icon" href="{{ U_PF_LAST }}" title="{{ lang('PORTFOLIO_LAST_PHOTO') }}" aria-label="{{ lang('PORTFOLIO_LAST_PHOTO') }}">{{ pf.icon('last') }}</a>{% else %}<span class="pf-btn pf-btn--icon is-disabled" aria-hidden="true">{{ pf.icon('last') }}</span>{% endif %}
+	</div>
+	<div class="pf-photonav__albums">
+		{% if not U_PF_PREV and PF_ALBUM_NAV.prev %}<a class="pf-btn pf-btn--ghost pf-btn--small" href="{{ PF_ALBUM_NAV.prev.url }}">{{ pf.icon('left') }}{{ lang('PORTFOLIO_PREV_ALBUM_NAMED', PF_ALBUM_NAV.prev.name) }}</a>{% endif %}
+		{% if not U_PF_NEXT and PF_ALBUM_NAV.next %}<a class="pf-btn pf-btn--ghost pf-btn--small" href="{{ PF_ALBUM_NAV.next.url }}">{{ lang('PORTFOLIO_NEXT_ALBUM_NAMED', PF_ALBUM_NAV.next.name) }}{{ pf.icon('right') }}</a>{% endif %}
+	</div>
+</nav>
+
+{% if PF_STRIP|length %}
+<div class="pf-strip" aria-label="{{ lang('PORTFOLIO_FILMSTRIP') }}">
+	{% for item in PF_STRIP %}
+	<a class="pf-strip__item{% if item.current %} is-current{% endif %}" href="{{ item.url }}" title="{{ item.title }}"{% if item.current %} aria-current="true"{% endif %}><img src="{{ item.thumb }}" alt="{{ item.title }}" loading="lazy"></a>
+	{% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
+{% if not PF_PHOTO.trashed and not PF_PHOTO.pending %}
+<section class="pf-section pf-comments" id="comments">
+	<h2 class="pf-section__title">{{ pf.icon('comment') }}{{ lang('PORTFOLIO_COMMENTS') }} <span class="pf-count">{{ PF_PHOTO.comments }}</span></h2>
+
+	{% if PF_COMMENTS|length %}
+	<ol class="pf-comment-list">
+		{% include '@verturin_portfolio/portfolio_comment_list.html' %}
+	</ol>
+	{{ pf.pagination(PF_COMMENTS_PAGINATION) }}
+	{% else %}
+	<p class="pf-muted">{{ lang('PORTFOLIO_NO_COMMENTS') }}</p>
+	{% endif %}
+
+	{% if PF_CAN_COMMENT %}
+	{{ pf.errors(PF_COMMENT_ERRORS) }}
+	<form method="post" action="{{ U_PF_ACTION }}#comments" class="pf-comment-form">
+		<label for="pf-comment" class="sr-only">{{ lang('PORTFOLIO_ADD_COMMENT') }}</label>
+		<textarea id="pf-comment" name="comment" class="pf-input" rows="3" placeholder="{{ lang('PORTFOLIO_COMMENT_PLACEHOLDER') }}" required></textarea>
+		<div class="pf-form__footer">
+			<small class="pf-muted">{{ lang('PORTFOLIO_BBCODE_ALLOWED') }}</small>
+			<button type="submit" name="post_comment" value="1" class="pf-btn pf-btn--primary">{{ pf.icon('comment') }}{{ lang('PORTFOLIO_PUBLISH') }}</button>
+		</div>
+		{{ S_FORM_TOKEN_COMMENT }}
+	</form>
+	{% endif %}
+</section>
+{% endif %}
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

@@ -1,0 +1,54 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<div class="pf-panel">
+	<div class="pf-panel__head">
+		<h1 class="pf-panel__title">{{ PF_TITLE }}</h1>
+		{% if PF_TARGETS|length > 1 %}
+		<label class="pf-inline-select">{{ lang('PORTFOLIO_CHANGE_ALBUM') }}
+			<select class="pf-input pf-input--inline" data-pf-goto>
+				{% for target in PF_TARGETS %}<option value="{{ target.url }}"{% if target.selected %} selected{% endif %}>{{ target.name }}{% if target.owner %} ({{ target.owner }}){% endif %}</option>{% endfor %}
+			</select>
+		</label>
+		{% endif %}
+	</div>
+
+	<ul class="pf-facts">
+		<li>{{ pf.icon('image') }}{{ lang('PORTFOLIO_ALLOWED_TYPES', PF_EXTENSIONS) }}</li>
+		{% if PF_MAX_SIZE %}<li>{{ pf.icon('upload') }}{{ lang('PORTFOLIO_MAX_SIZE', PF_MAX_SIZE) }}</li>{% endif %}
+		{% if PF_QUOTA_LEFT >= 0 %}<li>{{ pf.icon('inbox') }}{{ lang('PORTFOLIO_QUOTA_LEFT', PF_QUOTA_LEFT, PF_QUOTA) }}</li>{% endif %}
+		{% if PF_STRIP_EXIF %}<li class="is-good">{{ pf.icon('shield') }}{{ lang('PORTFOLIO_EXIF_WILL_BE_REMOVED') }}</li>{% endif %}
+		{% if PF_NEEDS_APPROVAL %}<li class="is-warn">{{ pf.icon('clock') }}{{ lang('PORTFOLIO_NEEDS_APPROVAL') }}</li>{% endif %}
+	</ul>
+
+	<form method="post" action="{{ U_PF_ACTION }}" enctype="multipart/form-data" class="pf-upload" data-pf-upload data-max-bytes="{{ PF_MAX_BYTES }}" data-accept="{{ PF_ACCEPT }}"
+		data-msg-too-big="{{ lang('PORTFOLIO_ERR_FILESIZE', PF_MAX_SIZE) }}" data-msg-type="{{ lang('PORTFOLIO_ERR_TYPE') }}" data-msg-network="{{ lang('PORTFOLIO_ERR_NETWORK') }}" data-msg-server="{{ lang('PORTFOLIO_ERR_SERVER_HTTP') }}"
+		data-msg-done="{{ lang('PORTFOLIO_UPLOAD_ALL_DONE') }}" data-album-url="{{ U_PF_ALBUM }}">
+		<label class="pf-dropzone" data-pf-dropzone>
+			<input type="file" name="photo" accept="{{ PF_ACCEPT }}" multiple data-pf-file>
+			<span class="pf-dropzone__icon">{{ pf.icon('upload') }}</span>
+			<span class="pf-dropzone__title">{{ lang('PORTFOLIO_DROP_HERE') }}</span>
+			<span class="pf-dropzone__hint">{{ lang('PORTFOLIO_DROP_HINT') }}</span>
+		</label>
+
+		<noscript>
+			<div class="pf-field">
+				<label for="pf-title">{{ lang('PORTFOLIO_PHOTO_TITLE') }}</label>
+				<input type="text" id="pf-title" name="title" class="pf-input" maxlength="255">
+			</div>
+			<button type="submit" name="upload" value="1" class="pf-btn pf-btn--primary">{{ lang('PORTFOLIO_SEND') }}</button>
+		</noscript>
+
+		<ul class="pf-queue" data-pf-queue></ul>
+
+		<div class="pf-form__footer" data-pf-upload-footer hidden>
+			<span class="pf-muted" data-pf-summary></span>
+			<a class="pf-btn" href="{{ U_PF_ALBUM }}">{{ pf.icon('grid') }}{{ lang('PORTFOLIO_VIEW_ALBUM') }}</a>
+			<button type="button" class="pf-btn pf-btn--primary" data-pf-start>{{ pf.icon('upload') }}{{ lang('PORTFOLIO_SEND_ALL') }}</button>
+		</div>
+		<input type="hidden" name="upload" value="1">
+		{{ S_FORM_TOKEN }}
+	</form>
+</div>
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

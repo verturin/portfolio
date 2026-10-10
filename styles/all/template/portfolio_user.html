@@ -1,0 +1,52 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<header class="pf-head pf-head--profile">
+	<span class="pf-avatar pf-avatar--xl">{{ PF_OWNER_AVATAR }}</span>
+	<div class="pf-head__text">
+		<h1 class="pf-head__title">{{ PF_TITLE }}</h1>
+		<p class="pf-head__sub">{{ PF_OWNER_NAME }} · {{ lang('PORTFOLIO_ALBUM_COUNT', PF_ALBUMS|length) }} · {{ lang('PORTFOLIO_PHOTO_COUNT', PF_PHOTO_COUNT) }}</p>
+	</div>
+	<div class="pf-actions">
+		{% if U_PF_NEW_ALBUM %}<a class="pf-btn pf-btn--primary" href="{{ U_PF_NEW_ALBUM }}">{{ pf.icon('plus') }}{{ lang('PORTFOLIO_NEW_ALBUM') }}</a>{% endif %}
+		{% if U_PF_EXPORT_ALL %}<a class="pf-btn" href="{{ U_PF_EXPORT_ALL }}">{{ pf.icon('download') }}{{ lang('PORTFOLIO_EXPORT_MINE') }}</a>{% endif %}
+		{% if PF_IS_SELF and U_PF_SHARING %}<a class="pf-btn" href="{{ U_PF_SHARING }}">{{ pf.icon('share') }}{{ lang('PORTFOLIO_SHARING') }}</a>{% endif %}
+	</div>
+</header>
+
+<section class="pf-section">
+	<h2 class="pf-section__title">{{ pf.icon(PF_IS_SELF ? 'user' : 'folder') }}{{ PF_IS_SELF ? lang('PORTFOLIO_MY_ALBUMS') : lang('PORTFOLIO_ALBUMS_OF', PF_OWNER_USERNAME) }}</h2>
+	{% if PF_ALBUMS|length %}
+	<div class="pf-albums">
+		{% for album in PF_ALBUMS %}{{ pf.album_card(album, false) }}{% endfor %}
+	</div>
+	{% elseif PF_IS_SELF %}
+	<div class="pf-empty">
+		{{ pf.icon('folder') }}
+		<p>{{ lang('PORTFOLIO_FIRST_ALBUM') }}</p>
+		{% if U_PF_NEW_ALBUM %}<a class="pf-btn pf-btn--primary" href="{{ U_PF_NEW_ALBUM }}">{{ pf.icon('plus') }}{{ lang('PORTFOLIO_NEW_ALBUM') }}</a>{% endif %}
+	</div>
+	{% else %}
+	{{ pf.empty(lang('PORTFOLIO_NO_ALBUMS'), 'folder') }}
+	{% endif %}
+</section>
+
+{% if PF_SHARED|length %}
+<section class="pf-section">
+	<h2 class="pf-section__title">{{ pf.icon('share') }}{{ lang('PORTFOLIO_SHARED_WITH_ME') }}</h2>
+	<div class="pf-albums">
+		{% for album in PF_SHARED %}{{ pf.album_card(album, true) }}{% endfor %}
+	</div>
+</section>
+{% endif %}
+
+{% if PF_RECENT|length %}
+<section class="pf-section">
+	<h2 class="pf-section__title">{{ pf.icon('clock') }}{{ lang('PORTFOLIO_RECENT') }}</h2>
+	<div class="pf-grid" data-pf-gallery>
+		{% for photo in PF_RECENT %}{{ pf.photo_card(photo, false) }}{% endfor %}
+	</div>
+</section>
+{% endif %}
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

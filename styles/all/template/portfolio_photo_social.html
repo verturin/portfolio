@@ -1,0 +1,28 @@
+{# Notation et réactions : page photo et aperçu rapide (v1.6.0) #}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+<div class="pf-rating" data-pf-rating>
+	<div class="pf-stars{% if PF_CAN_RATE %} is-interactive{% endif %}" data-pf-stars data-avg="{{ PF_PHOTO.rating.avg }}">
+		{% for i in 1..5 %}
+		{% if PF_CAN_RATE %}
+		<a class="pf-star{% if PF_PHOTO.rating.avg >= i - 0.25 %} is-filled{% endif %}" href="{{ PF_RATE_URLS[i] }}" data-value="{{ i }}" title="{{ lang('PORTFOLIO_RATE_N', i) }}" rel="nofollow">{{ pf.icon('star') }}</a>
+		{% else %}
+		<span class="pf-star{% if PF_PHOTO.rating.avg >= i - 0.25 %} is-filled{% endif %}">{{ pf.icon('star') }}</span>
+		{% endif %}
+		{% endfor %}
+	</div>
+	<span class="pf-rating__text"><b data-pf-avg>{{ PF_PHOTO.rating.avg_txt }}</b> · <span data-pf-rcount>{{ lang('PORTFOLIO_RATINGS', PF_PHOTO.rating.count) }}</span></span>
+	{% if PF_CAN_RATE %}<span class="pf-rating__mine" data-pf-mine data-label="{{ lang('PORTFOLIO_YOUR_RATING') }}"{% if not PF_PHOTO.my_rating %} hidden{% endif %}>{{ lang('PORTFOLIO_YOUR_RATING') }} <b>{{ PF_PHOTO.my_rating }}</b>/5 · <a class="pf-rating__clear" href="{{ PF_RATE_URLS[0] }}" data-value="0" rel="nofollow">{{ lang('PORTFOLIO_RATE_CLEAR') }}</a></span>{% elseif not PF_IS_REGISTERED %}<span class="pf-rating__mine">{{ lang('PORTFOLIO_LOGIN_TO_RATE') }}</span>{% endif %}
+</div>
+
+{% if PF_REACTIONS|length %}
+<div class="pf-reactions{% if PF_CAN_REACT %} is-interactive{% endif %}" data-pf-reactions aria-label="{{ lang('PORTFOLIO_REACTIONS') }}">
+	{% for reaction in PF_REACTIONS %}
+	{% if reaction.url %}
+	<a class="pf-reaction{% if reaction.mine %} is-mine{% endif %}{% if not reaction.count %} is-empty{% endif %}" href="{{ reaction.url }}" data-code="{{ reaction.code }}" title="{{ reaction.label }}{% if reaction.who %} : {{ reaction.who }}{% endif %}" rel="nofollow" aria-pressed="{{ reaction.mine ? 'true' : 'false' }}"><span class="pf-reaction__emoji">{{ reaction.emoji }}</span><span class="pf-reaction__count" data-count>{{ reaction.count ?: '' }}</span></a>
+	{% elseif reaction.count %}
+	<span class="pf-reaction" title="{{ reaction.label }}{% if reaction.who %} : {{ reaction.who }}{% endif %}"><span class="pf-reaction__emoji">{{ reaction.emoji }}</span><span class="pf-reaction__count">{{ reaction.count }}</span></span>
+	{% endif %}
+	{% endfor %}
+</div>
+{% endif %}
+

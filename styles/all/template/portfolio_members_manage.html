@@ -1,0 +1,69 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<div class="pf-panel pf-panel--narrow">
+	<h1 class="pf-panel__title">{{ PF_TITLE }}</h1>
+	<p class="pf-note">{{ pf.icon('users') }}<span>{{ lang('PORTFOLIO_ALBUM_MEMBERS_EXPLAIN', PF_ALBUM_NAME) }}</span></p>
+
+	{{ pf.errors(PF_ERRORS) }}
+
+	<form method="post" action="{{ U_PF_ACTION }}" id="pf_members" name="pf_members" class="pf-form">
+		<div class="pf-share-form">
+			<div class="pf-share-form__field pf-share-form__field--user">
+				<label for="pf-username">{{ lang('USERNAME') }} <a class="pf-label-link" href="{{ U_PF_FIND_USER }}" onclick="find_username(this.href); return false;">{{ lang('FIND_USERNAME') }}</a></label>
+				<input type="text" id="pf-username" name="username" class="pf-input" autocomplete="off">
+			</div>
+			<div class="pf-share-form__field">
+				<label for="pf-role">{{ lang('PORTFOLIO_ROLE') }}</label>
+				<select id="pf-role" name="member_role" class="pf-input">
+					<option value="1">{{ lang('PORTFOLIO_ROLE_VIEWER') }}</option>
+					<option value="2">{{ lang('PORTFOLIO_ROLE_CONTRIBUTOR') }}</option>
+					<option value="3">{{ lang('PORTFOLIO_ROLE_MANAGER') }}</option>
+				</select>
+			</div>
+			<button type="submit" name="add" value="1" class="pf-btn pf-btn--primary pf-share-form__submit">{{ pf.icon('plus') }}{{ lang('PORTFOLIO_ADD_MEMBER') }}</button>
+		</div>
+		<ul class="pf-legend">
+			<li><strong>{{ lang('PORTFOLIO_ROLE_VIEWER') }}</strong> — {{ lang('PORTFOLIO_ROLE_VIEWER_EXPLAIN') }}</li>
+			<li><strong>{{ lang('PORTFOLIO_ROLE_MANAGER') }}</strong> — {{ lang('PORTFOLIO_ROLE_MANAGER_EXPLAIN') }}</li>
+			<li><strong>{{ lang('PORTFOLIO_ROLE_CONTRIBUTOR') }}</strong> — {{ lang('PORTFOLIO_ROLE_CONTRIBUTOR_EXPLAIN') }}</li>
+		</ul>
+
+		<h2 class="pf-section__title">{{ pf.icon('users') }}{{ lang('PORTFOLIO_CURRENT_MEMBERS') }}</h2>
+		{% if PF_MEMBERS|length %}
+		<ul class="pf-list">
+			{% for member in PF_MEMBERS %}
+			<li class="pf-list__item pf-share-member">
+				<span class="pf-list__main">{{ member.name }}<small>{{ lang('PORTFOLIO_SHARED_SINCE', member.since) }}</small></span>
+				<span class="pf-share-member__actions">
+					<select name="roles[{{ member.user_id }}]" class="pf-input pf-input--small" aria-label="{{ lang('PORTFOLIO_ROLE') }}" data-pf-role-select data-initial="{{ member.role_id }}">
+						<option value="1"{% if member.role_id == 1 %} selected{% endif %}>{{ lang('PORTFOLIO_ROLE_VIEWER') }}</option>
+						<option value="2"{% if member.role_id == 2 %} selected{% endif %}>{{ lang('PORTFOLIO_ROLE_CONTRIBUTOR') }}</option>
+						<option value="3"{% if member.role_id == 3 %} selected{% endif %}>{{ lang('PORTFOLIO_ROLE_MANAGER') }}</option>
+					</select>
+					<button type="submit" name="update" value="{{ member.user_id }}" class="pf-btn pf-btn--small" data-pf-confirm="{{ lang('PORTFOLIO_SHARE_UPDATE_CONFIRM', member.username, PF_ALBUM_NAME)|e('html_attr') }}" data-pf-role-save hidden>{{ pf.icon('check') }}{{ lang('PORTFOLIO_SHARE_UPDATE') }}</button>
+					<button type="submit" name="remove" value="{{ member.user_id }}" class="pf-btn pf-btn--ghost pf-btn--small is-danger" data-pf-confirm="{{ lang('PORTFOLIO_SHARE_REMOVE_CONFIRM', member.username, PF_ALBUM_NAME)|e('html_attr') }}">{{ pf.icon('close') }}{{ lang('PORTFOLIO_REMOVE') }}</button>
+				</span>
+			</li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<p class="pf-muted">{{ lang('PORTFOLIO_NO_MEMBERS_YET') }}</p>
+		{% endif %}
+
+		{% if PF_INHERITED|length %}
+		<h2 class="pf-section__title">{{ pf.icon('share') }}{{ lang('PORTFOLIO_INHERITED_MEMBERS') }}</h2>
+		<ul class="pf-list">
+			{% for member in PF_INHERITED %}<li class="pf-list__item"><span class="pf-list__main">{{ member.name }}<small>{{ lang('PORTFOLIO_INHERITED_FROM', member.from) }}</small></span></li>{% endfor %}
+		</ul>
+		{% endif %}
+
+		{{ S_FORM_TOKEN }}
+	</form>
+
+	<div class="pf-form__footer">
+		<a class="pf-btn pf-btn--ghost" href="{{ U_PF_BACK }}">{{ pf.icon('left') }}{{ lang('BACK_TO_PREV') }}</a>
+	</div>
+</div>
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

@@ -1,0 +1,45 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<div class="pf-panel pf-panel--split">
+	<div class="pf-panel__preview">
+		<img src="{{ PF_PHOTO.medium }}" alt="{{ PF_PHOTO.title }}" data-pf-rotate-preview>
+	</div>
+	<div>
+		<h1 class="pf-panel__title">{{ PF_TITLE }}</h1>
+		{{ pf.errors(PF_ERRORS) }}
+		<form method="post" action="{{ U_PF_ACTION }}" class="pf-form">
+			<div class="pf-field">
+				<label for="pf-photo-title">{{ lang('PORTFOLIO_PHOTO_TITLE') }}</label>
+				<input type="text" id="pf-photo-title" name="photo_title" class="pf-input" maxlength="255" value="{{ PF_PHOTO.title }}" required>
+			</div>
+			<div class="pf-field">
+				<label for="pf-photo-desc">{{ lang('PORTFOLIO_PHOTO_DESC') }}</label>
+				<textarea id="pf-photo-desc" name="photo_desc" class="pf-input" rows="5">{{ PF_PHOTO.desc_edit }}</textarea>
+				<small>{{ lang('PORTFOLIO_BBCODE_ALLOWED') }}</small>
+			</div>
+			<div class="pf-field">
+				<label for="pf-photo-album">{{ lang('PORTFOLIO_ALBUM') }}</label>
+				<select id="pf-photo-album" name="album_id" class="pf-input">
+					{% for target in PF_TARGETS %}<option value="{{ target.id }}"{% if target.selected %} selected{% endif %}>{{ target.name }}{% if target.owner %} ({{ target.owner }}){% endif %}</option>{% endfor %}
+				</select>
+			</div>
+			<fieldset class="pf-field">
+				<legend>{{ pf.icon('rotate') }}{{ lang('PORTFOLIO_ROTATE') }}</legend>
+				<div class="pf-radios">
+					<label class="pf-radio-card"><input type="radio" name="rotate" value="0" checked data-pf-rotate> <span>{{ lang('PORTFOLIO_ROTATE_NONE') }}</span></label>
+					<label class="pf-radio-card"><input type="radio" name="rotate" value="90" data-pf-rotate> <span>90° ↻</span></label>
+					<label class="pf-radio-card"><input type="radio" name="rotate" value="180" data-pf-rotate> <span>180°</span></label>
+					<label class="pf-radio-card"><input type="radio" name="rotate" value="270" data-pf-rotate> <span>90° ↺</span></label>
+				</div>
+			</fieldset>
+			<div class="pf-form__footer">
+				<a class="pf-btn pf-btn--ghost" href="{{ U_PF_CANCEL }}">{{ lang('CANCEL') }}</a>
+				<button type="submit" name="submit" value="1" class="pf-btn pf-btn--primary">{{ pf.icon('check') }}{{ lang('SUBMIT') }}</button>
+			</div>
+			{{ S_FORM_TOKEN }}
+		</form>
+	</div>
+</div>
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

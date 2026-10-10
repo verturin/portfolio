@@ -1,0 +1,93 @@
+{% include '@verturin_portfolio/portfolio_header.html' %}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+
+<div class="pf-panel pf-panel--narrow">
+	<h1 class="pf-panel__title">{{ PF_TITLE }}</h1>
+	{% if PF_FORM.parent_name %}<p class="pf-muted">{{ lang('PORTFOLIO_INSIDE_ALBUM', PF_FORM.parent_name) }}</p>{% endif %}
+	{% if PF_FORM.is_public %}<p class="pf-note">{{ pf.icon('globe') }}{{ lang('PORTFOLIO_PUBLIC_ALBUM_EXPLAIN') }}</p>{% endif %}
+
+	{{ pf.errors(PF_ERRORS) }}
+
+	<form method="post" action="{{ U_PF_ACTION }}" class="pf-form">
+		<div class="pf-field">
+			<label for="pf-album-name">{{ lang('PORTFOLIO_ALBUM_NAME') }}</label>
+			<input type="text" id="pf-album-name" name="album_name" class="pf-input" maxlength="255" value="{{ PF_FORM.name }}" required autofocus>
+		</div>
+
+		<div class="pf-field">
+			<label for="pf-album-desc">{{ lang('PORTFOLIO_ALBUM_DESC') }}</label>
+			<textarea id="pf-album-desc" name="album_desc" class="pf-input" rows="4">{{ PF_FORM.desc }}</textarea>
+			<small>{{ lang('PORTFOLIO_BBCODE_ALLOWED') }}</small>
+		</div>
+
+		{% if PF_PARENTS|length or PF_CAN_ROOT %}
+		<div class="pf-field">
+			<label for="pf-album-parent">{{ lang('PORTFOLIO_ALBUM_PARENT') }}</label>
+			<select id="pf-album-parent" name="parent_id" class="pf-input">
+				{% if PF_CAN_ROOT %}<option value="0"{% if PF_ROOT_SELECTED %} selected{% endif %}>{{ lang('PORTFOLIO_ROOT_LEVEL') }}</option>{% endif %}
+				{% for parent in PF_PARENTS %}<option value="{{ parent.id }}"{% if parent.selected %} selected{% endif %}>{{ parent.name }}</option>{% endfor %}
+			</select>
+		</div>
+		{% endif %}
+
+		<fieldset class="pf-field">
+			<legend>{{ lang('PORTFOLIO_VISIBILITY') }}</legend>
+			<div class="pf-vis-cards">
+				{% for option in PF_VISIBILITY %}
+				<label class="pf-vis-card pf-vis-card--{{ option.icon }}">
+					<input type="radio" name="album_visibility" value="{{ option.value }}"{% if option.selected %} checked{% endif %} data-pf-visibility>
+					<span><strong>{{ pf.icon(option.icon) }}{{ option.label }}</strong><small>{{ option.explain }}</small></span>
+				</label>
+				{% endfor %}
+			</div>
+			<small>{{ lang('PORTFOLIO_VISIBILITY_EXPLAIN') }}</small>
+		</fieldset>
+
+		{% if PF_CAN_GROUPS %}
+		<fieldset class="pf-field" data-pf-groups{% if not PF_GROUPS_SELECTED %} hidden{% endif %}>
+			<legend>{{ lang('PORTFOLIO_VIEW_GROUPS') }}</legend>
+			<div class="pf-checks">
+				{% for group in PF_GROUPS %}
+				<label class="pf-check"><input type="checkbox" name="view_groups[]" value="{{ group.id }}"{% if group.checked %} checked{% endif %}> {{ group.name }}</label>
+				{% endfor %}
+			</div>
+			{% if PF_PERSONAL %}
+			<label class="pf-check pf-check--highlight"><input type="checkbox" name="album_friends" value="1"{% if PF_ALLOW_FRIENDS %} checked{% endif %}> {{ lang('PORTFOLIO_ALSO_FRIENDS') }}</label>
+			{% endif %}
+		</fieldset>
+		{% endif %}
+
+		{% if PF_PERSONAL and PF_CAN_FRIENDS %}
+		<p class="pf-note" data-pf-friends-hint>{{ pf.icon('users') }}<span>{{ lang('PORTFOLIO_FRIENDS_HINT', '<a href="' ~ U_PF_ZEBRA ~ '">', '</a>') }}</span></p>
+		{% endif %}
+
+		{% if PF_CHOICE.sort or PF_CHOICE.lock %}
+		<div class="pf-field pf-field--row">
+			{% if PF_CHOICE.sort %}
+			<div>
+				<label for="pf-album-sort">{{ lang('PORTFOLIO_DEFAULT_SORT') }}</label>
+				<select id="pf-album-sort" name="album_sort" class="pf-input">
+					{% for sort in PF_SORT_OPTIONS %}<option value="{{ sort.key }}"{% if sort.selected %} selected{% endif %}>{{ sort.label }}</option>{% endfor %}
+				</select>
+			</div>
+			{% endif %}
+			{% if PF_CHOICE.lock %}<label class="pf-check pf-check--switch"><input type="checkbox" name="album_locked" value="1"{% if PF_FORM.locked %} checked{% endif %}> {{ lang('PORTFOLIO_LOCK_ALBUM') }}</label>{% endif %}
+		</div>
+		{% endif %}
+
+		{% if PF_CHOICE.download %}
+		<div class="pf-field">
+			<label class="pf-check pf-check--highlight"><input type="checkbox" name="album_download" value="1"{% if PF_FORM.download %} checked{% endif %}> {{ lang('PORTFOLIO_ALLOW_DOWNLOAD') }}</label>
+			<small>{{ lang('PORTFOLIO_ALLOW_DOWNLOAD_EXPLAIN') }}</small>
+		</div>
+		{% endif %}
+
+		<div class="pf-form__footer">
+			<a class="pf-btn pf-btn--ghost" href="{{ U_PF_CANCEL }}">{{ lang('CANCEL') }}</a>
+			<button type="submit" name="submit" value="1" class="pf-btn pf-btn--primary">{{ pf.icon('check') }}{{ lang(PF_FORM.is_new ? 'PORTFOLIO_CREATE' : 'SUBMIT') }}</button>
+		</div>
+		{{ S_FORM_TOKEN }}
+	</form>
+</div>
+
+{% include '@verturin_portfolio/portfolio_footer.html' %}

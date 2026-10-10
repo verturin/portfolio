@@ -1,0 +1,34 @@
+{# Aperçu rapide affiché dans la visionneuse depuis les grilles de photos (v1.6.0) #}
+{% import '@verturin_portfolio/portfolio_macros.html' as pf %}
+<div class="pf-quick" data-photo-id="{{ PF_PHOTO.id }}">
+	<header class="pf-quick__head">
+		<h2 class="pf-quick__title">{% if PF_OWNER_SIDE %}<a href="{{ U_PF_PHOTO }}">{{ PF_PHOTO.title }}</a>{% else %}{{ PF_PHOTO.title }}{% endif %}</h2>
+		<p class="pf-quick__by">{{ PF_PHOTO.user }} · <time datetime="{{ PF_PHOTO.time_iso }}">{{ PF_PHOTO.time }}</time>{% if PF_ALBUM %} · <a href="{{ PF_ALBUM.url }}">{{ PF_ALBUM.name }}</a>{% endif %}</p>
+	</header>
+
+	{% include '@verturin_portfolio/portfolio_photo_social.html' %}
+
+	<section class="pf-quick__comments" data-pf-quick-comments>
+		<h3 class="pf-quick__subtitle">{{ pf.icon('comment') }}{{ lang('PORTFOLIO_COMMENTS') }} <span class="pf-count" data-pf-comment-count>{{ PF_PHOTO.comments }}</span></h3>
+		{% if PF_MORE_COMMENTS %}<a class="pf-quick__more" href="{{ U_PF_PHOTO }}#comments">{{ lang('PORTFOLIO_MORE_COMMENTS', PF_MORE_COMMENTS) }}</a>{% endif %}
+		<ol class="pf-comment-list pf-comment-list--compact" data-pf-comment-list>
+			{% include '@verturin_portfolio/portfolio_comment_list.html' %}
+		</ol>
+		{% if not PF_COMMENTS|length %}<p class="pf-muted pf-small-note" data-pf-no-comment>{{ lang('PORTFOLIO_NO_COMMENTS') }}</p>{% endif %}
+
+		{% if PF_CAN_COMMENT %}
+		<form method="post" action="{{ U_PF_COMMENT }}" class="pf-comment-form pf-comment-form--quick" data-pf-quick-comment>
+			<label for="pf-quick-comment-{{ PF_PHOTO.id }}" class="sr-only">{{ lang('PORTFOLIO_ADD_COMMENT') }}</label>
+			<textarea id="pf-quick-comment-{{ PF_PHOTO.id }}" name="comment" class="pf-input" rows="2" placeholder="{{ lang('PORTFOLIO_COMMENT_PLACEHOLDER') }}" required></textarea>
+			<button type="submit" class="pf-btn pf-btn--primary pf-btn--small">{{ pf.icon('comment') }}{{ lang('PORTFOLIO_PUBLISH') }}</button>
+			{{ S_FORM_TOKEN_COMMENT }}
+		</form>
+		{% elseif not PF_IS_REGISTERED %}
+		<p class="pf-muted pf-small-note">{{ lang('PORTFOLIO_LOGIN_TO_COMMENT') }}</p>
+		{% endif %}
+	</section>
+
+	{% include '@verturin_portfolio/portfolio_embed.html' %}
+
+	{% if PF_OWNER_SIDE %}<a class="pf-btn pf-btn--ghost pf-quick__open" href="{{ U_PF_PHOTO }}">{{ pf.icon('expand') }}{{ lang('PORTFOLIO_OPEN_PHOTO_PAGE') }}</a>{% endif %}
+</div>
