@@ -1,0 +1,105 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+{% if S_PF_GROUPS %}
+<h1>{{ lang('ACP_PORTFOLIO_GROUPS_TITLE', PF_ALBUM_NAME) }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_GROUPS_EXPLAIN') }}</p>
+<p class="skin-actions"><a class="button2" href="{{ U_BACK }}">&laquo; {{ lang('BACK') }}</a></p>
+{% if PF_ALBUM_VIS %}<div class="skin-note">{{ lang('ACP_PORTFOLIO_GROUPS_VIS_TIP') }}</div>{% endif %}
+
+<form id="acp_portfolio_groups" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+	<legend>{{ lang('ACP_PORTFOLIO_GROUP_PERMS') }}</legend>
+	<table class="table1 zebra-table skin-log pf-acp-matrix">
+		<thead>
+			<tr>
+				<th>{{ lang('GROUP') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_RULE_ACTIVE') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_CAN_VIEW') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_CAN_UPLOAD') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_CAN_RATE') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_CAN_COMMENT') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for group in PF_MATRIX %}
+			<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
+				<td><strong>{{ group.name }}</strong></td>
+				<td><input type="checkbox" name="enabled[]" value="{{ group.id }}"{% if group.enabled %} checked{% endif %}></td>
+				<td><input type="checkbox" name="can_view_{{ group.id }}" value="1"{% if group.can_view %} checked{% endif %}></td>
+				<td><input type="checkbox" name="can_upload_{{ group.id }}" value="1"{% if group.can_upload %} checked{% endif %}></td>
+				<td><input type="checkbox" name="can_rate_{{ group.id }}" value="1"{% if group.can_rate %} checked{% endif %}></td>
+				<td><input type="checkbox" name="can_comment_{{ group.id }}" value="1"{% if group.can_comment %} checked{% endif %}></td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	{% if PF_HAS_CHILDREN %}
+	<p><label><input type="checkbox" name="recursive" value="1"> {{ lang('ACP_PORTFOLIO_APPLY_CHILDREN') }}</label></p>
+	{% endif %}
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}">&nbsp;
+		<input class="button2" type="submit" name="clear" value="{{ lang('ACP_PORTFOLIO_CLEAR_RULES') }}">
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+{% else %}
+
+<h1>{{ lang('ACP_PORTFOLIO_ALBUMS') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_ALBUMS_EXPLAIN') }}</p>
+
+<p class="skin-actions">
+	<a class="button1" href="{{ U_PF_NEW_PUBLIC }}">{{ lang('PORTFOLIO_NEW_PUBLIC_ALBUM') }}</a>
+	<a class="button2"{% if PF_FILTER == 'all' %} style="font-weight: bold;"{% endif %} href="{{ U_ACTION }}&amp;filter=all">{{ lang('ACP_PORTFOLIO_FILTER') }} : {{ lang('ACP_PORTFOLIO_FILTER_ALL') }}</a>
+	<a class="button2"{% if PF_FILTER == 'public' %} style="font-weight: bold;"{% endif %} href="{{ U_ACTION }}&amp;filter=public">{{ lang('ACP_PORTFOLIO_FILTER_PUBLIC') }}</a>
+	<a class="button2"{% if PF_FILTER == 'members' %} style="font-weight: bold;"{% endif %} href="{{ U_ACTION }}&amp;filter=members">{{ lang('ACP_PORTFOLIO_FILTER_MEMBERS') }}</a>
+</p>
+
+<fieldset>
+<legend>{{ lang('ACP_PORTFOLIO_ALBUMS') }}</legend>
+{% if PF_ROWS|length %}
+<table class="table1 zebra-table skin-log">
+	<thead>
+		<tr>
+			<th>{{ lang('PORTFOLIO_ALBUM') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_OWNER') }}</th>
+			<th>{{ lang('PORTFOLIO_VISIBILITY') }}</th>
+			<th>{{ lang('PORTFOLIO_STAT_PHOTOS') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_GROUP_RULES') }}</th>
+			<th>{{ lang('ACTION') }}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for row in PF_ROWS %}
+		<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
+			<td><span class="pf-acp-indent" style="width: {{ row.depth * 18 }}px"></span><a href="{{ row.u_view }}"><strong>{{ row.name }}</strong></a>
+				{% if row.locked %} <span class="skin-status skin-warn">{{ lang('PORTFOLIO_LOCKED') }}</span>{% endif %}{% if row.protected %} <span class="skin-status skin-warn">{{ lang('ACP_PORTFOLIO_PROTECTED') }}</span>{% endif %}</td>
+			<td>{% if row.is_public %}<span class="skin-status skin-info">{{ lang('PORTFOLIO_PUBLIC_ALBUM') }}</span>{% else %}{{ row.owner }}{% endif %}</td>
+			<td>{{ row.visibility }}</td>
+			<td>{{ row.photos }}</td>
+			<td>{% if row.group_rules %}<span class="skin-status skin-info">{{ row.group_rules }}</span>{% else %}—{% endif %}</td>
+			<td class="pf-acp-actions">
+				<a href="{{ row.u_up }}" title="{{ lang('MOVE_UP') }}">▲</a><a href="{{ row.u_down }}" title="{{ lang('MOVE_DOWN') }}">▼</a>
+				<a href="{{ row.u_groups }}">{{ lang('ACP_PORTFOLIO_GROUP_PERMS') }}</a>
+				<a href="{{ row.u_members }}">{{ lang('PORTFOLIO_ALBUM_MEMBERS') }}</a>
+				<a href="{{ row.u_edit }}">{{ lang('EDIT') }}</a>
+				<a href="{{ row.u_lock }}">{{ row.locked ? lang('ACP_PORTFOLIO_UNLOCK') : lang('ACP_PORTFOLIO_LOCK') }}</a> · <a href="{{ row.u_protect }}" title="{{ lang('ACP_PORTFOLIO_PAGE_PROTECT_EXPLAIN') }}">{{ row.protected ? lang('ACP_PORTFOLIO_UNPROTECT') : lang('ACP_PORTFOLIO_PROTECT') }}</a>
+				<a href="{{ row.u_delete }}" class="is-danger">{{ lang('DELETE') }}</a>
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% else %}
+<p>{{ lang('PORTFOLIO_NO_ALBUMS') }}</p>
+{% endif %}
+</fieldset>
+
+{% endif %}
+
+{% include 'overall_footer.html' %}

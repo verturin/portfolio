@@ -1,0 +1,205 @@
+# Accueil, membres, portfolio d'un membre
+verturin_portfolio_index:
+    path: /portfolio
+    defaults: { _controller: verturin.portfolio.controller.main:index }
+
+verturin_portfolio_members:
+    path: /portfolio/members
+    defaults: { _controller: verturin.portfolio.controller.main:members }
+
+verturin_portfolio_user:
+    path: /portfolio/user/{user_id}
+    defaults: { _controller: verturin.portfolio.controller.main:user }
+    requirements:
+        user_id: \d+
+
+verturin_portfolio_mine:
+    path: /portfolio/mine
+    defaults: { _controller: verturin.portfolio.controller.main:mine }
+
+verturin_portfolio_sharing:
+    path: /portfolio/sharing
+    defaults: { _controller: verturin.portfolio.controller.album:sharing }
+
+# Albums
+verturin_portfolio_album_create:
+    path: /portfolio/album/create
+    defaults: { _controller: verturin.portfolio.controller.album:create }
+
+verturin_portfolio_album:
+    path: /portfolio/album/{album_id}
+    defaults: { _controller: verturin.portfolio.controller.album:view }
+    requirements:
+        album_id: \d+
+
+verturin_portfolio_album_edit:
+    path: /portfolio/album/{album_id}/edit
+    defaults: { _controller: verturin.portfolio.controller.album:edit }
+    requirements:
+        album_id: \d+
+
+verturin_portfolio_album_delete:
+    path: /portfolio/album/{album_id}/delete
+    defaults: { _controller: verturin.portfolio.controller.album:delete }
+    requirements:
+        album_id: \d+
+
+verturin_portfolio_album_members:
+    path: /portfolio/album/{album_id}/members
+    defaults: { _controller: verturin.portfolio.controller.album:members }
+    requirements:
+        album_id: \d+
+
+verturin_portfolio_album_bulk:
+    path: /portfolio/album/{album_id}/bulk
+    defaults: { _controller: verturin.portfolio.controller.album:bulk }
+    methods: [POST]
+    requirements:
+        album_id: \d+
+
+verturin_portfolio_upload:
+    path: /portfolio/album/{album_id}/upload
+    defaults: { _controller: verturin.portfolio.controller.upload:upload }
+    requirements:
+        album_id: \d+
+
+# Photos
+verturin_portfolio_photo:
+    path: /portfolio/photo/{photo_id}
+    defaults: { _controller: verturin.portfolio.controller.photo:view }
+    requirements:
+        photo_id: \d+
+
+verturin_portfolio_photo_edit:
+    path: /portfolio/photo/{photo_id}/edit
+    defaults: { _controller: verturin.portfolio.controller.photo:edit }
+    requirements:
+        photo_id: \d+
+
+verturin_portfolio_photo_delete:
+    path: /portfolio/photo/{photo_id}/delete
+    defaults: { _controller: verturin.portfolio.controller.photo:delete }
+    requirements:
+        photo_id: \d+
+
+verturin_portfolio_photo_restore:
+    path: /portfolio/photo/{photo_id}/restore
+    defaults: { _controller: verturin.portfolio.controller.photo:restore }
+    requirements:
+        photo_id: \d+
+
+verturin_portfolio_photo_rate:
+    path: /portfolio/photo/{photo_id}/rate/{rating}
+    defaults: { _controller: verturin.portfolio.controller.photo:rate }
+    requirements:
+        photo_id: \d+
+        rating: '[0-5]'
+
+verturin_portfolio_photo_cover:
+    path: /portfolio/photo/{photo_id}/cover
+    defaults: { _controller: verturin.portfolio.controller.photo:cover }
+    requirements:
+        photo_id: \d+
+
+verturin_portfolio_photo_react:
+    path: /portfolio/photo/{photo_id}/react/{reaction}
+    defaults: { _controller: verturin.portfolio.controller.photo:react }
+    requirements:
+        photo_id: \d+
+        reaction: '[a-z]+'
+
+verturin_portfolio_photo_rotate:
+    path: /portfolio/photo/{photo_id}/rotate/{degrees}
+    defaults: { _controller: verturin.portfolio.controller.photo:rotate }
+    requirements:
+        photo_id: \d+
+        degrees: '90|180|270'
+
+verturin_portfolio_photo_move:
+    path: /portfolio/photo/{photo_id}/move
+    defaults: { _controller: verturin.portfolio.controller.photo:move }
+    methods: [POST]
+    requirements:
+        photo_id: \d+
+
+verturin_portfolio_comment_delete:
+    path: /portfolio/comment/{comment_id}/delete
+    defaults: { _controller: verturin.portfolio.controller.photo:comment_delete }
+    requirements:
+        comment_id: \d+
+
+verturin_portfolio_file:
+    path: /portfolio/file/{photo_id}/{size}
+    defaults: { _controller: verturin.portfolio.controller.file:serve }
+    requirements:
+        photo_id: \d+
+        size: thumb|medium|source
+
+# Image insérée dans un message avec le BBCode [portfolio] (v1.6.0)
+verturin_portfolio_embed:
+    path: /portfolio/embed/{photo_id}/{size}
+    defaults: { _controller: verturin.portfolio.controller.file:embed, size: medium }
+    requirements:
+        photo_id: \d+
+        size: '[a-z]+'
+
+# Aperçu rapide depuis les grilles (v1.6.0)
+verturin_portfolio_photo_quick:
+    path: /portfolio/photo/{photo_id}/quick
+    defaults: { _controller: verturin.portfolio.controller.photo:quick }
+    requirements:
+        photo_id: \d+
+
+verturin_portfolio_photo_comment:
+    path: /portfolio/photo/{photo_id}/comment
+    defaults: { _controller: verturin.portfolio.controller.photo:comment }
+    methods: [POST]
+    requirements:
+        photo_id: \d+
+
+# Export ZIP (v1.4.0)
+verturin_portfolio_export:
+    path: /portfolio/export
+    defaults: { _controller: verturin.portfolio.controller.export:index }
+
+verturin_portfolio_export_download:
+    path: /portfolio/export/{token}
+    defaults: { _controller: verturin.portfolio.controller.export:download }
+    requirements:
+        token: '[a-f0-9]{32}'
+
+# Corbeille et file de validation
+verturin_portfolio_trash:
+    path: /portfolio/trash
+    defaults: { _controller: verturin.portfolio.controller.moderation:trash }
+
+verturin_portfolio_queue:
+    path: /portfolio/queue
+    defaults: { _controller: verturin.portfolio.controller.moderation:queue }
+
+# Anciens liens phpBB Gallery (BBCode [image] repris par le Portfolio, v1.5.0)
+verturin_portfolio_legacy_image:
+    path: /portfolio/legacy/image/{image_id}
+    defaults: { _controller: verturin.portfolio.controller.legacy:image, size: '' }
+    requirements:
+        image_id: \d+
+
+verturin_portfolio_legacy_image_size:
+    path: /portfolio/legacy/image/{image_id}/{size}
+    defaults: { _controller: verturin.portfolio.controller.legacy:image }
+    requirements:
+        image_id: \d+
+        size: mini|medium|source
+
+verturin_portfolio_legacy_album:
+    path: /portfolio/legacy/album/{album_id}
+    defaults: { _controller: verturin.portfolio.controller.legacy:album }
+    requirements:
+        album_id: \d+
+
+# Pages Portfolio publiées dans le forum (v1.8.0)
+verturin_portfolio_page:
+    path: /portfolio/page/{page_id}
+    defaults: { _controller: verturin.portfolio.controller.page:view }
+    requirements:
+        page_id: \d+

@@ -1,0 +1,129 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+<h1>{{ lang('ACP_PORTFOLIO_MIGRATE') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_MIGRATE_EXPLAIN') }}</p>
+
+{% if not PF_MIG.available %}
+<div class="skin-note skin-note-warn">{{ lang('ACP_PORTFOLIO_MIGRATE_NO_GALLERY') }}</div>
+{% endif %}
+
+<div class="pf-acp-cards">
+	<div>{{ lang('ACP_PORTFOLIO_MIG_GALLERY_IMAGES') }}<b>{{ PF_MIG.images }}</b></div>
+	<div>{{ lang('ACP_PORTFOLIO_MIG_GALLERY_ALBUMS') }}<b>{{ PF_MIG.albums }}</b></div>
+	<div>{{ lang('ACP_PORTFOLIO_MIG_DONE_IMAGES') }}<b>{{ PF_MIG.migrated_images }}</b></div>
+	<div>{{ lang('ACP_PORTFOLIO_MIG_DONE_ALBUMS') }}<b>{{ PF_MIG.migrated_albums }}</b></div>
+	<div{% if PF_MIG.missing_files %} class="is-warn"{% endif %}>{{ lang('ACP_PORTFOLIO_MIG_MISSING') }}<b>{{ PF_MIG.missing_files }}</b></div>
+</div>
+
+<p class="skin-detail">
+	phpBB Gallery : {% if PF_MIG.enabled %}<span class="skin-status skin-ok">{{ lang('ACP_PORTFOLIO_MIG_ENABLED') }}</span>{% elseif PF_MIG.available %}<span class="skin-status skin-pending">{{ lang('ACP_PORTFOLIO_MIG_DISABLED') }}</span>{% else %}<span class="skin-status skin-pending">{{ lang('ACP_PORTFOLIO_MIG_REMOVED') }}</span>{% endif %}
+	· BBCode [image] : {% if PF_MIG.bbcode == 'portfolio' %}<span class="skin-status skin-ok">{{ lang('ACP_PORTFOLIO_BBCODE_PORTFOLIO') }}</span>{% elseif PF_MIG.bbcode == 'gallery' %}<span class="skin-status skin-info">{{ lang('ACP_PORTFOLIO_BBCODE_GALLERY') }}</span>{% else %}<span class="skin-status skin-failed">{{ lang('ACP_PORTFOLIO_BBCODE_MISSING') }}</span>{% endif %}
+	· {{ lang('ACP_PORTFOLIO_MIG_REWRITTEN', PF_MIG.rewritten_posts, PF_MIG.rewritten_sigs) }}
+</p>
+
+<details class="skin-details">
+	<summary><strong>{{ lang('ACP_PORTFOLIO_MIG_HOWTO_TITLE') }}</strong></summary>
+	<ol>
+		<li>{{ lang('ACP_PORTFOLIO_MIG_STEP1', U_PF_BACKUP) }}</li>
+		<li>{{ lang('ACP_PORTFOLIO_MIG_STEP2') }}</li>
+		<li>{{ lang('ACP_PORTFOLIO_MIG_STEP3') }}</li>
+		<li>{{ lang('ACP_PORTFOLIO_MIG_STEP4') }}</li>
+		<li>{{ lang('ACP_PORTFOLIO_MIG_STEP5') }}</li>
+		<li>{{ lang('ACP_PORTFOLIO_MIG_STEP6') }}</li>
+	</ol>
+</details>
+
+{% if PF_PROGRESS %}
+<div class="skin-note">
+	<strong>{{ lang('ACP_PORTFOLIO_MIG_RUNNING', PF_SCOPE_LABEL) }}</strong><br>
+	{{ lang('ACP_PORTFOLIO_MIG_PROGRESS', PF_PROGRESS.done, PF_PROGRESS.total, PF_PROGRESS.percent) }}
+	<div class="pf-acp-progress"><span style="width: {{ PF_PROGRESS.percent }}%"></span></div>
+	<a href="{{ PF_PROGRESS.u_next }}">{{ lang('ACP_PORTFOLIO_MIG_CONTINUE') }}</a>
+</div>
+{% endif %}
+
+{% if PF_MESSAGE %}<div class="skin-note skin-note-ok">{{ PF_MESSAGE }}</div>{% endif %}
+
+<form id="acp_portfolio_migrate" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_MIG_STEP_COPY') }}</legend>
+		<dl>
+			<dt><label>{{ lang('ACP_PORTFOLIO_MIG_SCOPE') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_SCOPE_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="scope" value="user"{% if PF_SCOPE == 'user' %} checked{% endif %}> {{ lang('ACP_PORTFOLIO_SCOPE_USER') }}</label>
+				<input type="text" class="inputbox autowidth" name="username" id="username" size="20" value="{{ PF_USERNAME }}"> <a href="{{ U_PF_FIND_USER }}" onclick="find_username(this.href); return false;">{{ lang('FIND_USERNAME') }}</a><br>
+				<label><input type="radio" class="radio" name="scope" value="group"{% if PF_SCOPE == 'group' %} checked{% endif %}> {{ lang('ACP_PORTFOLIO_SCOPE_GROUP') }}</label>
+				<select name="group_id">{% for group in PF_GROUPS %}<option value="{{ group.id }}"{% if group.selected %} selected{% endif %}>{{ group.name }}</option>{% endfor %}</select><br>
+				<label><input type="radio" class="radio" name="scope" value="all"{% if PF_SCOPE == 'all' %} checked{% endif %}> {{ lang('ACP_PORTFOLIO_SCOPE_ALL') }}</label>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="include_public">{{ lang('ACP_PORTFOLIO_MIG_PUBLIC') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_PUBLIC_EXPLAIN') }}</span></dt>
+			<dd><label><input type="checkbox" name="include_public" id="include_public" value="1"{% if PF_INCLUDE_PUBLIC %} checked{% endif %}> {{ lang('YES') }}</label></dd>
+		</dl>
+		<dl>
+			<dt><label for="strip_exif">{{ lang('ACP_PORTFOLIO_MIG_EXIF') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_EXIF_EXPLAIN') }}</span></dt>
+			<dd><label><input type="checkbox" name="strip_exif" id="strip_exif" value="1"{% if PF_STRIP_EXIF %} checked{% endif %}> {{ lang('YES') }}</label></dd>
+		</dl>
+		<p class="submit-buttons">
+			<button class="button2" type="submit" name="action" value="plan">{{ lang('ACP_PORTFOLIO_MIG_SIMULATE') }}</button>
+			<button class="button1" type="submit" name="action" value="run"{% if not PF_MIG.available %} disabled{% endif %}>{{ lang('ACP_PORTFOLIO_MIG_RUN', PF_BATCH) }}</button>
+		</p>
+
+		{% if PF_PLAN %}
+		<div class="skin-note">
+			<strong>{{ lang('ACP_PORTFOLIO_MIG_PLAN_TITLE', PF_SCOPE_LABEL) }}</strong><br>
+			{{ lang('ACP_PORTFOLIO_MIG_PLAN', PF_PLAN.images, PF_PLAN.albums, PF_PLAN.done, PF_PLAN.remaining) }}
+		</div>
+		{% if PF_PLAN.per_user|length %}
+		<table class="table1 zebra-table skin-log">
+			<thead><tr><th>{{ lang('USERNAME') }}</th><th>{{ lang('ACP_PORTFOLIO_MIG_GALLERY_IMAGES') }}</th><th>{{ lang('ACP_PORTFOLIO_MIG_DONE_IMAGES') }}</th><th></th></tr></thead>
+			<tbody>
+			{% for row in PF_PLAN.per_user %}
+				<tr><td>{{ row.username }}</td><td>{{ row.total }}</td><td>{{ row.done }}</td>
+				<td>{% if row.done >= row.total %}<span class="skin-status skin-ok">{{ lang('ACP_PORTFOLIO_MIG_USER_DONE') }}</span>{% elseif row.done %}<span class="skin-status skin-warn">{{ lang('ACP_PORTFOLIO_MIG_USER_PARTIAL') }}</span>{% else %}<span class="skin-status skin-pending">{{ lang('ACP_PORTFOLIO_MIG_USER_TODO') }}</span>{% endif %}</td></tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		{% endif %}
+		{% endif %}
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_MIG_STEP_LINKS') }}</legend>
+		<p>{{ lang('ACP_PORTFOLIO_MIG_LINKS_EXPLAIN') }}</p>
+		<dl>
+			<dt><label>{{ lang('ACP_PORTFOLIO_MIG_BBCODE') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_BBCODE_EXPLAIN') }}</span></dt>
+			<dd><button class="button2" type="submit" name="action" value="bbcode">{{ lang(PF_MIG.bbcode == 'portfolio' ? 'ACP_PORTFOLIO_BBCODE_REINSTALL' : 'ACP_PORTFOLIO_BBCODE_INSTALL') }}</button></dd>
+		</dl>
+		<dl>
+			<dt><label for="legacy_redirect">{{ lang('ACP_PORTFOLIO_MIG_REDIRECT') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_REDIRECT_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="legacy_redirect" value="1"{% if PF_REDIRECT %} checked{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="legacy_redirect" value="0"{% if not PF_REDIRECT %} checked{% endif %}> {{ lang('NO') }}</label>
+				<button class="button2" type="submit" name="action" value="redirect">{{ lang('SUBMIT') }}</button>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('ACP_PORTFOLIO_MIG_REWRITE') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_REWRITE_EXPLAIN') }}</span></dt>
+			<dd>
+				<button class="button2" type="submit" name="action" value="rewrite_test">{{ lang('ACP_PORTFOLIO_REWRITE_TEST') }}</button>
+				<button class="button2" type="submit" name="action" value="rewrite">{{ lang('ACP_PORTFOLIO_REWRITE_RUN') }}</button>
+				{% if PF_MIG.rewritten_posts or PF_MIG.rewritten_sigs %}<button class="button2" type="submit" name="action" value="restore_links">{{ lang('ACP_PORTFOLIO_RESTORE_LINKS') }}</button>{% endif %}
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_MIG_STEP_UNDO') }}</legend>
+		<p>{{ lang('ACP_PORTFOLIO_MIG_UNDO_EXPLAIN') }}</p>
+		<p class="skin-actions"><button class="button2 is-danger" type="submit" name="action" value="undo"{% if not PF_MIG.migrated_images and not PF_MIG.migrated_albums %} disabled{% endif %}>{{ lang('ACP_PORTFOLIO_MIG_UNDO') }}</button></p>
+	</fieldset>
+	{{ S_FORM_TOKEN }}
+</form>
+
+<div class="skin-note">{{ lang('ACP_PORTFOLIO_MIG_CLI') }}</div>
+
+{% include 'overall_footer.html' %}

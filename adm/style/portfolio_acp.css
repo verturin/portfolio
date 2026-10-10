@@ -1,0 +1,500 @@
+/* ============================================================================
+   Portfolio (verturin/portfolio) — habillage des pages d'administration
+   ACP Skin repris de Chastity Tracker (verturin) — style « cartes » inspiré de
+   Seasonal Header : blocs blancs arrondis, légère ombre, titre de bloc en
+   pastille posée sur la bordure, lignes de réglage aérées.
+
+   UTILISATION
+   1. Copier ce fichier dans  ext/<vendor>/<extension>/adm/style/acp_skin.css
+      (renommer librement, ex. monext_acp.css).
+   2. En tête de CHAQUE template d'administration de l'extension :
+
+        {% include 'overall_header.html' %}
+        {% INCLUDECSS '@<vendor>_<extension>/acp_skin.css' %}
+        <span class="acp-skin" hidden="hidden"></span>
+
+      Le repère <span class="acp-skin"> doit être placé AVANT le <h1>, au
+      même niveau que lui : toutes les règles partent de ce repère
+      (sélecteur « ~ »). Aucune autre page de l'administration n'est touchée.
+   3. Couleur d'accent (facultatif) : ajouter une classe au repère, ex.
+        <span class="acp-skin acp-skin-orange" hidden="hidden"></span>
+      ou définir la vôtre :
+        .acp-skin-maison ~ * { --skin-accent: #2E7D32; }
+
+   Rien à modifier dans le PHP. Compatible avec le thème d'administration
+   standard de phpBB 3.3 (adm/style/admin.css).
+   ========================================================================== */
+
+.acp-skin {
+	display: none;
+}
+
+/* Couleur d'accent : bleu phpBB par défaut, variantes prêtes à l'emploi */
+.acp-skin-orange ~ * { --skin-accent: #FF8C00; }
+.acp-skin-sky ~ *    { --skin-accent: #4FA9CC; }
+.acp-skin-red ~ *    { --skin-accent: #C94F4F; }
+.acp-skin-green ~ *  { --skin-accent: #2E7D32; }
+.acp-skin-violet ~ * { --skin-accent: #6A4C93; }
+
+/* --- Titre de page ------------------------------------------------------- */
+.acp-skin ~ h1 {
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	background: linear-gradient(var(--skin-accent, #115098), var(--skin-accent, #115098)) left bottom / 56px 3px no-repeat;
+}
+
+.acp-skin ~ h1 + p {
+	max-width: 75em;
+	margin-bottom: 14px;
+	line-height: 1.5;
+}
+
+.acp-skin ~ h2,
+.acp-skin ~ * h2 {
+	margin-top: 26px;
+}
+
+.acp-skin ~ h3,
+.acp-skin ~ form > h3 {
+	margin: 22px 0 6px;
+	padding-left: 9px;
+	border-left: 3px solid var(--skin-accent, #115098);
+	color: #2E4057;
+	font-size: 1.15em;
+}
+
+/* --- Blocs --------------------------------------------------------------- */
+.acp-skin ~ fieldset,
+.acp-skin ~ * fieldset,
+.acp-skin ~ .panel {
+	margin: 22px 0 18px;
+	padding: 16px 16px 10px;
+	border: 1px solid #D5DBE3;
+	border-radius: 12px;
+	background-color: #FFFFFF;
+	box-shadow: 0 2px 0 #C9D0DA, 0 4px 10px rgba(46, 64, 87, 0.06);
+}
+
+.acp-skin ~ * fieldset fieldset {
+	box-shadow: none;
+}
+
+.acp-skin ~ fieldset > legend,
+.acp-skin ~ * fieldset > legend {
+	top: 0;
+	margin: 0 0 0 4px;
+	padding: 5px 13px;
+	border: 1px solid #C9D0DA;
+	border-radius: 8px;
+	background: #FFFFFF;
+	color: var(--skin-accent-dark, #115098);
+	font-size: 0.95em;
+	line-height: 1.3;
+}
+
+/* Boutons d'envoi : bloc discret, centré */
+.acp-skin ~ fieldset.submit-buttons,
+.acp-skin ~ * fieldset.submit-buttons,
+.acp-skin ~ p.submit-buttons,
+.acp-skin ~ * p.submit-buttons {
+	margin: 18px 0;
+	padding: 12px 16px;
+	border: 1px solid #D5DBE3;
+	border-radius: 12px;
+	background-color: #FFFFFF;
+	box-shadow: 0 2px 0 #C9D0DA;
+	text-align: center;
+}
+
+/* --- Lignes de réglage --------------------------------------------------- */
+.acp-skin ~ fieldset dl,
+.acp-skin ~ * fieldset dl {
+	margin: 0;
+	padding: 9px 4px;
+}
+
+.acp-skin ~ fieldset dl + dl,
+.acp-skin ~ * fieldset dl + dl {
+	border-top: 1px solid #EEF1F5;
+}
+
+.acp-skin ~ fieldset dt,
+.acp-skin ~ * fieldset dt {
+	border-right-color: #E2E7ED;
+}
+
+.acp-skin ~ fieldset dt span,
+.acp-skin ~ * fieldset dt span {
+	color: #6B7684;
+	line-height: 1.45;
+}
+
+.acp-skin ~ fieldset > p,
+.acp-skin ~ * fieldset > p {
+	line-height: 1.5;
+}
+
+/* --- Champs -------------------------------------------------------------- */
+.acp-skin ~ * input[type="text"],
+.acp-skin ~ * input[type="email"],
+.acp-skin ~ * input[type="number"],
+.acp-skin ~ * input[type="date"],
+.acp-skin ~ * input[type="url"],
+.acp-skin ~ * select,
+.acp-skin ~ * textarea {
+	padding: 4px 7px;
+	border: 1px solid #B9C2CE;
+	border-radius: 5px;
+}
+
+.acp-skin ~ * input[type="radio"],
+.acp-skin ~ * input[type="checkbox"] {
+	accent-color: var(--skin-accent, #115098);
+}
+
+.acp-skin ~ * input.button1,
+.acp-skin ~ * input.button2,
+.acp-skin ~ * a.button1,
+.acp-skin ~ * a.button2 {
+	padding: 4px 12px;
+	border-radius: 5px;
+	cursor: pointer;
+}
+
+/* --- Tableaux ------------------------------------------------------------ */
+.acp-skin ~ table,
+.acp-skin ~ * table.table1,
+.acp-skin ~ * table.zebra-table {
+	border: 1px solid #C9D0DA;
+	border-radius: 10px;
+	border-spacing: 0;
+	border-collapse: separate;
+	overflow: hidden;
+	box-shadow: 0 2px 0 #C9D0DA;
+}
+
+.acp-skin ~ table th,
+.acp-skin ~ * table.table1 th,
+.acp-skin ~ * table.zebra-table th {
+	padding: 7px 8px;
+}
+
+.acp-skin ~ table td,
+.acp-skin ~ * table.table1 td,
+.acp-skin ~ * table.zebra-table td {
+	padding: 7px 8px;
+}
+
+.acp-skin ~ * fieldset table.table1,
+.acp-skin ~ * fieldset table.zebra-table,
+.acp-skin ~ fieldset table {
+	box-shadow: none;
+}
+
+/* --- Blocs repliables <details class="skin-details"> ------------------------ */
+.acp-skin ~ details.skin-details,
+.acp-skin ~ * details.skin-details {
+	margin: 0 0 10px;
+	padding: 0 14px;
+	border: 1px solid #D5DBE3;
+	border-radius: 12px;
+	background: #FFFFFF;
+	box-shadow: 0 2px 0 #C9D0DA;
+}
+
+.acp-skin ~ details.skin-details > summary,
+.acp-skin ~ * details.skin-details > summary {
+	padding: 10px 0;
+	color: var(--skin-accent-dark, #115098);
+}
+
+.acp-skin ~ details.skin-details[open],
+.acp-skin ~ * details.skin-details[open] {
+	padding-bottom: 12px;
+}
+
+.acp-skin ~ details.skin-details > table,
+.acp-skin ~ * details.skin-details > table {
+	box-shadow: none;
+}
+
+/* --- Pastilles d'état et tableau de journal -------------------------------- */
+.acp-skin ~ * table.skin-log td {
+	vertical-align: middle;
+}
+
+.acp-skin ~ * .skin-status {
+	display: inline-block;
+	padding: 2px 9px;
+	border-radius: 10px;
+	font-size: 0.9em;
+	font-weight: bold;
+	white-space: nowrap;
+}
+
+.acp-skin ~ * .skin-ok      { background: #D4EDDA; color: #1E6B34; }
+.acp-skin ~ * .skin-failed  { background: #F8D7DA; color: #8A1C27; }
+.acp-skin ~ * .skin-pending { background: #EEF1F5; color: #55606E; }
+
+.acp-skin ~ * .skin-detail,
+.acp-skin ~ * .skin-days {
+	color: #6B7684;
+	font-size: 0.9em;
+}
+
+.acp-skin ~ * .skin-foot {
+	margin-top: 8px;
+	text-align: right;
+}
+
+/* --- Aides facultatives --------------------------------------------------- */
+/* Rangée de boutons/liens :  <p class="skin-actions"><a class="button2">…</a></p> */
+.acp-skin ~ * a.button1,
+.acp-skin ~ * a.button2 {
+	display: inline-block;
+	text-decoration: none;
+	line-height: 1.6;
+}
+
+.acp-skin ~ * .skin-actions,
+.acp-skin ~ .skin-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 8px 0;
+}
+
+/* Encadrés :  <div class="skin-note">, <div class="skin-note skin-note-warn"> … */
+.acp-skin ~ .skin-note,
+.acp-skin ~ * .skin-note {
+	margin: 10px 0;
+	padding: 10px 14px;
+	border-left: 4px solid var(--skin-accent, #115098);
+	border-radius: 8px;
+	background: #E8F4FD;
+	line-height: 1.5;
+}
+
+.acp-skin ~ .skin-note-ok,   .acp-skin ~ * .skin-note-ok   { border-left-color: #2E7D32; background: #D4EDDA; }
+.acp-skin ~ .skin-note-warn, .acp-skin ~ * .skin-note-warn { border-left-color: #C9A227; background: #FFF3CD; }
+.acp-skin ~ .skin-note-error,.acp-skin ~ * .skin-note-error{ border-left-color: #C94F4F; background: #F8D7DA; }
+
+/* ============================================================================
+   Compléments propres au Portfolio (même charte)
+   ========================================================================== */
+
+/* Cartes de statistiques (page Réglages) */
+.acp-skin ~ .pf-acp-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 12px;
+	margin: 18px 0;
+}
+
+.acp-skin ~ .pf-acp-cards > div {
+	padding: 12px 14px;
+	border: 1px solid #D5DBE3;
+	border-radius: 12px;
+	background: #FFFFFF;
+	box-shadow: 0 2px 0 #C9D0DA, 0 4px 10px rgba(46, 64, 87, 0.06);
+	color: #6B7684;
+}
+
+.acp-skin ~ .pf-acp-cards b {
+	display: block;
+	margin-top: 2px;
+	color: var(--skin-accent-dark, #115098);
+	font-size: 1.7em;
+	line-height: 1.2;
+}
+
+.acp-skin ~ .pf-acp-cards > .is-warn b {
+	color: #A07800;
+}
+
+/* Pastilles supplémentaires : information (bleu) et avertissement (jaune) */
+.acp-skin ~ * .skin-info { background: #E8F4FD; color: #115098; }
+.acp-skin ~ * .skin-warn { background: #FFF3CD; color: #7A5B00; }
+
+/* Liens d'action dans les tableaux */
+.acp-skin ~ * td.pf-acp-actions {
+	white-space: normal;
+}
+
+.acp-skin ~ * td.pf-acp-actions a {
+	display: inline-block;
+	margin: 2px 6px 2px 0;
+	white-space: nowrap;
+}
+
+.acp-skin ~ * td.pf-acp-actions a.is-danger {
+	color: #C94F4F;
+}
+
+/* Arborescence des albums */
+.acp-skin ~ * .pf-acp-indent {
+	display: inline-block;
+}
+
+/* Matrice des droits de groupe : cases centrées */
+.acp-skin ~ * table.pf-acp-matrix th,
+.acp-skin ~ * table.pf-acp-matrix td {
+	text-align: center;
+}
+
+.acp-skin ~ * table.pf-acp-matrix th:first-child,
+.acp-skin ~ * table.pf-acp-matrix td:first-child {
+	text-align: left;
+}
+
+/* Vignettes (corbeille) et aperçus (filigrane, logo) */
+.acp-skin ~ * .pf-acp-thumb {
+	display: block;
+	width: 64px;
+	height: 64px;
+	border-radius: 8px;
+	object-fit: cover;
+	box-shadow: 0 1px 3px rgba(46, 64, 87, 0.25);
+}
+
+.acp-skin ~ * .pf-acp-preview {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: 10px;
+}
+
+.acp-skin ~ * .pf-acp-logo {
+	display: block;
+	max-width: 160px;
+	max-height: 80px;
+	margin-bottom: 6px;
+	border-radius: 6px;
+	background: repeating-conic-gradient(#DDE3EA 0 25%, #FFFFFF 0 50%) 0 0 / 16px 16px;
+}
+
+/* Page Filigrane : réglages à gauche, aperçu à droite */
+.acp-skin ~ .pf-acp-split {
+	display: grid;
+	grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+	gap: 18px;
+	align-items: start;
+}
+
+@media (max-width: 1100px) {
+	.acp-skin ~ .pf-acp-split {
+		grid-template-columns: 1fr;
+	}
+}
+
+.acp-skin ~ * input[type="range"] {
+	width: 200px;
+	vertical-align: middle;
+	accent-color: var(--skin-accent, #115098);
+}
+
+.acp-skin ~ * input[type="color"] {
+	width: 48px;
+	height: 28px;
+	padding: 0 2px;
+	border: 1px solid #B9C2CE;
+	border-radius: 5px;
+}
+
+.acp-skin ~ * code {
+	padding: 1px 5px;
+	border-radius: 4px;
+	background: #EEF1F5;
+}
+
+/* Pagination simple */
+.acp-skin ~ * .pf-acp-pagination a,
+.acp-skin ~ * .pf-acp-pagination strong {
+	display: inline-block;
+	min-width: 22px;
+	margin: 0 2px;
+	padding: 2px 6px;
+	border: 1px solid #D5DBE3;
+	border-radius: 5px;
+	text-align: center;
+}
+
+.acp-skin ~ * .pf-acp-pagination strong {
+	border-color: var(--skin-accent, #115098);
+	background: var(--skin-accent, #115098);
+	color: #FFFFFF;
+}
+
+/* Boutons <button> (plusieurs actions sur un même formulaire) : même rendu que input.button1/2 */
+.acp-skin ~ * button.button1,
+.acp-skin ~ * button.button2 {
+	width: auto;
+	padding: 4px 12px;
+	border: 1px solid #666666;
+	border-radius: 5px;
+	background: #EFEFEF url("../../../../adm/images/bg_button.gif") repeat-x top;
+	color: #000000;
+	font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
+	font-size: 0.85em;
+	cursor: pointer;
+}
+
+.acp-skin ~ * button.button1 {
+	font-weight: bold;
+}
+
+.acp-skin ~ * button.button1:hover,
+.acp-skin ~ * button.button2:hover {
+	border-color: #BC2A4D;
+	color: #BC2A4D;
+}
+
+/* Action irréversible (suppression définitive) */
+.acp-skin ~ * .button1.is-danger,
+.acp-skin ~ * .button2.is-danger {
+	border-color: #C94F4F;
+	color: #A12F2F;
+}
+
+/* Champs texte : jamais plus larges que leur colonne */
+.acp-skin ~ * fieldset dd input[type="text"],
+.acp-skin ~ * fieldset dd select {
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+/* Barre de progression (bascule phpBB Gallery) */
+.acp-skin ~ * .pf-acp-progress {
+	height: 10px;
+	margin: 8px 0;
+	border-radius: 5px;
+	background: #EEF1F5;
+	overflow: hidden;
+}
+
+.acp-skin ~ * .pf-acp-progress > span {
+	display: block;
+	height: 100%;
+	background: var(--skin-accent, #115098);
+}
+
+/* Choix des réactions (Réglages) */
+.acp-skin ~ * .pf-acp-reactions label {
+	display: inline-block;
+	margin: 0 12px 4px 0;
+	white-space: nowrap;
+}
+
+.acp-skin ~ * .pf-acp-reactions .pf-emoji {
+	font-size: 1.3em;
+	vertical-align: middle;
+}
+
+.acp-skin ~ * details.skin-details ol {
+	margin: 0 0 0 20px;
+	line-height: 1.6;
+}
+
+/* Choix de visibilité proposés aux membres (v1.6.0) */
+.acp-skin ~ * .pf-acp-choices { display: flex; flex-direction: column; gap: 4px; }
+.acp-skin ~ * .pf-acp-choices small { color: #6b7684; }

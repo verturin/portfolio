@@ -1,0 +1,79 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+<h1>{{ lang('ACP_PORTFOLIO_BACKUP') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_BACKUP_EXPLAIN') }}</p>
+
+{% if not PF_ZIP_OK %}<div class="skin-note skin-note-error">{{ lang('PORTFOLIO_ZIP_MISSING') }}</div>{% endif %}
+
+<form id="acp_portfolio_backup_create" method="post" action="{{ U_ACTION }}&amp;action=create">
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_BACKUP_CREATE_TITLE') }}</legend>
+		<p>{{ lang('ACP_PORTFOLIO_BACKUP_CREATE_EXPLAIN', PF_BACKUP_DIR) }}</p>
+		<p class="submit-buttons"><input class="button1" type="submit" name="create_backup" value="{{ lang('ACP_PORTFOLIO_BACKUP_CREATE') }}"{% if not PF_ZIP_OK %} disabled{% endif %}></p>
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+<fieldset>
+	<legend>{{ lang('ACP_PORTFOLIO_BACKUP_LIST') }}</legend>
+	{% if PF_BACKUPS|length %}
+	<table class="table1 zebra-table skin-log">
+		<thead><tr><th>{{ lang('ACP_PORTFOLIO_BACKUP_FILE') }}</th><th>{{ lang('ACP_PORTFOLIO_BACKUP_TYPE') }}</th><th>{{ lang('ACP_PORTFOLIO_BACKUP_CONTENT') }}</th><th>{{ lang('PORTFOLIO_FILESIZE') }}</th><th>{{ lang('ACP_PORTFOLIO_BACKUP_DATE') }}</th><th>{{ lang('ACTION') }}</th></tr></thead>
+		<tbody>
+		{% for backup in PF_BACKUPS %}
+			<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
+				<td><strong>{{ backup.name }}</strong>{% if backup.origin %}<br><span class="small">{{ backup.origin }}</span>{% endif %}</td>
+				<td>{% if backup.valid %}<span class="skin-status skin-info">{{ backup.type }}</span>{% else %}<span class="skin-status skin-failed">{{ backup.type }}</span>{% endif %}</td>
+				<td>{{ backup.counts }}</td>
+				<td>{{ backup.size }}</td>
+				<td>{{ backup.time }}</td>
+				<td class="pf-acp-actions"><a href="{{ backup.u_download }}">{{ lang('ACP_PORTFOLIO_DOWNLOAD') }}</a> <a href="{{ backup.u_delete }}" class="is-danger">{{ lang('DELETE') }}</a></td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p>{{ lang('ACP_PORTFOLIO_BACKUP_NONE') }}</p>
+	{% endif %}
+</fieldset>
+
+<form id="acp_portfolio_import" method="post" action="{{ U_ACTION }}&amp;action=import" enctype="multipart/form-data">
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_IMPORT_TITLE') }}</legend>
+		<p>{{ lang('ACP_PORTFOLIO_IMPORT_EXPLAIN') }}</p>
+		<dl>
+			<dt><label for="server_file">{{ lang('ACP_PORTFOLIO_IMPORT_SOURCE') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_IMPORT_SOURCE_EXPLAIN', PF_BACKUP_DIR, PF_UPLOAD_MAX) }}</span></dt>
+			<dd>
+				<select name="server_file" id="server_file"><option value="">— {{ lang('ACP_PORTFOLIO_IMPORT_UPLOAD_BELOW') }} —</option>{% for backup in PF_BACKUPS %}{% if backup.valid %}<option value="{{ backup.name }}">{{ backup.name }} ({{ backup.type }}, {{ backup.counts }})</option>{% endif %}{% endfor %}</select><br><br>
+				<input type="file" name="archive" accept=".zip,application/zip">
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('ACP_PORTFOLIO_IMPORT_MODE') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="mode_import" value="merge" checked> {{ lang('ACP_PORTFOLIO_IMPORT_MERGE') }}</label><br>
+				<label><input type="radio" class="radio" name="mode_import" value="replace"> <strong class="is-danger">{{ lang('ACP_PORTFOLIO_IMPORT_REPLACE') }}</strong></label>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="default_owner">{{ lang('ACP_PORTFOLIO_IMPORT_DEFAULT_OWNER') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_IMPORT_DEFAULT_OWNER_EXPLAIN') }}</span></dt>
+			<dd><input type="text" class="inputbox autowidth" name="default_owner" id="default_owner" size="25"></dd>
+		</dl>
+		<dl>
+			<dt><label for="force_owner">{{ lang('ACP_PORTFOLIO_IMPORT_FORCE_OWNER') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_IMPORT_FORCE_OWNER_EXPLAIN') }}</span></dt>
+			<dd><input type="text" class="inputbox autowidth" name="force_owner" id="force_owner" size="25"></dd>
+		</dl>
+		<dl>
+			<dt><label for="restore_config">{{ lang('ACP_PORTFOLIO_IMPORT_CONFIG') }}{{ lang('COLON') }}</label></dt>
+			<dd><label><input type="checkbox" name="restore_config" id="restore_config" value="1"> {{ lang('YES') }}</label></dd>
+		</dl>
+		<p class="submit-buttons"><input class="button1" type="submit" name="do_import" value="{{ lang('ACP_PORTFOLIO_IMPORT_RUN') }}"{% if not PF_ZIP_OK %} disabled{% endif %}></p>
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+<div class="skin-note">{{ lang('ACP_PORTFOLIO_BACKUP_CLI') }}</div>
+
+{% include 'overall_footer.html' %}

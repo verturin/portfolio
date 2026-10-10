@@ -1,0 +1,61 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+<h1>{{ lang('ACP_PORTFOLIO_WATERMARK') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_WATERMARK_EXPLAIN') }}</p>
+
+{% if not PF_TTF %}<div class="skin-note skin-note-error">{{ lang('ACP_PORTFOLIO_WM_NO_TTF') }}</div>{% endif %}
+
+<div class="pf-acp-split">
+	<form id="acp_portfolio_watermark" method="post" action="{{ U_ACTION }}" enctype="multipart/form-data">
+		<fieldset>
+			<legend>{{ lang('ACP_PORTFOLIO_WATERMARK') }}</legend>
+			{% for item in PF_ITEMS %}
+			<dl>
+				<dt><label for="{{ item.key }}">{{ item.label }}{{ lang('COLON') }}</label>{% if item.explain %}<br><span>{{ item.explain }}</span>{% endif %}</dt>
+				<dd>
+					{% if item.type == 'bool' %}
+					<label><input type="radio" class="radio" name="{{ item.key }}" id="{{ item.key }}" value="1"{% if item.value %} checked{% endif %}> {{ lang('YES') }}</label>
+					<label><input type="radio" class="radio" name="{{ item.key }}" value="0"{% if not item.value %} checked{% endif %}> {{ lang('NO') }}</label>
+					{% elseif item.type == 'int' %}
+					<input type="range" name="{{ item.key }}" id="{{ item.key }}" value="{{ item.value }}" min="{{ item.min }}" max="{{ item.max }}" oninput="this.nextElementSibling.textContent=this.value"> <strong>{{ item.value }}</strong>
+					{% elseif item.type == 'choice' %}
+					<select name="{{ item.key }}" id="{{ item.key }}">{% for option in item.options %}<option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>{% endfor %}</select>
+					{% elseif item.type == 'color' %}
+					<input type="color" name="{{ item.key }}" id="{{ item.key }}" value="{{ item.value }}">
+					{% else %}
+					<input type="text" class="inputbox autowidth" size="45" maxlength="120" name="{{ item.key }}" id="{{ item.key }}" value="{{ item.value }}">
+					{% endif %}
+				</dd>
+			</dl>
+			{% endfor %}
+			<dl>
+				<dt><label for="wm_logo">{{ lang('ACP_PORTFOLIO_WM_LOGO_FILE') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_WM_LOGO_FILE_EXPLAIN') }}</span></dt>
+				<dd>
+					{% if PF_HAS_LOGO %}<img class="pf-acp-logo" src="{{ PF_LOGO }}" alt="">{% endif %}
+					<input type="file" name="wm_logo" id="wm_logo" accept="image/png,image/jpeg,image/gif">
+					{% if PF_HAS_LOGO %}<input class="button2" type="submit" name="delete_logo" value="{{ lang('ACP_PORTFOLIO_WM_LOGO_DELETE') }}">{% endif %}
+				</dd>
+			</dl>
+		</fieldset>
+
+		<fieldset class="submit-buttons">
+			<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}">&nbsp;
+			<input class="button2" type="submit" name="clear_cache" value="{{ lang('ACP_PORTFOLIO_WM_REBUILD') }}" title="{{ lang('ACP_PORTFOLIO_WM_REBUILD_EXPLAIN') }}">
+			<p class="small">{{ lang('ACP_PORTFOLIO_WM_REBUILD_EXPLAIN') }}</p>
+			{{ S_FORM_TOKEN }}
+		</fieldset>
+	</form>
+
+	<div>
+		<fieldset>
+			<legend>{{ lang('ACP_PORTFOLIO_WM_PREVIEW') }}</legend>
+			{% if PF_PREVIEW %}<img class="pf-acp-preview" src="{{ PF_PREVIEW }}" alt="">{% endif %}
+			<p class="small">{{ lang('ACP_PORTFOLIO_WM_PREVIEW_EXPLAIN', PF_SAMPLE_TEXT) }}</p>
+		</fieldset>
+		<div class="skin-note">{{ lang('ACP_PORTFOLIO_WM_PLACEHOLDERS') }}</div>
+	</div>
+</div>
+
+{% include 'overall_footer.html' %}

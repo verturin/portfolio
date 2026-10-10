@@ -1,0 +1,92 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+<h1>{{ lang('ACP_PORTFOLIO_TRASH') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_TRASH_EXPLAIN') }}</p>
+
+{% if PF_RECENT|length %}
+<fieldset>
+	<legend>{{ lang('ACP_PORTFOLIO_RECENT_DELETIONS') }}</legend>
+	<table class="table1 zebra-table skin-log">
+		<thead><tr><th>{{ lang('USERNAME') }}</th><th>{{ lang('ACP_PORTFOLIO_DELETED_24H') }}</th><th>{{ lang('ACP_PORTFOLIO_LAST_DELETION') }}</th><th></th></tr></thead>
+		<tbody>
+		{% for row in PF_RECENT %}
+			<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
+				<td>{{ row.user }}</td>
+				<td><strong>{{ row.total }}</strong>{% if row.alert %} <span class="skin-status skin-failed">{{ lang('ACP_PORTFOLIO_ALERT_BADGE', PF_THRESHOLD) }}</span>{% endif %}</td>
+				<td>{{ row.last }}</td>
+				<td><a href="{{ row.u_filter }}">{{ lang('ACP_PORTFOLIO_SHOW_ONLY') }}</a></td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+</fieldset>
+{% endif %}
+
+{% if PF_FILTERED %}<p class="skin-actions"><a class="button2" href="{{ U_PF_ALL }}">&laquo; {{ lang('ACP_PORTFOLIO_SHOW_ALL') }}</a></p>{% endif %}
+
+<form id="acp_portfolio_trash" method="post" action="{{ U_ACTION }}">
+	{% if PF_ITEMS|length %}
+	<fieldset>
+	<legend>{{ lang('ACP_PORTFOLIO_TRASH') }} ({{ PF_TOTAL }})</legend>
+	<table class="table1 zebra-table skin-log">
+		<thead>
+			<tr>
+				<th style="width: 30px;"><input type="checkbox" onclick="var c=this.checked;document.querySelectorAll('#acp_portfolio_trash input[name=\'photo_ids[]\']').forEach(function(b){b.checked=c;});"></th>
+				<th>{{ lang('ACP_PORTFOLIO_PREVIEW') }}</th>
+				<th>{{ lang('PORTFOLIO_PHOTO_TITLE') }}</th>
+				<th>{{ lang('PORTFOLIO_ALBUM') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_OWNER') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_DELETED_BY') }}</th>
+				<th>{{ lang('PORTFOLIO_REASON') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for item in PF_ITEMS %}
+			<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
+				<td><input type="checkbox" name="photo_ids[]" value="{{ item.id }}"></td>
+				<td><a href="{{ item.medium }}" target="_blank" rel="noopener"><img class="pf-acp-thumb" src="{{ item.thumb }}" alt="" loading="lazy"></a></td>
+				<td><strong>{{ item.title }}</strong><br><span class="small">{{ item.size }}</span></td>
+				<td>{% if item.album_missing %}<span class="skin-status skin-warn">{{ lang('PORTFOLIO_ALBUM_GONE') }}</span>{% else %}{{ item.album }}{% endif %}</td>
+				<td>{{ item.owner }}</td>
+				<td>{{ item.deleted_by }}<br><span class="small">{{ item.deleted_time }}</span></td>
+				<td>{{ item.reason ?: '—' }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	</fieldset>
+
+	{% if PF_PAGINATION|length %}
+	<p class="pf-acp-pagination">{% for page in PF_PAGINATION %}{% if page.current %}<strong>{{ page.num }}</strong>{% else %}<a href="{{ page.url }}">{{ page.num }}</a>{% endif %} {% endfor %}</p>
+	{% endif %}
+
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_SELECTION') }}</legend>
+		<dl>
+			<dt><label>{{ lang('ACP_PORTFOLIO_RESTORE_TARGET') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_RESTORE_TARGET_EXPLAIN') }}</span></dt>
+			<dd><select name="target_album"><option value="0">—</option>{% for target in PF_TARGETS %}<option value="{{ target.id }}">{{ target.name }}</option>{% endfor %}</select></dd>
+		</dl>
+		<p class="submit-buttons">
+			<button class="button2" type="submit" name="action" value="restore">{{ lang('ACP_PORTFOLIO_RESTORE_SELECTED') }}</button>
+			<button class="button1 is-danger" type="submit" name="action" value="purge">{{ lang('ACP_PORTFOLIO_PURGE_SELECTED') }}</button>
+		</p>
+	</fieldset>
+	{% else %}
+	<p>{{ lang('PORTFOLIO_TRASH_EMPTY') }}</p>
+	{% endif %}
+
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_PURGE_OLD') }}</legend>
+		<dl>
+			<dt><label for="days">{{ lang('ACP_PORTFOLIO_PURGE_OLDER_THAN') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="number" id="days" name="days" value="30" min="0" style="width:80px"> {{ lang('DAYS') }}
+				<button class="button2" type="submit" name="action" value="purge_older">{{ lang('ACP_PORTFOLIO_PURGE') }}</button></dd>
+		</dl>
+	</fieldset>
+	{{ S_FORM_TOKEN }}
+</form>
+
+{% include 'overall_footer.html' %}

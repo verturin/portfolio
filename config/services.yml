@@ -1,0 +1,358 @@
+imports:
+    - { resource: tables.yml }
+
+services:
+    # ------------------------------------------------------------------
+    # Réglages (table propre portfolio_config, pas phpbb_config)
+    # ------------------------------------------------------------------
+    verturin.portfolio.settings:
+        class: verturin\portfolio\service\settings
+        arguments:
+            - '@dbal.conn'
+            - '%verturin.portfolio.tables.config%'
+
+    # ------------------------------------------------------------------
+    # Services métier
+    # ------------------------------------------------------------------
+    verturin.portfolio.albums:
+        class: verturin\portfolio\service\album_manager
+        arguments:
+            - '@dbal.conn'
+            - '@verturin.portfolio.settings'
+            - '@dispatcher'
+            - '%verturin.portfolio.tables.albums%'
+            - '%verturin.portfolio.tables.photos%'
+            - '%verturin.portfolio.tables.members%'
+            - '%verturin.portfolio.tables.album_groups%'
+
+    verturin.portfolio.access:
+        class: verturin\portfolio\service\access
+        arguments:
+            - '@auth'
+            - '@user'
+            - '@verturin.portfolio.settings'
+            - '@dbal.conn'
+            - '@verturin.portfolio.albums'
+            - '%verturin.portfolio.tables.members%'
+            - '%verturin.portfolio.tables.album_groups%'
+
+    verturin.portfolio.image:
+        class: verturin\portfolio\service\image_processor
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '%verturin.portfolio.storage%'
+
+    verturin.portfolio.watermark:
+        class: verturin\portfolio\service\watermark
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '@config'
+            - '@user'
+            - '%verturin.portfolio.storage%'
+            - '%core.root_path%ext/verturin/portfolio'
+
+    verturin.portfolio.archive:
+        class: verturin\portfolio\service\archive
+        arguments:
+            - '@dbal.conn'
+            - '@verturin.portfolio.settings'
+            - '@user'
+            - '@verturin.portfolio.albums'
+            - '@verturin.portfolio.image'
+            -
+                config: '%verturin.portfolio.tables.config%'
+                albums: '%verturin.portfolio.tables.albums%'
+                members: '%verturin.portfolio.tables.members%'
+                album_groups: '%verturin.portfolio.tables.album_groups%'
+                photos: '%verturin.portfolio.tables.photos%'
+                ratings: '%verturin.portfolio.tables.ratings%'
+                comments: '%verturin.portfolio.tables.comments%'
+                reactions: '%verturin.portfolio.tables.reactions%'
+                exports: '%verturin.portfolio.tables.exports%'
+            - '%verturin.portfolio.storage%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    verturin.portfolio.photos:
+        class: verturin\portfolio\service\photo_manager
+        arguments:
+            - '@dbal.conn'
+            - '@verturin.portfolio.settings'
+            - '@user'
+            - '@cache.driver'
+            - '@log'
+            - '@notification_manager'
+            - '@dispatcher'
+            - '@verturin.portfolio.albums'
+            - '@verturin.portfolio.image'
+            - '%verturin.portfolio.tables.photos%'
+            - '%verturin.portfolio.tables.ratings%'
+            - '%verturin.portfolio.tables.comments%'
+        calls:
+            - [set_reactions_table, ['%verturin.portfolio.tables.reactions%']]
+
+    verturin.portfolio.gallery_migrator:
+        class: verturin\portfolio\service\gallery_migrator
+        arguments:
+            - '@dbal.conn'
+            - '@dbal.tools'
+            - '@config'
+            - '@cache'
+            - '@ext.manager'
+            - '@verturin.portfolio.albums'
+            - '@verturin.portfolio.image'
+            -
+                albums: '%verturin.portfolio.tables.albums%'
+                photos: '%verturin.portfolio.tables.photos%'
+                ratings: '%verturin.portfolio.tables.ratings%'
+                comments: '%verturin.portfolio.tables.comments%'
+                reactions: '%verturin.portfolio.tables.reactions%'
+                legacy: '%verturin.portfolio.tables.legacy%'
+                legacy_texts: '%verturin.portfolio.tables.legacy_texts%'
+            - '%core.table_prefix%'
+            - '%core.root_path%'
+
+    verturin.portfolio.bbcode:
+        class: verturin\portfolio\service\bbcode
+        arguments:
+            - '@dbal.conn'
+
+    verturin.portfolio.pages:
+        class: verturin\portfolio\service\page_manager
+        arguments:
+            - '@dbal.conn'
+            - '%verturin.portfolio.tables.pages%'
+
+    verturin.portfolio.forum_link:
+        class: verturin\portfolio\service\forum_link
+        arguments:
+            - '@dbal.conn'
+            - '@cache.driver'
+            - '@auth'
+            - '@language'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    verturin.portfolio.presenter:
+        class: verturin\portfolio\service\presenter
+        calls:
+            - [set_watermark, ['@verturin.portfolio.watermark']]
+        arguments:
+            - '@controller.helper'
+            - '@user'
+            - '@language'
+            - '@user_loader'
+            - '@verturin.portfolio.albums'
+            - '@verturin.portfolio.photos'
+            - '@verturin.portfolio.access'
+
+    # ------------------------------------------------------------------
+    # Contrôleurs (partie publique)
+    # ------------------------------------------------------------------
+    verturin.portfolio.controller.base:
+        abstract: true
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '@controller.helper'
+            - '@template'
+            - '@user'
+            - '@language'
+            - '@request'
+            - '@verturin.portfolio.access'
+            - '@verturin.portfolio.albums'
+            - '@verturin.portfolio.photos'
+            - '@verturin.portfolio.presenter'
+            - '@verturin.portfolio.image'
+
+    verturin.portfolio.controller.main:
+        class: verturin\portfolio\controller\main
+        parent: verturin.portfolio.controller.base
+
+    verturin.portfolio.controller.album:
+        class: verturin\portfolio\controller\album
+        parent: verturin.portfolio.controller.base
+        calls:
+            - [set_db, ['@dbal.conn']]
+
+    verturin.portfolio.controller.photo:
+        class: verturin\portfolio\controller\photo
+        parent: verturin.portfolio.controller.base
+        calls:
+            - [set_bbcode, ['@verturin.portfolio.bbcode']]
+            - [set_watermark, ['@verturin.portfolio.watermark']]
+
+    verturin.portfolio.controller.upload:
+        class: verturin\portfolio\controller\upload
+        parent: verturin.portfolio.controller.base
+
+    verturin.portfolio.controller.file:
+        class: verturin\portfolio\controller\file
+        parent: verturin.portfolio.controller.base
+        calls:
+            - [set_symfony_request, ['@symfony_request']]
+            - [set_watermark, ['@verturin.portfolio.watermark']]
+
+    verturin.portfolio.controller.export:
+        class: verturin\portfolio\controller\export
+        parent: verturin.portfolio.controller.base
+        calls:
+            - [set_archive, ['@verturin.portfolio.archive']]
+
+    verturin.portfolio.controller.legacy:
+        class: verturin\portfolio\controller\legacy
+        arguments:
+            - '@request'
+            - '@language'
+            - '@verturin.portfolio.gallery_migrator'
+            - '@symfony_request'
+
+    verturin.portfolio.controller.page:
+        class: verturin\portfolio\controller\page
+        parent: verturin.portfolio.controller.base
+        calls:
+            - [set_pages, ['@verturin.portfolio.pages', '@verturin.portfolio.forum_link']]
+
+    verturin.portfolio.controller.moderation:
+        class: verturin\portfolio\controller\moderation
+        parent: verturin.portfolio.controller.base
+
+    # ------------------------------------------------------------------
+    # Administration
+    # ------------------------------------------------------------------
+    verturin.portfolio.controller.acp:
+        class: verturin\portfolio\controller\acp_controller
+        calls:
+            - [set_watermark, ['@verturin.portfolio.watermark']]
+            - [set_archive, ['@verturin.portfolio.archive']]
+            - [set_migrator, ['@verturin.portfolio.gallery_migrator']]
+            - [set_bbcode, ['@verturin.portfolio.bbcode']]
+            - [set_pages, ['@verturin.portfolio.pages', '@verturin.portfolio.forum_link']]
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '@template'
+            - '@user'
+            - '@language'
+            - '@request'
+            - '@log'
+            - '@dbal.conn'
+            - '@verturin.portfolio.access'
+            - '@verturin.portfolio.albums'
+            - '@verturin.portfolio.photos'
+            - '@verturin.portfolio.presenter'
+            - '%verturin.portfolio.tables.photos%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    # ------------------------------------------------------------------
+    # Événements, tâche cron, notifications
+    # ------------------------------------------------------------------
+    verturin.portfolio.listener:
+        class: verturin\portfolio\event\main_listener
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '@controller.helper'
+            - '@template'
+            - '@language'
+            - '@auth'
+            - '@dbal.conn'
+            - '%verturin.portfolio.tables.photos%'
+        calls:
+            - [set_portfolio, ['@verturin.portfolio.access', '@verturin.portfolio.albums']]
+            - [set_display, ['@verturin.portfolio.photos', '@verturin.portfolio.presenter']]
+        tags:
+            - { name: event.listener }
+
+    verturin.portfolio.legacy_listener:
+        class: verturin\portfolio\event\legacy_listener
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '@verturin.portfolio.gallery_migrator'
+        tags:
+            - { name: event.listener }
+
+    verturin.portfolio.console.migrate_gallery:
+        class: verturin\portfolio\console\migrate_gallery
+        arguments:
+            - '@user'
+            - '@verturin.portfolio.gallery_migrator'
+            - '@verturin.portfolio.settings'
+            - '@dbal.conn'
+        tags:
+            - { name: console.command }
+
+    verturin.portfolio.cron.watermark_cache:
+        class: verturin\portfolio\cron\task\watermark_cache
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '@verturin.portfolio.watermark'
+        calls:
+            - [set_name, [cron.task.verturin.portfolio.watermark_cache]]
+        tags:
+            - { name: cron.task }
+
+    verturin.portfolio.cron.exports_gc:
+        class: verturin\portfolio\cron\task\exports_gc
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '@verturin.portfolio.archive'
+        calls:
+            - [set_name, [cron.task.verturin.portfolio.exports_gc]]
+        tags:
+            - { name: cron.task }
+
+    verturin.portfolio.console.backup:
+        class: verturin\portfolio\console\backup
+        arguments:
+            - '@user'
+            - '@verturin.portfolio.archive'
+        tags:
+            - { name: console.command }
+
+    verturin.portfolio.console.restore:
+        class: verturin\portfolio\console\restore
+        arguments:
+            - '@user'
+            - '@verturin.portfolio.archive'
+            - '@dbal.conn'
+        tags:
+            - { name: console.command }
+
+    verturin.portfolio.cron.purge_trash:
+        class: verturin\portfolio\cron\task\purge_trash
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '@verturin.portfolio.photos'
+        calls:
+            - [set_name, [cron.task.verturin.portfolio.purge_trash]]
+        tags:
+            - { name: cron.task }
+
+    verturin.portfolio.notification.type.mass_delete:
+        class: verturin\portfolio\notification\type\mass_delete
+        shared: false
+        parent: notification.type.base
+        calls:
+            - [set_helper, ['@controller.helper']]
+            - [set_user_loader, ['@user_loader']]
+        tags:
+            - { name: notification.type }
+
+    verturin.portfolio.notification.type.comment:
+        class: verturin\portfolio\notification\type\comment
+        shared: false
+        parent: notification.type.base
+        calls:
+            - [set_helper, ['@controller.helper']]
+            - [set_user_loader, ['@user_loader']]
+        tags:
+            - { name: notification.type }
+
+    verturin.portfolio.notification.type.approved:
+        class: verturin\portfolio\notification\type\approved
+        shared: false
+        parent: notification.type.base
+        calls:
+            - [set_helper, ['@controller.helper']]
+            - [set_user_loader, ['@user_loader']]
+        tags:
+            - { name: notification.type }

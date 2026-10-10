@@ -1,0 +1,126 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+{% if S_PF_PAGE_FORM %}
+<h1>{{ lang(PF_IS_NEW ? 'ACP_PORTFOLIO_PAGE_ADD' : 'ACP_PORTFOLIO_PAGE_EDIT') }}</h1>
+<p class="skin-actions"><a class="button2" href="{{ U_BACK }}">&laquo; {{ lang('BACK') }}</a></p>
+
+{% if PF_ERRORS|length %}<div class="errorbox">{% for error in PF_ERRORS %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+
+<form id="acp_portfolio_page" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_PAGE_CONTENT') }}</legend>
+		<dl>
+			<dt><label for="page_title">{{ lang('ACP_PORTFOLIO_PAGE_TITLE') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_PAGE_TITLE_EXPLAIN') }}</span></dt>
+			<dd><input type="text" class="inputbox" name="page_title" id="page_title" value="{{ PF_FORM.page_title }}" maxlength="255" size="45"></dd>
+		</dl>
+		<dl>
+			<dt><label for="page_desc">{{ lang('ACP_PORTFOLIO_PAGE_DESC') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_PAGE_DESC_EXPLAIN') }}</span></dt>
+			<dd><textarea name="page_desc" id="page_desc" rows="4" cols="60">{{ PF_FORM.page_desc }}</textarea></dd>
+		</dl>
+		<dl>
+			<dt><label for="page_type">{{ lang('ACP_PORTFOLIO_PAGE_TYPE') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<select name="page_type" id="page_type" data-pf-page-type>
+					{% for type in PF_TYPES %}<option value="{{ type.value }}"{% if type.selected %} selected{% endif %}>{{ type.label }}</option>{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl data-pf-type-only="recent top comments random albums">
+			<dt><label for="page_limit">{{ lang('ACP_PORTFOLIO_PAGE_LIMIT') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="number" name="page_limit" id="page_limit" value="{{ PF_FORM.page_limit }}" min="1" max="100"></dd>
+		</dl>
+		<dl data-pf-type-only="album">
+			<dt><label for="album_id">{{ lang('ACP_PORTFOLIO_PAGE_ALBUM') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_PAGE_ALBUM_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="album_id" id="album_id">
+					<option value="-1">{{ lang('ACP_PORTFOLIO_PAGE_NEW_ALBUM') }}</option>
+					{% for album in PF_ALBUM_OPTIONS %}<option value="{{ album.value }}"{% if album.selected %} selected{% endif %}>{{ album.label }}</option>{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl data-pf-type-only="album">
+			<dt><label for="protect_album">{{ lang('ACP_PORTFOLIO_PAGE_PROTECT') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_PAGE_PROTECT_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="protect_album" id="protect_album" value="1"{% if PF_FORM.protect %} checked{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="protect_album" value="0"{% if not PF_FORM.protect %} checked{% endif %}> {{ lang('NO') }}</label>
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_PAGE_IN_FORUM') }}</legend>
+		<dl>
+			<dt><label for="publish">{{ lang('ACP_PORTFOLIO_PAGE_PUBLISH') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_PAGE_PUBLISH_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="publish" id="publish" value="1"{% if PF_FORM.publish %} checked{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="publish" value="0"{% if not PF_FORM.publish %} checked{% endif %}> {{ lang('NO') }}</label>
+			</dd>
+		</dl>
+		{% if not PF_FORM.has_forum %}
+		<dl>
+			<dt><label for="parent_id">{{ lang('ACP_PORTFOLIO_PAGE_PARENT') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_PAGE_PARENT_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="parent_id" id="parent_id">
+					<option value="0">{{ lang('NO_PARENT') }}</option>
+					{% for forum in PF_FORUMS %}<option value="{{ forum.value }}"{% if forum.selected %} selected{% endif %}>{{ forum.label }}</option>{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		{% else %}
+		<div class="skin-note">{{ lang('ACP_PORTFOLIO_PAGE_FORUM_EXISTS') }}</div>
+		{% endif %}
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}">
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+<script>
+(function () {
+	var select = document.querySelector('[data-pf-page-type]');
+	function sync() {
+		document.querySelectorAll('[data-pf-type-only]').forEach(function (row) {
+			row.style.display = row.getAttribute('data-pf-type-only').split(' ').indexOf(select.value) === -1 ? 'none' : '';
+		});
+	}
+	select.addEventListener('change', sync);
+	sync();
+})();
+</script>
+
+{% else %}
+<h1>{{ lang('ACP_PORTFOLIO_PAGES') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_PAGES_EXPLAIN') }}</p>
+<p class="skin-actions"><a class="button1" href="{{ U_PF_ADD }}">{{ lang('ACP_PORTFOLIO_PAGE_ADD') }}</a></p>
+
+{% if PF_PAGES|length %}
+<table class="table1 zebra-table skin-log">
+	<thead>
+		<tr>
+			<th>{{ lang('ACP_PORTFOLIO_PAGE_TITLE') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_PAGE_TYPE') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_PAGE_IN_FORUM') }}</th>
+			<th>{{ lang('ACTION') }}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for page in PF_PAGES %}
+		<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
+			<td><strong><a href="{{ page.u_view }}">{{ page.title }}</a></strong></td>
+			<td>{{ page.type }}{% if page.album %} : {{ page.album }}{% endif %}{% if page.protected %} <span class="skin-status skin-warn">{{ lang('ACP_PORTFOLIO_PROTECTED') }}</span>{% endif %}</td>
+			<td>{% if page.forum %}<a href="{{ page.u_forum }}">{{ lang('ACP_PORTFOLIO_PAGE_FORUM_LINK') }}</a> · <a href="{{ page.u_perms }}">{{ lang('ACP_PORTFOLIO_PAGE_FORUM_PERMS') }}</a>{% else %}<span class="skin-status">{{ lang('ACP_PORTFOLIO_PAGE_NOT_PUBLISHED') }}</span>{% endif %}</td>
+			<td><a href="{{ page.u_edit }}">{{ lang('EDIT') }}</a> · <a href="{{ page.u_delete }}">{{ lang('DELETE') }}</a></td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% else %}
+<div class="skin-note">{{ lang('ACP_PORTFOLIO_PAGES_NONE') }}</div>
+{% endif %}
+{% endif %}
+
+{% include 'overall_footer.html' %}

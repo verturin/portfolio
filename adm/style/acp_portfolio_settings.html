@@ -1,0 +1,75 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+<h1>{{ lang('ACP_PORTFOLIO_SETTINGS') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_SETTINGS_EXPLAIN') }}</p>
+<p class="skin-actions"><a class="button2" href="{{ U_PF_FRONT }}">{{ lang('ACP_PORTFOLIO_OPEN_FRONT') }}</a></p>
+
+<div class="pf-acp-cards">
+	<div class="pf-acp-card">{{ lang('PORTFOLIO_STAT_ALBUMS') }}<b>{{ PF_STATS.albums }}</b></div>
+	<div class="pf-acp-card">{{ lang('PORTFOLIO_STAT_PHOTOS') }}<b>{{ PF_STATS.approved }}</b></div>
+	<div class="pf-acp-card{% if PF_STATS.pending %} is-warn{% endif %}">{{ lang('PORTFOLIO_QUEUE') }}<b>{{ PF_STATS.pending }}</b></div>
+	<div class="pf-acp-card{% if PF_STATS.trash %} is-warn{% endif %}">{{ lang('PORTFOLIO_TRASH') }}<b>{{ PF_STATS.trash }}</b></div>
+	<div class="pf-acp-card">{{ lang('ACP_PORTFOLIO_DISK') }}<b>{{ PF_STATS.disk }}</b></div>
+</div>
+
+{% if not PF_STATS.writable %}
+<div class="skin-note skin-note-error">{{ lang('ACP_PORTFOLIO_NOT_WRITABLE') }}</div>
+{% endif %}
+
+<p class="skin-detail">
+	{{ lang('ACP_PORTFOLIO_VERSION') }} <strong>{{ PF_VERSION }}</strong> ·
+	GD : <strong>{{ PF_GD ?: lang('NO') }}</strong> ·
+	EXIF (orientation) : <strong>{{ PF_EXIF_EXT ? lang('YES') : lang('NO') }}</strong> ·
+	WebP : <strong>{{ PF_WEBP ? lang('YES') : lang('NO') }}</strong>
+</p>
+
+<div class="skin-note">{{ lang('ACP_PORTFOLIO_PERMISSIONS_TIP') }}</div>
+
+<div class="skin-note">
+	{{ lang('ACP_PORTFOLIO_REBUILD_EXPLAIN') }}
+	<a class="button2" href="{{ U_PF_REBUILD }}" onclick="return confirm(this.getAttribute('data-confirm'));" data-confirm="{{ lang('ACP_PORTFOLIO_REBUILD_CONFIRM')|e('html_attr') }}">{{ lang('ACP_PORTFOLIO_REBUILD') }}</a>
+</div>
+
+<div class="skin-note{% if not PF_BBCODE %} skin-note-error{% endif %}">
+	{{ lang(PF_BBCODE ? 'ACP_PORTFOLIO_PFBBCODE_OK' : 'ACP_PORTFOLIO_PFBBCODE_MISSING') }}
+	<a class="button2" href="{{ U_PF_BBCODE }}">{{ lang('ACP_PORTFOLIO_PFBBCODE_INSTALL') }}</a>
+</div>
+
+<form id="acp_portfolio_settings" method="post" action="{{ U_ACTION }}">
+	{% for legend in PF_LEGENDS %}
+	<fieldset>
+		<legend>{{ legend.title }}</legend>
+		{% for item in legend.items %}
+		<dl>
+			<dt><label for="{{ item.key }}">{{ item.label }}{{ lang('COLON') }}</label>{% if item.explain %}<br><span>{{ item.explain }}</span>{% endif %}</dt>
+			<dd>
+				{% if item.type == 'bool' %}
+				<label><input type="radio" class="radio" name="{{ item.key }}" id="{{ item.key }}" value="1"{% if item.value %} checked{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="{{ item.key }}" value="0"{% if not item.value %} checked{% endif %}> {{ lang('NO') }}</label>
+				{% elseif item.type == 'visibilities' %}
+				<span class="pf-acp-choices">{% for choice in item.choices %}<label><input type="checkbox" name="{{ item.key }}[]" value="{{ choice.value }}"{% if choice.checked %} checked{% endif %}> {{ choice.label }}{% if choice.explain %} <small>({{ choice.explain }})</small>{% endif %}</label>{% endfor %}</span>
+				{% elseif item.type == 'visibility' %}
+				<select name="{{ item.key }}" id="{{ item.key }}">{% for choice in item.choices %}<option value="{{ choice.value }}"{% if choice.checked %} selected{% endif %}>{{ choice.label }}</option>{% endfor %}</select>
+				{% elseif item.type == 'reactions' %}
+				<span class="pf-acp-reactions">{% for choice in item.choices %}<label><input type="checkbox" name="{{ item.key }}[]" value="{{ choice.value }}"{% if choice.checked %} checked{% endif %}> <span class="pf-emoji">{{ choice.emoji }}</span> {{ choice.label }}</label>{% endfor %}</span>
+				{% elseif item.type == 'int' %}
+				<input type="number" name="{{ item.key }}" id="{{ item.key }}" value="{{ item.value }}" min="{{ item.min }}" max="{{ item.max }}">
+				{% else %}
+				<input type="text" class="inputbox autowidth" size="40" name="{{ item.key }}" id="{{ item.key }}" value="{{ item.value }}">
+				{% endif %}
+			</dd>
+		</dl>
+		{% endfor %}
+	</fieldset>
+	{% endfor %}
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}">&nbsp;
+		<input class="button2" type="reset" id="reset" name="reset" value="{{ lang('RESET') }}">
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+{% include 'overall_footer.html' %}

@@ -1,0 +1,11 @@
+{
+	"stable": {
+		"1.8": {
+			"current": "1.8.6",
+			"download": "https://github.com/verturin/portfolio/releases",
+			"announcement": "https://github.com/verturin/portfolio",
+			"eol": null,
+			"security": false
+		}
+	}
+}
