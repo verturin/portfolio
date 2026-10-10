@@ -363,11 +363,16 @@ abstract class base
 	/**
 	 * Options de liste déroulante pour les albums où l'utilisateur peut envoyer des photos.
 	 */
-	protected function upload_targets($exclude = 0)
+	/**
+	 * @param int      $exclude  Album à ne pas proposer
+	 * @param int|array|null $owner_id Pour un déplacement : seulement les albums de ce(s) propriétaire(s) (v1.9.1)
+	 */
+	protected function upload_targets($exclude = 0, $owner_id = null)
 	{
 		$options = [];
-		$tree = $this->albums->flat_tree(function ($album) {
-			return $this->access->can_upload($album);
+		$owners = $owner_id === null ? null : array_unique(array_map('intval', (array) $owner_id));
+		$tree = $this->albums->flat_tree(function ($album) use ($owners) {
+			return ($owners === null || in_array((int) $album['owner_id'], $owners, true)) && $this->access->can_upload($album);
 		}, 0);
 		$this->presenter->load_users(array_map(function ($node) {
 			return (int) $node['album']['owner_id'];
@@ -381,11 +386,35 @@ abstract class base
 			$options[] = [
 				'id'		=> $id,
 				'name'		=> str_repeat('— ', $node['depth']) . $node['album']['album_name'],
-				'owner'		=> (int) $node['album']['owner_id'] ? $this->presenter->username($node['album']['owner_id'], 'username') : '',
+				'owner'		=> ($owners === null || count($owners) > 1) && (int) $node['album']['owner_id'] ? $this->presenter->username($node['album']['owner_id'], 'username') : '',
 			];
 		}
 
 		return $options;
+	}
+
+	/**
+	 * Une photo ne se déplace que dans le même portfolio (albums et sous-albums du propriétaire de l'album),
+	 * ou vers les albums de la personne qui l'a postée. Jamais vers l'album d'un autre membre (v1.9.1).
+	 */
+	protected function same_owner(array $from, array $to, ?array $photo = null)
+	{
+		return (int) $from['owner_id'] === (int) $to['owner_id']
+			|| ($photo && (int) $photo['user_id'] > ANONYMOUS && (int) $to['owner_id'] === (int) $photo['user_id']);
+	}
+
+	/**
+	 * Propriétaires dont les albums sont proposés pour déplacer cette photo.
+	 */
+	protected function move_owners(array $album, ?array $photo = null)
+	{
+		$owners = [(int) $album['owner_id']];
+		if ($photo && (int) $photo['user_id'] > ANONYMOUS)
+		{
+			$owners[] = (int) $photo['user_id'];
+		}
+
+		return $owners;
 	}
 
 	protected function visibility_options($selected, $personal = true, array $allowed = [])

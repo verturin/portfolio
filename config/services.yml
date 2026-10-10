@@ -112,6 +112,21 @@ services:
             - '%core.table_prefix%'
             - '%core.root_path%'
 
+    verturin.portfolio.departed:
+        class: verturin\portfolio\service\departed
+        arguments:
+            - '@dbal.conn'
+            - '@dbal.tools'
+            - '@verturin.portfolio.settings'
+            - '@user'
+            - '@verturin.portfolio.albums'
+            -
+                departed: '%verturin.portfolio.tables.departed%'
+                albums: '%verturin.portfolio.tables.albums%'
+                photos: '%verturin.portfolio.tables.photos%'
+                members: '%verturin.portfolio.tables.members%'
+            - '%core.table_prefix%'
+
     verturin.portfolio.bbcode:
         class: verturin\portfolio\service\bbcode
         arguments:
@@ -137,6 +152,7 @@ services:
         class: verturin\portfolio\service\presenter
         calls:
             - [set_watermark, ['@verturin.portfolio.watermark']]
+            - [set_departed, ['@verturin.portfolio.departed']]
         arguments:
             - '@controller.helper'
             - '@user'
@@ -227,6 +243,7 @@ services:
             - [set_migrator, ['@verturin.portfolio.gallery_migrator']]
             - [set_bbcode, ['@verturin.portfolio.bbcode']]
             - [set_pages, ['@verturin.portfolio.pages', '@verturin.portfolio.forum_link']]
+            - [set_departed, ['@verturin.portfolio.departed']]
         arguments:
             - '@verturin.portfolio.settings'
             - '@template'
@@ -259,6 +276,7 @@ services:
         calls:
             - [set_portfolio, ['@verturin.portfolio.access', '@verturin.portfolio.albums']]
             - [set_display, ['@verturin.portfolio.photos', '@verturin.portfolio.presenter']]
+            - [set_departed, ['@verturin.portfolio.departed']]
         tags:
             - { name: event.listener }
 

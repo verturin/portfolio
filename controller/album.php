@@ -95,7 +95,7 @@ class album extends base
 			'PF_CAN_MANAGE'		=> $can_manage,
 			'PF_CAN_BULK'		=> $can_bulk,
 			'PF_CAN_APPROVE'	=> $this->access->can_approve() || $can_manage,
-			'PF_MOVE_TARGETS'	=> $can_bulk ? $this->upload_targets($album_id) : [],
+			'PF_MOVE_TARGETS'	=> $can_bulk ? $this->upload_targets($album_id, (int) $album['owner_id']) : [],
 			'U_PF_UPLOAD'		=> $this->access->can_upload($album) ? $this->route('upload', ['album_id' => $album_id]) : '',
 			'U_PF_EDIT'			=> $can_manage ? $this->route('album_edit', ['album_id' => $album_id]) : '',
 			'U_PF_DELETE'		=> $this->access->can_delete_album($album) ? $this->route('album_delete', ['album_id' => $album_id]) : '',
@@ -793,8 +793,8 @@ class album extends base
 					$this->deny();
 				}
 
-				$allowed = array_keys(array_filter($selected, function ($photo) use ($album) {
-					return $this->access->can_move_photo($album, $photo);
+				$allowed = array_keys(array_filter($selected, function ($photo) use ($album, $target) {
+					return $this->access->can_move_photo($album, $photo) && $this->same_owner($album, $target, $photo);
 				}));
 				$count = $this->photos->move($allowed, (int) $target['album_id']);
 

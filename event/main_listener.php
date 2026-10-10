@@ -53,6 +53,7 @@ class main_listener implements EventSubscriberInterface
 			'core.viewonline_overwrite_location'	=> 'viewonline',
 			'core.memberlist_view_profile'			=> 'profile',
 			'core.viewtopic_modify_post_row'		=> 'miniprofile',
+			'core.delete_user_before'				=> 'user_deleted',
 		];
 	}
 
@@ -231,5 +232,48 @@ class main_listener implements EventSubscriberInterface
 		$post_row['PORTFOLIO_PHOTOS'] = $counts[$poster_id]['photos'];
 		$post_row['U_PORTFOLIO'] = $this->helper->route('verturin_portfolio_user', ['user_id' => $poster_id]);
 		$event['post_row'] = $post_row;
+	}
+
+	/** @var \verturin\portfolio\service\departed */
+	protected $departed;
+
+	public function set_departed(\verturin\portfolio\service\departed $departed)
+	{
+		$this->departed = $departed;
+	}
+
+	/**
+	 * Un membre quitte le forum (ACP, élagage des inactifs, extension de nettoyage…) : ses albums sont
+	 * rattachés au membre repreneur et ses photos restent signées de son nom (v1.9.0).
+	 */
+	public function user_deleted($event)
+	{
+		if (!$this->departed)
+		{
+			return;
+		}
+
+		$users = [];
+		foreach ((array) $event['user_rows'] as $user_id => $row)
+		{
+			$users[(int) $user_id] = isset($row['username']) ? (string) $row['username'] : '';
+		}
+		if (!$users)
+		{
+			return;
+		}
+
+		$this->language->add_lang('common', 'verturin/portfolio');
+		$language = $this->language;
+		$this->departed->on_delete(
+			$users,
+			(string) $event['mode'],
+			function ($username) use ($language) {
+				return $language->lang('PORTFOLIO_DEPARTED_ALBUM', $username);
+			},
+			function ($username) use ($language) {
+				return $language->lang('PORTFOLIO_DEPARTED_REASON', $username);
+			}
+		);
 	}
 }

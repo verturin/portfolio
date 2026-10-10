@@ -1,0 +1,93 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+<h1>{{ lang('ACP_PORTFOLIO_DEPARTED') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_DEPARTED_EXPLAIN') }}</p>
+
+<form id="acp_portfolio_departed" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_DEPARTED_RULES') }}</legend>
+		<dl>
+			<dt><label for="heir_name">{{ lang('ACP_PORTFOLIO_HEIR') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_HEIR_EXPLAIN') }}</span></dt>
+			<dd>
+				<input type="text" class="inputbox autowidth" size="30" name="heir_name" id="heir_name" value="{{ PF_HEIR_NAME }}" placeholder="{{ lang('ACP_PORTFOLIO_HEIR_PLACEHOLDER') }}">
+				<a href="{{ U_FIND_USERNAME }}" onclick="find_username(this.href); return false;">{{ lang('FIND_USERNAME') }}</a>
+				<br><small>{{ lang('ACP_PORTFOLIO_HEIR_CURRENT') }}{{ lang('COLON') }} <strong>{{ PF_HEIR_EFFECTIVE }}</strong>{% if PF_HEIR_DEFAULT %} ({{ lang('ACP_PORTFOLIO_HEIR_FOUNDER') }}){% endif %}</small>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('ACP_PORTFOLIO_DEPARTED_MODE') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_DEPARTED_MODE_EXPLAIN') }}</span></dt>
+			<dd class="pf-acp-stack">
+				{% for mode in ['transfer', 'follow', 'trash'] %}
+				<label><input type="radio" class="radio" name="departed_mode" value="{{ mode }}"{% if PF_DEPARTED_MODE == mode %} checked{% endif %}> {{ lang('ACP_PORTFOLIO_DEPARTED_' ~ mode|upper) }}</label>
+				{% endfor %}
+			</dd>
+		</dl>
+	</fieldset>
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}">
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+<h2>{{ lang('ACP_PORTFOLIO_ORPHANS') }}</h2>
+<p>{{ lang('ACP_PORTFOLIO_ORPHANS_EXPLAIN') }}</p>
+
+{% if PF_ORPHANS|length %}
+{% if PF_ADOPTABLE > 1 %}<p class="skin-actions"><a class="button1" href="{{ U_PF_ADOPT_ALL }}">{{ lang('ACP_PORTFOLIO_ADOPT_ALL', PF_ADOPTABLE) }}</a></p>{% endif %}
+<table class="table1 zebra-table skin-log">
+	<thead>
+		<tr>
+			<th>{{ lang('ACP_PORTFOLIO_ORPHAN_MEMBER') }}</th>
+			<th>{{ lang('PORTFOLIO_STAT_ALBUMS') }}</th>
+			<th>{{ lang('PORTFOLIO_STAT_PHOTOS') }}</th>
+			<th>{{ lang('ACTION') }}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for row in PF_ORPHANS %}
+		<tr>
+			<td><strong>{{ row.name }}</strong> <span class="skin-status">ID {{ row.id }}</span></td>
+			<td>{{ row.albums }}</td>
+			<td>{{ row.photos }}</td>
+			<td>
+				<form method="post" action="{{ row.u_adopt }}" class="pf-acp-adopt">
+					<input type="text" class="inputbox autowidth" size="18" name="to_name" placeholder="{{ PF_HEIR_USERNAME }}" aria-label="{{ lang('ACP_PORTFOLIO_ADOPT_TO') }}">
+					<label><input type="checkbox" name="sign_photos" value="1"{% if not row.albums %} checked{% endif %}> {{ lang('ACP_PORTFOLIO_SIGN_PHOTOS') }}</label>
+					<button class="button2" type="submit">{{ lang(row.albums ? 'ACP_PORTFOLIO_ADOPT' : 'ACP_PORTFOLIO_SIGN') }}</button>
+				</form>
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% else %}
+<div class="skin-note">{{ lang('ACP_PORTFOLIO_ORPHANS_NONE') }}</div>
+{% endif %}
+
+{% if PF_HISTORY|length %}
+<h2>{{ lang('ACP_PORTFOLIO_DEPARTED_HISTORY') }}</h2>
+<table class="table1 zebra-table skin-log">
+	<thead>
+		<tr>
+			<th>{{ lang('ACP_PORTFOLIO_ORPHAN_MEMBER') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_HEIR') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_DEPARTED_ALBUM') }}</th>
+			<th>{{ lang('TIME') }}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for row in PF_HISTORY %}
+		<tr>
+			<td>{{ row.name }}</td>
+			<td>{{ row.heir }}</td>
+			<td>{% if row.u_album %}<a href="{{ row.u_album }}">{{ row.album }}</a>{% else %}—{% endif %}</td>
+			<td>{{ row.time }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% endif %}
+
+{% include 'overall_footer.html' %}

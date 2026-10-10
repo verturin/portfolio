@@ -51,6 +51,8 @@ class moderation extends base
 			$item['deleted_time'] = $this->user->format_date((int) $row['deleted_time']);
 			$item['reason'] = $row['deleted_reason'];
 			$item['u_restore'] = $this->access->can_restore_photo($row, $album) ? $this->route('photo_restore', ['photo_id' => (int) $row['photo_id']]) : '';
+			// Album disparu : on ne restaure que dans les albums de l'auteur de la photo (v1.9.1)
+			$item['targets'] = !$album && $item['u_restore'] ? $this->upload_targets(0, (int) $row['user_id']) : [];
 			$items[] = $item;
 		}
 
@@ -59,7 +61,6 @@ class moderation extends base
 		return $this->render('portfolio_trash.html', $this->language->lang('PORTFOLIO_TRASH'), [
 			'PF_ITEMS'		=> $items,
 			'PF_TOTAL'		=> $total,
-			'PF_TARGETS'	=> $this->upload_targets(),
 			'PF_CAN_RESTORE' => $this->access->acl('u_portfolio_restore') || $this->access->can_admin_trash(),
 			'PF_PAGINATION'	=> $this->presenter->pagination('trash', [], $total, $per_page, $start),
 		]);

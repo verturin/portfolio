@@ -9,12 +9,22 @@
 <div class="skin-note skin-note-warn">{{ lang('ACP_PORTFOLIO_MIGRATE_NO_GALLERY') }}</div>
 {% endif %}
 
+{% if PF_INCIDENT %}
+<div class="skin-note skin-note-error">
+	<strong>{{ lang('ACP_PORTFOLIO_MIG_INCIDENT') }}</strong> ({{ PF_INCIDENT.time }})<br>
+	{{ lang('ACP_PORTFOLIO_MIG_INCIDENT_PHOTO', PF_INCIDENT.image_id, PF_INCIDENT.title, PF_INCIDENT.file) }}<br>
+	{% if PF_INCIDENT.killed %}{{ lang('ACP_PORTFOLIO_MIG_INCIDENT_KILLED') }}{% else %}<code>{{ PF_INCIDENT.message }}</code> <small>({{ PF_INCIDENT.where }} · memory_limit {{ PF_INCIDENT.memory }} · {{ PF_INCIDENT.peak }})</small>{% endif %}<br>
+	{{ lang('ACP_PORTFOLIO_MIG_INCIDENT_NEXT') }}
+	<form method="post" action="{{ U_ACTION }}" style="display:inline"><button class="button2" type="submit" name="action" value="clear_incident">{{ lang('ACP_PORTFOLIO_MIG_INCIDENT_CLEAR') }}</button>{{ S_FORM_TOKEN }}</form>
+</div>
+{% endif %}
+
 <div class="pf-acp-cards">
 	<div>{{ lang('ACP_PORTFOLIO_MIG_GALLERY_IMAGES') }}<b>{{ PF_MIG.images }}</b></div>
 	<div>{{ lang('ACP_PORTFOLIO_MIG_GALLERY_ALBUMS') }}<b>{{ PF_MIG.albums }}</b></div>
 	<div>{{ lang('ACP_PORTFOLIO_MIG_DONE_IMAGES') }}<b>{{ PF_MIG.migrated_images }}</b></div>
 	<div>{{ lang('ACP_PORTFOLIO_MIG_DONE_ALBUMS') }}<b>{{ PF_MIG.migrated_albums }}</b></div>
-	<div{% if PF_MIG.missing_files %} class="is-warn"{% endif %}>{{ lang('ACP_PORTFOLIO_MIG_MISSING') }}<b>{{ PF_MIG.missing_files }}</b></div>
+	<div{% if PF_MIG.missing_files %} class="is-warn"{% endif %}>{{ lang('ACP_PORTFOLIO_MIG_MISSING') }}<b>{{ PF_MIG.missing_files }}</b>{% if PF_MIG.missing_files %}<a class="pf-acp-card__link" href="{{ U_PF_MISSING }}">{{ lang('ACP_PORTFOLIO_MIG_MISSING_SHOW') }}</a>{% endif %}</div>
 </div>
 
 <p class="skin-detail">
@@ -22,6 +32,57 @@
 	· BBCode [image] : {% if PF_MIG.bbcode == 'portfolio' %}<span class="skin-status skin-ok">{{ lang('ACP_PORTFOLIO_BBCODE_PORTFOLIO') }}</span>{% elseif PF_MIG.bbcode == 'gallery' %}<span class="skin-status skin-info">{{ lang('ACP_PORTFOLIO_BBCODE_GALLERY') }}</span>{% else %}<span class="skin-status skin-failed">{{ lang('ACP_PORTFOLIO_BBCODE_MISSING') }}</span>{% endif %}
 	· {{ lang('ACP_PORTFOLIO_MIG_REWRITTEN', PF_MIG.rewritten_posts, PF_MIG.rewritten_sigs) }}
 </p>
+<p class="skin-detail">
+	Portfolio <strong>{{ PF_VERSION }}</strong> · PHP {{ PF_LIMITS.php }} · memory_limit <strong>{{ PF_LIMITS.memory_limit }}</strong>{% if not PF_LIMITS.can_raise %} <span class="skin-status skin-warn">{{ lang('ACP_PORTFOLIO_MIG_MEM_FIXED') }}</span>{% endif %} · max_execution_time {{ PF_LIMITS.max_time }} s · GD {{ PF_LIMITS.gd }}
+</p>
+
+{% if PF_MISSING is not null %}
+<div id="pf-missing">
+<h2>{{ lang('ACP_PORTFOLIO_MIG_MISSING_TITLE') }}</h2>
+<p>{{ lang('ACP_PORTFOLIO_MIG_MISSING_EXPLAIN') }}</p>
+{% if PF_MISSING|length %}
+<form method="post" action="{{ U_ACTION }}" id="pf-missing-form">
+<table class="table1 zebra-table skin-log">
+	<thead>
+		<tr>
+			<th style="width:1%"><input type="checkbox" aria-label="{{ lang('ACP_PORTFOLIO_MIG_SELECT_ALL') }}" onclick="document.querySelectorAll('#pf-missing-form input[name=&quot;pf_ids[]&quot;]').forEach(function (c) { c.checked = this.checked; }, this);"></th>
+			<th>{{ lang('ACP_PORTFOLIO_MIG_COL_PHOTO') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_MIG_COL_MEMBER') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_MIG_COL_FILE') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_MIG_COL_REASON') }}</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for row in PF_MISSING %}
+		<tr>
+			<td><input type="checkbox" name="pf_ids[]" value="{{ row.id }}" aria-label="{{ row.title }}"></td>
+			<td><strong>{{ row.title }}</strong><br><small>n° {{ row.id }}{% if row.album %} · {{ row.album }}{% endif %}{% if row.time %} · {{ row.time }}{% endif %}</small></td>
+			<td>{{ row.user ?: '—' }}</td>
+			<td>{% if row.path %}<code>{{ row.path }}</code>{% else %}—{% endif %}{% if row.detail %}<br><small>{{ row.detail }}</small>{% endif %}</td>
+			<td><span class="skin-status{% if row.code == 'refused' %} skin-warn{% elseif row.code == 'gone' %}{% else %} skin-failed{% endif %}">{{ row.reason }}</span>{% if row.error %}<br><small><code>{{ row.error }}</code></small>{% endif %}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+<p class="skin-actions pf-acp-adopt">
+	<strong>{{ lang('ACP_PORTFOLIO_MIG_SELECTION') }}</strong>
+	<input type="hidden" name="action" value="missing_selected">
+	<button class="button2" type="submit" name="pf_op" value="retry">{{ lang('ACP_PORTFOLIO_MIG_OP_RETRY') }}</button>
+	<button class="button2" type="submit" name="pf_op" value="assign" title="{{ lang('ACP_PORTFOLIO_MIG_OP_ASSIGN_EXPLAIN') }}">{{ lang('ACP_PORTFOLIO_MIG_OP_ASSIGN', PF_HEIR) }}</button>
+	<button class="button2 is-danger" type="submit" name="pf_op" value="drop" onclick="return confirm(this.getAttribute('data-confirm'));" data-confirm="{{ lang('ACP_PORTFOLIO_MIG_OP_DROP_CONFIRM')|e('html_attr') }}">{{ lang('ACP_PORTFOLIO_MIG_OP_DROP') }}</button>
+	<small>{{ lang('ACP_PORTFOLIO_MIG_HEIR_HINT', U_PF_DEPARTED) }}</small>
+	{{ S_FORM_TOKEN }}
+</p>
+</form>
+<form method="post" action="{{ U_ACTION }}">
+	<p class="skin-actions"><button class="button2" type="submit" name="action" value="retry_missing">{{ lang('ACP_PORTFOLIO_MIG_RETRY') }}</button> <small>{{ lang('ACP_PORTFOLIO_MIG_RETRY_EXPLAIN') }}</small></p>
+	{{ S_FORM_TOKEN }}
+</form>
+{% else %}
+<div class="skin-note">{{ lang('ACP_PORTFOLIO_MIG_MISSING_NONE') }}</div>
+{% endif %}
+</div>
+{% endif %}
 
 <details class="skin-details">
 	<summary><strong>{{ lang('ACP_PORTFOLIO_MIG_HOWTO_TITLE') }}</strong></summary>
@@ -41,6 +102,13 @@
 	{{ lang('ACP_PORTFOLIO_MIG_PROGRESS', PF_PROGRESS.done, PF_PROGRESS.total, PF_PROGRESS.percent) }}
 	<div class="pf-acp-progress"><span style="width: {{ PF_PROGRESS.percent }}%"></span></div>
 	<a href="{{ PF_PROGRESS.u_next }}">{{ lang('ACP_PORTFOLIO_MIG_CONTINUE') }}</a>
+	{% if PF_PROGRESS.failed|length %}
+	<div class="pf-acp-failed">
+		<strong>{{ lang('ACP_PORTFOLIO_MIG_BATCH_FAILED') }}</strong>
+		<ul>{% for row in PF_PROGRESS.failed %}<li>n° {{ row.id }} « {{ row.title }} » : {{ row.reason }}{% if row.message %} — <code>{{ row.message }}</code>{% endif %}</li>{% endfor %}</ul>
+	</div>
+	{% endif %}
+	{% if PF_PROGRESS.set_aside %}<small>{{ lang('ACP_PORTFOLIO_MIG_SET_ASIDE_SO_FAR', PF_PROGRESS.set_aside) }}</small>{% endif %}
 </div>
 {% endif %}
 
@@ -66,6 +134,10 @@
 		<dl>
 			<dt><label for="strip_exif">{{ lang('ACP_PORTFOLIO_MIG_EXIF') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_EXIF_EXPLAIN') }}</span></dt>
 			<dd><label><input type="checkbox" name="strip_exif" id="strip_exif" value="1"{% if PF_STRIP_EXIF %} checked{% endif %}> {{ lang('YES') }}</label></dd>
+		</dl>
+		<dl>
+			<dt><label for="batch_size">{{ lang('ACP_PORTFOLIO_MIG_BATCH') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_BATCH_EXPLAIN') }}</span></dt>
+			<dd><input type="number" name="batch_size" id="batch_size" value="{{ PF_BATCH }}" min="1" max="100"></dd>
 		</dl>
 		<p class="submit-buttons">
 			<button class="button2" type="submit" name="action" value="plan">{{ lang('ACP_PORTFOLIO_MIG_SIMULATE') }}</button>

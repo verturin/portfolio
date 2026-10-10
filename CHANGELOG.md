@@ -1,5 +1,42 @@
 # Journal des versions — Portfolio (verturin/portfolio)
 
+
+### 1.9.6 — 2026-10-10
+- Réglages › Réactions et profils : le nombre de photos affichées en bas du profil se choisit dans une liste (ne pas afficher, 3, 4, 5, 6, 8, 10, 12, 15, 20), **5 par défaut**
+- Bascule phpBB Gallery : une photo dont l'album a été supprimé de la galerie n'est plus refusée. Elle est copiée dans un album « Photos récupérées de la galerie » de son auteur (un seul par membre, visible des membres inscrits). Pour les photos déjà mises de côté, cliquez sur « Réessayer ces photos » puis relancez la bascule
+- Liste des photos non copiées : cases à cocher (et « tout sélectionner ») avec trois actions sur la sélection : **Réessayer**, **Copier chez le repreneur** (copie immédiate dans l'album « Photos récupérées de la galerie » du membre repreneur choisi dans *Membres partis*, qui en devient l'auteur) et **Abandonner** (la photo sort de la liste et du compteur, n'est plus retentée ; son ancien lien affiche « Photo indisponible » ; rien n'est supprimé dans phpBB Gallery)
+
+### 1.9.5 — 2026-10-10
+- **Correctif bascule phpBB Gallery (erreur 500 « Infinite recursion »)** : une arborescence abîmée dans phpBB Gallery (album parent de lui-même, ou deux albums parents l'un de l'autre) faisait tourner la recréation des albums en rond jusqu'à l'arrêt de PHP. Ces albums sont désormais recréés à la racine, et un album illisible ne bloque plus le reste de la bascule. Reproduit puis vérifié corrigé
+- Membres partis : choix du membre qui reçoit les albums ligne par ligne, et option « Signer aussi les photos » pour attribuer ses photos à ce membre (elles portent alors son nom). Les membres partis qui n'ont que des photos, sans album, sont aussi listés
+
+### 1.9.4 — 2026-10-10
+- Bascule phpBB Gallery : dans la simulation et la liste des photos non copiées, le nom affiché est le **pseudo actuel** du membre. S'il a changé de pseudo depuis ses envois, l'ancien est indiqué entre parenthèses (« robert (« bob » dans la galerie) »). Un membre qui a quitté le forum est signalé « membre parti (n° …, n'existe plus sur le forum) » : phpBB Gallery conserve le nom de l'auteur avec chaque photo, même après la suppression du compte
+
+### 1.9.3 — 2026-10-10
+- Bascule phpBB Gallery : **erreur affichée photo par photo**. Chaque lot liste les photos mises de côté (raison et message d'erreur exact), le message de fin donne le nombre de photos non copiées avec un lien vers la liste détaillée, qui affiche aussi l'erreur de chacune
+- Si PHP s'arrête en pleine copie (erreur fatale, mémoire épuisée), l'erreur exacte, le fichier et la photo concernée sont enregistrés et affichés en haut de la page de bascule. Une page coupée par le serveur web sans message PHP est aussi détectée (photo restée « en cours »)
+- Page de bascule : version du Portfolio, `memory_limit` (et si le Portfolio peut l'augmenter), `max_execution_time`, version de GD ; nombre de photos par lot réglable (10 par défaut au lieu de 25)
+- Les albums personnels déjà basculés ne sont plus réenregistrés à chaque lot (lots plus rapides sur les grosses galeries)
+- Nouvelle colonne `legacy_error` dans `phpbb_portfolio_legacy`
+
+### 1.9.2 — 2026-10-10
+- **Correctif bascule phpBB Gallery** : erreur 500 au lancement de la bascule sur une grosse galerie (la simulation fonctionnait). Un lot de 25 grandes photos dépassait le délai du serveur web. Les lots sont désormais limités à ~12 secondes et s'enchaînent tout seuls
+- Chaque photo est notée « en cours » avant d'être traitée : si le serveur s'arrête dessus (mémoire, délai), le lot suivant passe à la suite au lieu de replanter sur la même photo
+- Photo trop grande pour la mémoire PHP que l'hébergeur autorise : refusée proprement (bascule et envois) au lieu d'une erreur 500. Raisons « mémoire » et « arrêt du serveur » dans la liste des fichiers introuvables
+- La bascule ne refuse plus les photos de la galerie plus lourdes que le poids maximal des envois du Portfolio
+- Nouvelle colonne `legacy_note` (raison de l'échec) dans `phpbb_portfolio_legacy`
+
+### 1.9.1 — 2026-10-10
+- **Correctif** : « Déplacer vers un autre album » proposait les albums des autres membres (notamment à un administrateur, qui peut envoyer partout). Une photo ne se déplace plus que dans les albums et sous-albums du même portfolio, ou vers les albums de la personne qui l'a postée ; règle vérifiée aussi côté serveur (fiche photo, modification, déplacement groupé). La restauration d'une photo dont l'album a disparu ne propose que les albums de son auteur
+- Bascule phpBB Gallery : le compteur « Fichiers introuvables » mène à la liste détaillée (photo, membre, album, chemin attendu, raison) avec un bouton « Réessayer ces photos »
+
+### 1.9.0 — 2026-10-10
+- **Membres partis** : quand un membre est supprimé (ACP, élagage des inactifs, extension de nettoyage), ses albums sont rattachés à un **membre repreneur choisi par son nom dans l'ACP** (à défaut, le premier fondateur), rangés dans un album « Photos de … ». Ses photos et commentaires restent signés de son nom, sans lien. Les albums « Mes amis » deviennent privés, les partages sont conservés, les anciens liens vers son portfolio mènent à l'album de rangement
+- Réglage du sort de ses photos : toujours conservées, suivre le choix « Conserver / Supprimer les messages », ou toujours à la corbeille
+- Nouvelle page **ACP › Membres partis** : choix du repreneur, liste des photos orphelines existantes (membres supprimés avant cette version, ancienne galerie) avec le nom retrouvé dans phpBB Gallery, rattachement membre par membre ou en une fois, historique
+- Nouvelle table `phpbb_portfolio_departed`
+
 ### 1.8.6 — 2026-10-10
 - Correctif important : le service de réglages du Portfolio héritait de `\phpbb\config\config`. Les extensions qui utilisent l'« autowiring » (par ex. dmzx/scheduledmaintenance) ne savaient plus quel service choisir : « Cannot autowire service … references class phpbb\config\config », et phpBB désactivait temporairement toutes les extensions. Les réglages sont désormais une classe indépendante ; reproduit puis vérifié corrigé avec une extension en autowiring
 - Coexistence avec phpBB Gallery vérifiée (elle n'était pas en cause)
@@ -118,4 +155,3 @@
 - Tables et réglages propres à l'extension (`phpbb_portfolio_*`)
 - ACP : réglages, albums et droits par groupe, corbeille
 - Langues : français et anglais
-

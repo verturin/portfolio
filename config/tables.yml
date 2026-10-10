@@ -12,3 +12,4 @@ parameters:
     verturin.portfolio.tables.reactions: '%core.table_prefix%portfolio_reactions'
     verturin.portfolio.storage: '%core.root_path%files/portfolio/'
     verturin.portfolio.tables.pages: '%core.table_prefix%portfolio_pages'
+    verturin.portfolio.tables.departed: '%core.table_prefix%portfolio_departed'

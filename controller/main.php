@@ -169,6 +169,12 @@ class main extends base
 
 		if (!$this->presenter->user_exists($user_id))
 		{
+			// Membre parti : ses albums ont été rattachés à un repreneur (v1.9.0)
+			$album_id = $this->presenter->departed_album($user_id);
+			if ($album_id && $this->albums->get($album_id))
+			{
+				return new RedirectResponse($this->helper->route('verturin_portfolio_album', ['album_id' => $album_id], false), 301);
+			}
 			$this->not_found('PORTFOLIO_USER_NOT_FOUND');
 		}
 		$username = $this->presenter->username($user_id, 'username');

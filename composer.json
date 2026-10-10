@@ -3,7 +3,7 @@
 	"type": "phpbb-extension",
 	"description": "Portfolio — galerie photos moderne pour phpBB : albums et sous-albums, albums partagés entre membres, notation, commentaires, corbeille avec validation par l'administrateur, suppression EXIF et droits par groupe sur toutes les fonctions.",
 	"homepage": "https://github.com/verturin/portfolio",
-	"version": "1.8.6",
+	"version": "1.9.6",
 	"time": "2026-10-09",
 	"keywords": ["phpbb", "extension", "gallery", "portfolio", "photos", "albums"],
 	"license": "GPL-2.0-only",
