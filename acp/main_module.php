@@ -46,6 +46,12 @@ class main_module
 				$controller->pages();
 			break;
 
+			case 'departed':
+				$this->tpl_name = 'acp_portfolio_departed';
+				$this->page_title = $language->lang('ACP_PORTFOLIO_DEPARTED');
+				$controller->departed();
+			break;
+
 			case 'migrate':
 				$this->tpl_name = 'acp_portfolio_migrate';
 				$this->page_title = $language->lang('ACP_PORTFOLIO_MIGRATE');

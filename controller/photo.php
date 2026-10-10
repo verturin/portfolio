@@ -226,7 +226,7 @@ class photo extends base
 			}
 			if ($this->access->can_move_photo($album, $photo))
 			{
-				$move_targets = $this->upload_targets((int) $album['album_id']);
+				$move_targets = $this->upload_targets((int) $album['album_id'], $this->move_owners($album, $photo));
 				add_form_key('verturin_portfolio_move', '_MOVE');
 			}
 		}
@@ -269,7 +269,7 @@ class photo extends base
 			'U_PF_FIRST'		=> $photo_url($nav['first']),
 			'U_PF_LAST'			=> $photo_url($nav['last']),
 			'U_PF_BACK_ALBUM'	=> $album_url,
-			'PF_TARGETS'		=> $can_restore && !$album ? $this->upload_targets() : [],
+			'PF_TARGETS'		=> $can_restore && !$album ? $this->upload_targets(0, (int) $photo['user_id']) : [],
 			'U_PF_PREV'			=> $photo_url($nav['prev']),
 			'U_PF_NEXT'			=> $photo_url($nav['next']),
 			'U_PF_EDIT'			=> $can_edit ? $this->route('photo_edit', ['photo_id' => $photo_id]) : '',
@@ -480,7 +480,7 @@ class photo extends base
 		}
 
 		$target = $this->albums->get($this->request->variable('target_album', 0));
-		if (!$target || (int) $target['album_id'] === (int) $album['album_id'] || !$this->access->can_upload($target))
+		if (!$target || (int) $target['album_id'] === (int) $album['album_id'] || !$this->same_owner($album, $target, $photo) || !$this->access->can_upload($target))
 		{
 			$this->deny();
 		}
@@ -537,7 +537,7 @@ class photo extends base
 				if ($target_id !== (int) $album['album_id'] && $this->access->can_move_photo($album, $photo))
 				{
 					$target = $this->albums->get($target_id);
-					if ($target && $this->access->can_upload($target))
+					if ($target && $this->same_owner($album, $target, $photo) && $this->access->can_upload($target))
 					{
 						$this->photos->move([$photo_id], $target_id);
 					}
@@ -550,7 +550,7 @@ class photo extends base
 		add_form_key('verturin_portfolio_photo_edit');
 		$decoded = generate_text_for_edit($photo['photo_desc'], $photo['photo_desc_uid'], (int) $photo['photo_desc_options']);
 
-		$targets = $this->access->can_move_photo($album, $photo) ? $this->upload_targets() : [];
+		$targets = $this->access->can_move_photo($album, $photo) ? $this->upload_targets(0, $this->move_owners($album, $photo)) : [];
 		$has_current = false;
 		foreach ($targets as &$target)
 		{
@@ -633,7 +633,7 @@ class photo extends base
 		if (!$album)
 		{
 			$target_album = $this->albums->get($this->request->variable('target_album', 0));
-			if (!$target_album || !$this->access->can_upload($target_album))
+			if (!$target_album || (int) $target_album['owner_id'] !== (int) $photo['user_id'] || !$this->access->can_upload($target_album))
 			{
 				$this->deny('PORTFOLIO_RESTORE_NEED_ALBUM');
 			}

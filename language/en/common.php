@@ -430,4 +430,16 @@ $lang = array_merge($lang, [
 	// v1.8.5
 	'PORTFOLIO_POSTED_BY'						=> 'posted by %s',
 	'PORTFOLIO_POSTED_BY_SHORT'				=> 'by',
+	// v1.9.0
+	'PORTFOLIO_DEPARTED_ALBUM'					=> 'Photos by %s',
+	'PORTFOLIO_DEPARTED_REASON'					=> 'Member deleted: %s',
+	'PORTFOLIO_DEPARTED_UNKNOWN'				=> 'Former member #%d',
+	'PORTFOLIO_DEPARTED_TITLE'					=> 'This member has left the board',
+	'LOG_PORTFOLIO_ADOPTED'						=> '<strong>Portfolio: albums of %1$d departed member(s) handed over to</strong><br>» %2$s',
+	// v1.9.1
+	'LOG_PORTFOLIO_MIG_RETRY'					=> '<strong>Portfolio: %d gallery photo(s) queued again for migration</strong>',
+	// v1.9.2
+	'PORTFOLIO_ERR_MEMORY'						=> 'This image is too large for the memory your host allows PHP. Resize it before uploading.',
+	'LOG_PORTFOLIO_MIG_DROPPED'					=> '<strong>Portfolio: %d gallery photo(s) given up</strong>',
+	'LOG_PORTFOLIO_MIG_ASSIGNED'				=> '<strong>Portfolio: %1$d gallery photo(s) copied to</strong><br>» %2$s',
 ]);

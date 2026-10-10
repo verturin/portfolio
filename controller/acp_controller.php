@@ -103,7 +103,7 @@ class acp_controller
 			'portfolio_reactions_list'		=> ['reactions'],
 			'portfolio_profile_link'		=> ['bool'],
 			'portfolio_miniprofile_link'	=> ['bool'],
-			'portfolio_profile_photos'		=> ['int', 0, 20],
+			'portfolio_profile_photos'		=> ['select', [0, 3, 4, 5, 6, 8, 10, 12, 15, 20], 5],
 			'portfolio_quickview'			=> ['bool'],
 			'portfolio_embed'				=> ['bool'],
 		],
@@ -217,6 +217,10 @@ class acp_controller
 						case 'visibility':
 							$value = min(4, max(0, $this->request->variable($key, 1)));
 						break;
+						case 'select':
+							$value = $this->request->variable($key, (int) $def[2]);
+							$value = in_array($value, $def[1], true) ? $value : (int) $def[2];
+						break;
 						case 'reactions':
 							$picked = array_intersect(array_keys(\verturin\portfolio\service\photo_manager::REACTIONS), $this->request->variable($key, ['']));
 							$value = implode(',', $picked ?: ['like']);
@@ -253,6 +257,17 @@ class acp_controller
 						];
 					}
 				}
+				if ($def[0] === 'select')
+				{
+					foreach ($def[1] as $option)
+					{
+						$choices[] = [
+							'value'		=> $option,
+							'label'		=> $option ? $option : $this->language->lang('ACP_PORTFOLIO_SELECT_NONE'),
+							'checked'	=> (int) $this->config[$key] === $option,
+						];
+					}
+				}
 				if ($def[0] === 'reactions')
 				{
 					$current = explode(',', (string) $this->config[$key]);
@@ -266,8 +281,8 @@ class acp_controller
 					'type'		=> $def[0],
 					'choices'	=> $choices,
 					'value'		=> $this->config[$key],
-					'min'		=> isset($def[1]) ? $def[1] : '',
-					'max'		=> isset($def[2]) ? $def[2] : '',
+					'min'		=> isset($def[1]) && !is_array($def[1]) ? $def[1] : '',
+					'max'		=> isset($def[2]) && $def[0] !== 'select' ? $def[2] : '',
 					'label'		=> $this->language->lang($lang),
 					'explain'	=> $this->language->is_set($lang . '_EXPLAIN') ? $this->language->lang($lang . '_EXPLAIN') : '',
 				];
@@ -350,6 +365,167 @@ class acp_controller
 	{
 		$this->pages = $pages;
 		$this->forum_link = $forum_link;
+	}
+
+	/** @var \verturin\portfolio\service\departed */
+	protected $departed;
+
+	public function set_departed(\verturin\portfolio\service\departed $departed)
+	{
+		$this->departed = $departed;
+	}
+
+	/* ------------------------------------------------------------------
+	 * Membres partis : repreneur et albums orphelins (v1.9.0)
+	 * ------------------------------------------------------------------ */
+
+	public function departed()
+	{
+		$form_key = 'verturin_portfolio_acp_departed';
+		add_form_key($form_key);
+		$action = $this->request->variable('action', '');
+
+		if ($this->request->is_set_post('submit'))
+		{
+			if (!check_form_key($form_key))
+			{
+				trigger_error($this->language->lang('FORM_INVALID') . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+
+			$name = trim($this->request->variable('heir_name', '', true));
+			$heir_id = 0;
+			if ($name !== '')
+			{
+				$heir_id = $this->user_id_from_name($name);
+				if (!$heir_id)
+				{
+					trigger_error($this->language->lang('ACP_PORTFOLIO_HEIR_NOT_FOUND', $name) . adm_back_link($this->u_action), E_USER_WARNING);
+				}
+			}
+			$mode = $this->request->variable('departed_mode', 'transfer');
+			if (!in_array($mode, ['transfer', 'follow', 'trash'], true))
+			{
+				$mode = 'transfer';
+			}
+
+			$this->config->set('portfolio_heir_id', $heir_id);
+			$this->config->set('portfolio_departed_mode', $mode);
+			$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_SETTINGS');
+			trigger_error($this->language->lang('PORTFOLIO_SETTINGS_SAVED') . adm_back_link($this->u_action));
+		}
+
+		if ($action === 'adopt' || $action === 'adopt_all')
+		{
+			$scan = $this->departed->scan();
+			$target = $this->request->variable('user_id', 0);
+			$sign = (bool) $this->request->variable('sign_photos', 0);
+			$to_name = trim($this->request->variable('to_name', '', true));
+			$heir_id = $this->departed->heir_id();
+			if ($to_name !== '')
+			{
+				$heir_id = $this->user_id_from_name($to_name);
+				if (!$heir_id)
+				{
+					trigger_error($this->language->lang('ACP_PORTFOLIO_HEIR_NOT_FOUND', $to_name) . adm_back_link($this->u_action), E_USER_WARNING);
+				}
+			}
+			$todo = array_filter($scan, function ($row) use ($action, $target, $sign) {
+				return ($row['albums'] > 0 || ($sign && $row['photos'] > 0)) && ($action === 'adopt_all' || $row['user_id'] === $target);
+			});
+
+			if (!$todo)
+			{
+				redirect($this->u_action);
+			}
+
+			$heir_name = $this->departed->username_of($heir_id);
+			if (confirm_box(true))
+			{
+				$albums = 0;
+				$photos = 0;
+				foreach ($todo as $row)
+				{
+					$label = $row['username'] !== '' ? $row['username'] : $this->language->lang('PORTFOLIO_DEPARTED_UNKNOWN', $row['user_id']);
+					if ($row['username'] === '')
+					{
+						$this->departed->record($row['user_id'], $label);
+					}
+					if ($row['albums'])
+					{
+						$this->departed->adopt($row['user_id'], $heir_id, $this->language->lang('PORTFOLIO_DEPARTED_ALBUM', $label));
+						$albums += $row['albums'];
+					}
+					if ($sign)
+					{
+						$photos += $this->departed->assign_photos($row['user_id'], $heir_id);
+					}
+				}
+				$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_ADOPTED', false, [count($todo), $heir_name]);
+				trigger_error($this->language->lang('ACP_PORTFOLIO_ADOPT_DONE', count($todo), $albums, $heir_name) . ($sign ? '<br>' . $this->language->lang('ACP_PORTFOLIO_SIGN_DONE', $photos, $heir_name) : '') . adm_back_link($this->u_action));
+			}
+
+			$names = array_map(function ($row) {
+				return $row['username'] !== '' ? $row['username'] : '#' . $row['user_id'];
+			}, $todo);
+			confirm_box(false, $this->language->lang($sign ? 'ACP_PORTFOLIO_ADOPT_SIGN_CONFIRM' : 'ACP_PORTFOLIO_ADOPT_CONFIRM', implode(', ', $names), $heir_name), build_hidden_fields(['action' => $action, 'user_id' => $target, 'sign_photos' => (int) $sign, 'to_name' => $to_name]));
+			redirect($this->u_action);
+		}
+
+		$heir_id = $this->departed->heir_id();
+		$set_heir = (int) $this->config['portfolio_heir_id'];
+		$rows = [];
+		$adoptable = 0;
+		foreach ($this->departed->scan() as $row)
+		{
+			$adoptable += $row['albums'] ? 1 : 0;
+			$rows[] = [
+				'id'		=> $row['user_id'],
+				'name'		=> $row['username'] !== '' ? $row['username'] : $this->language->lang('PORTFOLIO_DEPARTED_UNKNOWN', $row['user_id']),
+				'known'		=> $row['username'] !== '',
+				'albums'	=> $row['albums'],
+				'photos'	=> $row['photos'],
+				'u_adopt'	=> $this->u_action . '&amp;action=adopt&amp;user_id=' . $row['user_id'],
+			];
+		}
+
+		$history = [];
+		foreach ($this->departed->history() as $row)
+		{
+			$album = (int) $row['album_id'] ? $this->albums->get((int) $row['album_id']) : null;
+			$history[] = [
+				'name'		=> $row['username'],
+				'heir'		=> $this->presenter->username((int) $row['heir_id']),
+				'time'		=> $this->user->format_date((int) $row['departed_time']),
+				'album'		=> $album ? $album['album_name'] : '',
+				'u_album'	=> $album ? $this->presenter->route_abs('album', ['album_id' => (int) $album['album_id']]) : '',
+			];
+		}
+
+		$this->template->assign_vars([
+			'PF_HEIR_USERNAME'	=> $this->departed->username_of($heir_id),
+			'PF_HEIR_NAME'		=> $set_heir && $this->departed->user_exists($set_heir) ? $this->departed->username_of($set_heir) : '',
+			'PF_HEIR_EFFECTIVE'	=> $this->presenter->username($heir_id),
+			'PF_HEIR_DEFAULT'	=> !$set_heir || !$this->departed->user_exists($set_heir),
+			'PF_DEPARTED_MODE'	=> (string) $this->config['portfolio_departed_mode'] ?: 'transfer',
+			'PF_ORPHANS'		=> $rows,
+			'PF_ADOPTABLE'		=> $adoptable,
+			'PF_HISTORY'		=> $history,
+			'U_PF_ADOPT_ALL'	=> $this->u_action . '&amp;action=adopt_all',
+			'U_FIND_USERNAME'	=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=searchuser&amp;form=acp_portfolio_departed&amp;field=heir_name&amp;select_single=true'),
+			'U_ACTION'			=> $this->u_action,
+		]);
+	}
+
+	protected function user_id_from_name($name)
+	{
+		$sql = 'SELECT user_id FROM ' . USERS_TABLE . "
+			WHERE username_clean = '" . $this->db->sql_escape(utf8_clean_string($name)) . "'
+				AND user_type <> " . USER_IGNORE;
+		$result = $this->db->sql_query($sql);
+		$user_id = (int) $this->db->sql_fetchfield('user_id');
+		$this->db->sql_freeresult($result);
+
+		return $user_id;
 	}
 
 	/* ------------------------------------------------------------------
@@ -651,6 +827,14 @@ class acp_controller
 		$progress = null;
 		$plan = null;
 		$message = '';
+		$missing = null;
+
+		// Liste des fichiers introuvables (lecture seule, v1.9.1)
+		if ($action === 'missing')
+		{
+			$missing = $this->missing_rows();
+			$action = '';
+		}
 
 		if ($action !== '')
 		{
@@ -672,9 +856,19 @@ class acp_controller
 			{
 				case 'plan':
 					$plan = $this->migrator->plan($users, $include_public);
+					foreach ($plan['per_user'] as &$plan_row)
+					{
+						$plan_row['username'] = $this->member_label($plan_row['user_id'], $plan_row['username']);
+					}
+					unset($plan_row);
 				break;
 
 				case 'run':
+					if ($this->request->is_set_post('batch_size'))
+					{
+						$this->config->set('portfolio_migrate_batch', min(100, max(1, $this->request->variable('batch_size', 10))));
+					}
+					$this->migrator->set_fallback_name($this->language->lang('PORTFOLIO_MIG_FALLBACK_ALBUM'));
 					$result = $this->migrator->run_batch($users, $include_public, max(1, (int) $this->config['portfolio_migrate_batch']), $strip_exif);
 					if (!$result['done'] && ($result['migrated'] || $result['skipped']))
 					{
@@ -685,12 +879,15 @@ class acp_controller
 							'total'		=> $result['total'],
 							'percent'	=> $result['total'] ? (int) floor(($result['total'] - $result['remaining']) * 100 / $result['total']) : 100,
 							'u_next'	=> $next,
+							'failed'	=> $this->failed_rows($result['failed']),
+							'set_aside'	=> $result['set_aside'],
 						];
 					}
 					else
 					{
 						$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_MIGRATED', false, [$this->scope_label($scope, $value), $result['total'] - $result['remaining']]);
-						trigger_error($this->language->lang('ACP_PORTFOLIO_MIGRATE_DONE', $result['total'] - $result['remaining'], $result['total']) . adm_back_link($this->u_action));
+						$aside = $result['set_aside'] ? '<br><br>' . $this->language->lang('ACP_PORTFOLIO_MIG_SET_ASIDE', $result['set_aside'], $this->u_action . '&amp;action=missing#pf-missing') : '';
+						trigger_error($this->language->lang('ACP_PORTFOLIO_MIGRATE_DONE', $result['total'] - $result['remaining'], $result['total']) . $aside . adm_back_link($this->u_action));
 					}
 				break;
 
@@ -734,6 +931,57 @@ class acp_controller
 					trigger_error($this->language->lang('ACP_PORTFOLIO_RESTORE_LINKS_DONE', $count) . adm_back_link($this->u_action));
 				break;
 
+				case 'clear_incident':
+					$this->migrator->clear_incident();
+					redirect($this->u_action);
+				break;
+
+				case 'missing_selected':
+					$ids = array_filter(array_map('intval', $this->request->variable('pf_ids', [0])));
+					$op = $this->request->variable('pf_op', '');
+					if (!$ids)
+					{
+						trigger_error($this->language->lang('ACP_PORTFOLIO_MIG_NONE_SELECTED') . adm_back_link($this->u_action . '&amp;action=missing'), E_USER_WARNING);
+					}
+					$back = adm_back_link($this->u_action . '&amp;action=missing#pf-missing');
+					if ($op === 'retry')
+					{
+						$count = $this->migrator->retry_missing($ids);
+						trigger_error($this->language->lang('ACP_PORTFOLIO_MIG_RETRY_DONE', $count) . $back);
+					}
+					if ($op === 'drop')
+					{
+						$count = $this->migrator->drop_missing($ids);
+						$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_MIG_DROPPED', false, [$count]);
+						trigger_error($this->language->lang('ACP_PORTFOLIO_MIG_DROP_DONE', $count) . $back);
+					}
+					if ($op === 'assign' && $this->departed)
+					{
+						$heir_id = $this->departed->heir_id();
+						$heir_name = $this->departed->username_of($heir_id);
+						$this->migrator->set_fallback_name($this->language->lang('PORTFOLIO_MIG_FALLBACK_ALBUM'));
+						$result = $this->migrator->assign_missing($ids, $heir_id, $strip_exif);
+						$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_MIG_ASSIGNED', false, [$result['done'], $heir_name]);
+						$message = $this->language->lang('ACP_PORTFOLIO_MIG_ASSIGN_DONE', $result['done'], $heir_name);
+						foreach ($this->failed_rows($result['failed']) as $row)
+						{
+							$message .= '<br>n° ' . $row['id'] . ' « ' . $row['title'] . ' » : ' . $row['reason'] . ($row['message'] !== '' ? ' — ' . $row['message'] : '');
+						}
+						if ($result['left'])
+						{
+							$message .= '<br>' . $this->language->lang('ACP_PORTFOLIO_MIG_ASSIGN_LEFT', $result['left']);
+						}
+						trigger_error($message . $back);
+					}
+					redirect($this->u_action . '&amp;action=missing');
+				break;
+
+				case 'retry_missing':
+					$count = $this->migrator->retry_missing();
+					$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_MIG_RETRY', false, [$count]);
+					trigger_error($this->language->lang('ACP_PORTFOLIO_MIG_RETRY_DONE', $count) . adm_back_link($this->u_action));
+				break;
+
 				case 'undo':
 					if (!confirm_box(true))
 					{
@@ -770,6 +1018,13 @@ class acp_controller
 		$this->template->assign_vars([
 			'PF_MIG'			=> $stats,
 			'PF_PLAN'			=> $plan,
+			'PF_MISSING'		=> $missing,
+			'PF_HEIR'			=> $this->departed ? $this->departed->username_of($this->departed->heir_id()) : '',
+			'U_PF_DEPARTED'		=> str_replace('mode=migrate', 'mode=departed', $this->u_action),
+			'PF_INCIDENT'		=> $this->incident_row(),
+			'PF_LIMITS'			=> $this->migrator->server_limits(),
+			'PF_VERSION'		=> $this->config['portfolio_version'],
+			'U_PF_MISSING'		=> $this->u_action . '&amp;action=missing#pf-missing',
 			'PF_PROGRESS'		=> $progress,
 			'PF_MESSAGE'		=> $message,
 			'PF_GROUPS'			=> $groups,
@@ -784,6 +1039,89 @@ class acp_controller
 			'U_PF_BACKUP'		=> str_replace('mode=migrate', 'mode=backup', $this->u_action),
 			'U_PF_FIND_USER'	=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=searchuser&amp;form=acp_portfolio_migrate&amp;field=username&amp;select_single=true'),
 		]);
+	}
+
+	/**
+	 * Nom à afficher pour l'auteur d'une photo de la galerie (v1.9.4) : le pseudo actuel du membre, en signalant
+	 * l'ancien pseudo enregistré par phpBB Gallery s'il a changé, ou « membre parti » s'il n'existe plus.
+	 */
+	protected function member_label($user_id, $gallery_name)
+	{
+		$user_id = (int) $user_id;
+		$gallery_name = (string) $gallery_name;
+		if ($user_id <= ANONYMOUS)
+		{
+			return $gallery_name !== '' ? $gallery_name : $this->language->lang('GUEST');
+		}
+		if ($this->presenter->is_departed($user_id))
+		{
+			return $this->language->lang('ACP_PORTFOLIO_MIG_MEMBER_GONE', $gallery_name !== '' ? $gallery_name : '?', $user_id);
+		}
+		$current = $this->presenter->username($user_id, 'username');
+		if ($gallery_name !== '' && utf8_clean_string($gallery_name) !== utf8_clean_string($current))
+		{
+			return $this->language->lang('ACP_PORTFOLIO_MIG_MEMBER_RENAMED', $current, $gallery_name);
+		}
+
+		return $current;
+	}
+
+	protected function failed_rows(array $failed)
+	{
+		$rows = [];
+		foreach ($failed as $row)
+		{
+			$message = $row['message'];
+			if ($message !== '' && $this->language->is_set($message))
+			{
+				$message = $this->language->lang($message);
+			}
+			$rows[] = [
+				'id'		=> $row['image_id'],
+				'title'		=> $row['title'],
+				'reason'	=> $this->language->lang('ACP_PORTFOLIO_MIG_REASON_' . strtoupper($row['reason'])),
+				'message'	=> $message,
+			];
+		}
+
+		return $rows;
+	}
+
+	protected function incident_row()
+	{
+		$incident = $this->migrator->incident();
+		if (!$incident)
+		{
+			return null;
+		}
+		$incident['time'] = $this->user->format_date((int) $incident['time']);
+		$incident['peak'] = $incident['peak'] ? get_formatted_filesize((int) $incident['peak']) : '';
+		$incident['killed'] = !empty($incident['killed']);
+
+		return $incident;
+	}
+
+	protected function missing_rows()
+	{
+		$rows = [];
+		foreach ($this->migrator->missing_list() as $row)
+		{
+			$name = $this->member_label($row['user_id'], $row['username']);
+			$rows[] = [
+				'id'		=> $row['image_id'],
+				'title'		=> $row['title'] !== '' ? $row['title'] : '—',
+				'user'		=> $name,
+				'album'		=> $row['album'],
+				'time'		=> $row['time'] ? $this->user->format_date($row['time'], 'd/m/Y') : '',
+				'path'		=> $row['path'],
+				'reason'	=> $this->language->lang('ACP_PORTFOLIO_MIG_REASON_' . strtoupper($row['reason'])),
+				'code'		=> $row['reason'],
+				'detail'	=> $row['width'] ? $row['width'] . ' × ' . $row['height'] . ' px · ' . get_formatted_filesize($row['size']) : '',
+				'error'		=> $row['error'] !== '' && $this->language->is_set($row['error']) ? $this->language->lang($row['error']) : $row['error'],
+			];
+		}
+
+		return $rows;
 	}
 
 	protected function scope_label($scope, $value)

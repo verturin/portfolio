@@ -54,6 +54,8 @@
 				<select name="{{ item.key }}" id="{{ item.key }}">{% for choice in item.choices %}<option value="{{ choice.value }}"{% if choice.checked %} selected{% endif %}>{{ choice.label }}</option>{% endfor %}</select>
 				{% elseif item.type == 'reactions' %}
 				<span class="pf-acp-reactions">{% for choice in item.choices %}<label><input type="checkbox" name="{{ item.key }}[]" value="{{ choice.value }}"{% if choice.checked %} checked{% endif %}> <span class="pf-emoji">{{ choice.emoji }}</span> {{ choice.label }}</label>{% endfor %}</span>
+				{% elseif item.type == 'select' %}
+				<select name="{{ item.key }}" id="{{ item.key }}">{% for choice in item.choices %}<option value="{{ choice.value }}"{% if choice.checked %} selected{% endif %}>{{ choice.label }}{% if choice.value == 5 %} ({{ lang('ACP_PORTFOLIO_SELECT_DEFAULT') }}){% endif %}</option>{% endfor %}</select>
 				{% elseif item.type == 'int' %}
 				<input type="number" name="{{ item.key }}" id="{{ item.key }}" value="{{ item.value }}" min="{{ item.min }}" max="{{ item.max }}">
 				{% else %}

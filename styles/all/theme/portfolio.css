@@ -638,3 +638,6 @@ textarea.pf-input { resize: vertical; min-height: 80px; }
 .pf-photo__by { display: flex; align-items: center; gap: 4px; height: 30px; padding: 0 10px; font-size: 12px; color: var(--pf-muted); border-top: 1px solid var(--pf-line); white-space: nowrap; overflow: hidden; }
 .pf-photo__by .pf-icon { width: 13px; height: 13px; flex: none; }
 .pf-photo__by a, .pf-photo__by b { font-weight: 700; overflow: hidden; text-overflow: ellipsis; color: var(--pf-text); }
+
+/* v1.9.0 : membre parti (nom conservé, sans lien) */
+.pf-departed { font-style: italic; color: var(--pf-muted); }

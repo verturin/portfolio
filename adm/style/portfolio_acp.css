@@ -497,4 +497,11 @@
 
 /* Choix de visibilité proposés aux membres (v1.6.0) */
 .acp-skin ~ * .pf-acp-choices { display: flex; flex-direction: column; gap: 4px; }
+.acp-skin ~ * .pf-acp-stack label { display: block; margin-bottom: 4px; }
 .acp-skin ~ * .pf-acp-choices small { color: #6b7684; }
+
+/* v1.9.1 : lien sous un compteur */
+.acp-skin ~ * .pf-acp-card__link { display: block; margin-top: 4px; font-size: 12px; font-weight: 600; }
+.acp-skin ~ * .pf-acp-failed { margin-top: 8px; padding: 8px 10px; border-left: 3px solid #c0392b; background: rgba(192,57,43,.06); }
+.acp-skin ~ * .pf-acp-failed ul { margin: 4px 0 0 18px; }
+.acp-skin ~ * .pf-acp-adopt { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }

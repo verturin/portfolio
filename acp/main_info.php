@@ -36,6 +36,11 @@ class main_info
 					'auth'	=> 'ext_verturin/portfolio && acl_a_portfolio_manage',
 					'cat'	=> ['ACP_PORTFOLIO_TITLE'],
 				],
+				'departed'	=> [
+					'title'	=> 'ACP_PORTFOLIO_DEPARTED',
+					'auth'	=> 'ext_verturin/portfolio && acl_a_portfolio_manage',
+					'cat'	=> ['ACP_PORTFOLIO_TITLE'],
+				],
 				'migrate'	=> [
 					'title'	=> 'ACP_PORTFOLIO_MIGRATE',
 					'auth'	=> 'ext_verturin/portfolio && acl_a_portfolio_manage',

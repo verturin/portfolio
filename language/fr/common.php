@@ -486,4 +486,16 @@ $lang = array_merge($lang, [
 	// v1.8.5
 	'PORTFOLIO_POSTED_BY'						=> 'postée par %s',
 	'PORTFOLIO_POSTED_BY_SHORT'				=> 'par',
+	// v1.9.0
+	'PORTFOLIO_DEPARTED_ALBUM'					=> 'Photos de %s',
+	'PORTFOLIO_DEPARTED_REASON'					=> 'Membre supprimé : %s',
+	'PORTFOLIO_DEPARTED_UNKNOWN'				=> 'Ancien membre n° %d',
+	'PORTFOLIO_DEPARTED_TITLE'					=> 'Ce membre a quitté le forum',
+	'LOG_PORTFOLIO_ADOPTED'						=> '<strong>Portfolio : albums de %1$d membre(s) parti(s) rattachés à</strong><br>» %2$s',
+	// v1.9.1
+	'LOG_PORTFOLIO_MIG_RETRY'					=> '<strong>Portfolio : %d photo(s) de la galerie remises dans la file de bascule</strong>',
+	// v1.9.2
+	'PORTFOLIO_ERR_MEMORY'						=> 'Cette image est trop grande pour la mémoire que l’hébergeur accorde à PHP. Réduisez-la avant de l’envoyer.',
+	'LOG_PORTFOLIO_MIG_DROPPED'					=> '<strong>Portfolio : %d photo(s) de la galerie abandonnée(s)</strong>',
+	'LOG_PORTFOLIO_MIG_ASSIGNED'				=> '<strong>Portfolio : %1$d photo(s) de la galerie copiée(s) chez</strong><br>» %2$s',
 ]);
