@@ -25,4 +25,5 @@ $lang = array_merge($lang, [
 	'ACP_PORTFOLIO_BACKUP'	=> 'Sauvegarde',
 	'ACP_PORTFOLIO_TRASH'		=> 'Corbeille',
 	'ACP_PORTFOLIO_PAGES'						=> 'Pages dans le forum',
+	'ACP_PORTFOLIO_DEPARTED'					=> 'Membres partis',
 ]);

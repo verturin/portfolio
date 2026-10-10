@@ -99,8 +99,68 @@ class presenter
 		return $row && (int) $row['user_id'] === (int) $user_id && (int) $user_id !== ANONYMOUS && (int) $row['user_type'] !== USER_IGNORE;
 	}
 
+	/** @var departed */
+	protected $departed;
+
+	/** @var array [user_id => bool] Membres absents de la table des utilisateurs */
+	protected $gone = [];
+
+	public function set_departed(departed $departed)
+	{
+		$this->departed = $departed;
+	}
+
+	/**
+	 * Le membre a-t-il quitté le forum ? (ses photos restent signées de son nom, sans lien)
+	 */
+	public function is_departed($user_id)
+	{
+		$user_id = (int) $user_id;
+		if ($user_id <= ANONYMOUS)
+		{
+			return false;
+		}
+		if (!isset($this->gone[$user_id]))
+		{
+			$this->load_users([$user_id]);
+			$row = $this->user_loader->get_user($user_id);
+			$this->gone[$user_id] = !$row || (int) $row['user_id'] !== $user_id;
+		}
+
+		return $this->gone[$user_id];
+	}
+
+	/**
+	 * Album « Photos de … » d'un membre parti (les anciens liens vers son portfolio y mènent).
+	 */
+	public function departed_album($user_id)
+	{
+		return $this->departed && $this->is_departed($user_id) ? $this->departed->album_id($user_id) : 0;
+	}
+
 	public function username($user_id, $mode = 'full')
 	{
+		if ($this->is_departed($user_id))
+		{
+			$name = $this->departed ? $this->departed->name($user_id) : '';
+			if ($name === '')
+			{
+				$name = $this->language->lang('PORTFOLIO_DEPARTED_UNKNOWN', (int) $user_id);
+			}
+			switch ($mode)
+			{
+				case 'colour':
+					return '';
+				case 'profile':
+					return '';
+				case 'username':
+				case 'no_profile':
+					return $mode === 'username' ? $name : '<span class="username pf-departed" title="' . $this->language->lang('PORTFOLIO_DEPARTED_TITLE') . '">' . $name . '</span>';
+				default:
+					return '<span class="username pf-departed" title="' . $this->language->lang('PORTFOLIO_DEPARTED_TITLE') . '">' . $name . '</span>';
+			}
+		}
+
 		return $this->user_loader->get_username((int) $user_id, $mode);
 	}
 
@@ -163,7 +223,7 @@ class presenter
 			'user'			=> $this->username($photo['user_id']),
 			'user_name'		=> $this->username($photo['user_id'], 'username'),
 			'user_colour'	=> $this->username($photo['user_id'], 'colour'),
-			'user_url'		=> (int) $photo['user_id'] && (int) $photo['user_id'] !== ANONYMOUS ? $this->route('user', ['user_id' => (int) $photo['user_id']]) : '',
+			'user_url'		=> (int) $photo['user_id'] && (int) $photo['user_id'] !== ANONYMOUS && !$this->is_departed($photo['user_id']) ? $this->route('user', ['user_id' => (int) $photo['user_id']]) : '',
 			'time'			=> $this->user->format_date((int) $photo['photo_time']),
 			'time_iso'		=> gmdate('c', (int) $photo['photo_time']),
 			'pending'		=> (int) $photo['photo_status'] === photo_manager::STATUS_PENDING,

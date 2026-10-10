@@ -20,7 +20,7 @@
 		{% if item.u_restore %}
 		<form method="post" action="{{ item.u_restore }}" class="pf-trash__actions">
 			{% if item.album_missing %}
-			<select name="target_album" class="pf-input pf-input--inline" aria-label="{{ lang('PORTFOLIO_RESTORE_INTO') }}">{% for target in PF_TARGETS %}<option value="{{ target.id }}">{{ target.name }}</option>{% endfor %}</select>
+			<select name="target_album" class="pf-input pf-input--inline" aria-label="{{ lang('PORTFOLIO_RESTORE_INTO') }}">{% for target in item.targets %}<option value="{{ target.id }}">{{ target.name }}</option>{% endfor %}</select>
 			{% endif %}
 			<button type="submit" name="restore" value="1" class="pf-btn pf-btn--primary pf-btn--small">{{ pf.icon('restore') }}{{ lang('PORTFOLIO_RESTORE') }}</button>
 			{{ S_FORM_TOKEN }}

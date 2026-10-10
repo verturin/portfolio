@@ -81,11 +81,14 @@ class image_processor
 	 * @param string $tmp      Fichier source
 	 * @param string $realname Nom d'origine (informatif)
 	 */
-	public function process_file($tmp, $realname = '')
+	/**
+	 * @param bool $check_size Contrôler le poids maximal des envois (pas pour la bascule depuis phpBB Gallery)
+	 */
+	public function process_file($tmp, $realname = '', $check_size = true)
 	{
 		$max_kb = (int) $this->config['portfolio_max_filesize'];
 		$filesize = (int) @filesize($tmp);
-		if ($max_kb && $filesize > $max_kb * 1024)
+		if ($check_size && $max_kb && $filesize > $max_kb * 1024)
 		{
 			return ['error' => 'PORTFOLIO_ERR_FILESIZE'];
 		}
@@ -109,7 +112,10 @@ class image_processor
 			return ['error' => 'PORTFOLIO_ERR_DIMENSIONS'];
 		}
 
-		$this->ensure_memory($width, $height);
+		if (!$this->ensure_memory($width, $height))
+		{
+			return ['error' => 'PORTFOLIO_ERR_MEMORY'];
+		}
 
 		$image = $this->load($tmp, $info[2]);
 		if (!$image)
@@ -196,7 +202,10 @@ class image_processor
 			return false;
 		}
 
-		$this->ensure_memory($info[0], $info[1]);
+		if (!$this->ensure_memory($info[0], $info[1]))
+		{
+			return false;
+		}
 		$image = $this->load($source, $info[2]);
 		if (!$image)
 		{
@@ -285,7 +294,10 @@ class image_processor
 		}
 
 		$this->ensure_dirs($photo_file);
-		$this->ensure_memory($info[0], $info[1]);
+		if (!$this->ensure_memory($info[0], $info[1]))
+		{
+			return false;
+		}
 		$image = $this->load($source, $info[2]);
 		if (!$image)
 		{
@@ -535,15 +547,52 @@ class image_processor
 		}
 	}
 
-	protected function ensure_memory($width, $height)
+	/**
+	 * Mémoire nécessaire pour traiter une image de cette taille (octets).
+	 */
+	public function memory_needed($width, $height)
 	{
 		// ~5 octets par pixel + marge pour la copie de travail
-		$needed = (int) ($width * $height * 5 * 2.2) + 32 * 1024 * 1024;
-		$limit = $this->bytes(@ini_get('memory_limit'));
-		if ($limit > 0 && memory_get_usage() + $needed > $limit)
+		return (int) ($width * $height * 5 * 2.2) + 32 * 1024 * 1024;
+	}
+
+	/**
+	 * Mémoire en dessous de laquelle le traitement échouerait à coup sûr (une image + sa copie de travail).
+	 */
+	public function memory_minimum($width, $height)
+	{
+		return (int) ($width * $height * 9) + 16 * 1024 * 1024;
+	}
+
+	/**
+	 * Mémoire PHP autorisée (octets, -1 = illimitée).
+	 */
+	public function memory_limit()
+	{
+		return $this->bytes(@ini_get('memory_limit'));
+	}
+
+	/**
+	 * Relève la limite mémoire si besoin. Retourne false si l'hébergeur ne le permet pas :
+	 * on refuse alors proprement l'image au lieu de laisser PHP s'arrêter (erreur 500) (v1.9.2).
+	 */
+	public function ensure_memory($width, $height)
+	{
+		$needed = $this->memory_needed($width, $height);
+		$limit = $this->memory_limit();
+		if ($limit <= 0 || memory_get_usage() + $needed <= $limit)
+		{
+			return true;
+		}
+
+		if (function_exists('ini_set'))
 		{
 			@ini_set('memory_limit', (string) (memory_get_usage() + $needed));
 		}
+		$limit = $this->memory_limit();
+
+		// Hébergeur qui plafonne la mémoire : on tente quand même si le strict nécessaire est disponible
+		return $limit <= 0 || memory_get_usage() + $this->memory_minimum($width, $height) <= $limit;
 	}
 
 	protected function bytes($value)
