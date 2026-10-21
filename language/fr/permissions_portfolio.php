@@ -26,6 +26,7 @@ $lang = array_merge($lang, [
 	'ACL_U_PORTFOLIO_RATE'			=> 'Peut noter les photos',
 	'ACL_U_PORTFOLIO_COMMENT'		=> 'Peut commenter les photos',
 	'ACL_U_PORTFOLIO_SHARE'			=> 'Peut partager ses albums avec des co-gestionnaires',
+	'ACL_U_PORTFOLIO_DELETE'		=> 'Peut supprimer ses propres photos et albums (mise à la corbeille)',
 	'ACL_U_PORTFOLIO_RESTORE'		=> 'Peut restaurer ses photos depuis la corbeille',
 	'ACL_U_PORTFOLIO_DOWNLOAD'		=> 'Peut télécharger les photos originales',
 	'ACL_U_PORTFOLIO_EXPORT'		=> 'Peut exporter ses albums en ZIP',

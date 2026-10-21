@@ -40,6 +40,32 @@ class gallery_migrator
 		}
 	}
 
+	/** @var string Visibilité des albums créés : registered (défaut), keep (celle de phpBB Gallery), private */
+	protected $visibility_mode = 'registered';
+
+	/** @var int Téléchargement des originaux dans les albums créés (0 par défaut) */
+	protected $album_download = 0;
+
+	/**
+	 * Réglages des albums créés par la bascule (v1.9.8) : membres inscrits et sans téléchargement par défaut.
+	 */
+	public function set_album_defaults($visibility_mode, $download)
+	{
+		$this->visibility_mode = in_array($visibility_mode, ['registered', 'keep', 'private'], true) ? $visibility_mode : 'registered';
+		$this->album_download = $download ? 1 : 0;
+	}
+
+	/** Visibilité d'un album créé, selon le réglage choisi et celle de phpBB Gallery */
+	protected function created_visibility($gallery_visibility)
+	{
+		if ($this->visibility_mode === 'private')
+		{
+			return access::VIS_PRIVATE;
+		}
+
+		return $this->visibility_mode === 'keep' ? (int) $gallery_visibility : access::VIS_REGISTERED;
+	}
+
 	/**
 	 * Album de secours d'un membre (un seul par membre, créé au premier besoin).
 	 */
@@ -61,7 +87,8 @@ class gallery_migrator
 			'album_desc_uid'		=> '',
 			'album_desc_bitfield'	=> '',
 			'album_desc_options'	=> 7,
-			'album_visibility'		=> access::VIS_REGISTERED,
+			'album_visibility'		=> $this->created_visibility(access::VIS_REGISTERED),
+			'album_download'		=> $this->album_download,
 			'album_locked'			=> 0,
 			'album_order'			=> 9999,
 			'album_sort'			=> 'date_desc',
@@ -807,7 +834,8 @@ class gallery_migrator
 			'album_desc_uid'		=> (string) $album['album_desc_uid'],
 			'album_desc_bitfield'	=> (string) $album['album_desc_bitfield'],
 			'album_desc_options'	=> (int) $album['album_desc_options'],
-			'album_visibility'		=> $visibility,
+			'album_visibility'		=> $this->created_visibility($visibility),
+			'album_download'		=> $this->album_download,
 			'album_locked'			=> (int) $album['album_status'] === 1 ? 1 : 0,
 			'album_order'			=> (int) $album['left_id'],
 			'album_sort'			=> 'date_desc',

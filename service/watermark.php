@@ -205,7 +205,7 @@ class watermark
 	protected function settings_hash()
 	{
 		$values = [];
-		foreach (['enabled', 'text_enabled', 'text', 'text_size', 'text_color', 'opacity', 'position', 'shadow', 'logo_enabled', 'logo_size', 'logo_position', 'logo_opacity', 'logo_version', 'revision'] as $key)
+		foreach (['enabled', 'text_enabled', 'text', 'text_size', 'text_color', 'opacity', 'position', 'shadow', 'logo_enabled', 'logo_size', 'logo_position', 'logo_opacity', 'logo_version', 'revision', 'tile_density'] as $key)
 		{
 			$values[] = $this->settings['portfolio_wm_' . $key];
 		}
@@ -325,8 +325,11 @@ class watermark
 				$rotated = $this->rotate($small, 30);
 				$lw = imagesx($rotated);
 				$lh = imagesy($rotated);
-				$step_x = (int) max(40, $lw * 1.05);
-				$step_y = (int) max(30, $lh * 0.9);
+				// Fréquence des répétitions (v1.9.10) : 1 = très espacé … 5 = d'origine … 10 = très serré
+				$density = min(10, max(1, (int) ($this->settings['portfolio_wm_tile_density'] !== '' ? $this->settings['portfolio_wm_tile_density'] : 5)));
+				$factor = [1 => 2.2, 2 => 1.8, 3 => 1.5, 4 => 1.22, 5 => 1.0, 6 => 0.88, 7 => 0.78, 8 => 0.7, 9 => 0.63, 10 => 0.56][$density];
+				$step_x = (int) max(24, $lw * 1.05 * $factor);
+				$step_y = (int) max(18, $lh * 0.9 * $factor);
 				$row = 0;
 				for ($y = -$lh / 2; $y < $h + $lh; $y += $step_y)
 				{
