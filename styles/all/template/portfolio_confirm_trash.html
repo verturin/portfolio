@@ -8,11 +8,11 @@
 		<p class="pf-note">{{ pf.icon('restore') }}{{ lang('PORTFOLIO_TRASH_SAFETY') }}</p>
 		<form id="confirm" action="{{ S_CONFIRM_ACTION }}" method="post" class="pf-form">
 			<div class="pf-field">
-				<label for="pf-reason">{{ lang('PORTFOLIO_REASON_OPTIONAL') }}</label>
-				<input type="text" id="pf-reason" name="reason" class="pf-input" maxlength="255">
+				<label for="pf-reason">{{ lang(PF_REASON_REQUIRED ? 'PORTFOLIO_REASON_REQUIRED' : 'PORTFOLIO_REASON_OPTIONAL') }}</label>
+				<input type="text" id="pf-reason" name="reason" class="pf-input" maxlength="255"{% if PF_REASON_REQUIRED %} required{% endif %}>
 			</div>
 			<div class="pf-form__footer">
-				<input type="submit" name="cancel" value="{{ lang('NO') }}" class="pf-btn pf-btn--ghost">
+				<input type="submit" name="cancel" value="{{ lang('NO') }}" class="pf-btn pf-btn--ghost" formnovalidate>
 				<input type="submit" name="confirm" value="{{ YES_VALUE }}" class="pf-btn pf-btn--primary is-danger">
 			</div>
 			{{ S_HIDDEN_FIELDS }}

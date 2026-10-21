@@ -136,6 +136,20 @@
 			<dd><label><input type="checkbox" name="strip_exif" id="strip_exif" value="1"{% if PF_STRIP_EXIF %} checked{% endif %}> {{ lang('YES') }}</label></dd>
 		</dl>
 		<dl>
+			<dt><label for="mig_visibility">{{ lang('ACP_PORTFOLIO_MIG_VIS') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_VIS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="mig_visibility" id="mig_visibility">
+					<option value="registered"{% if PF_MIG_VISIBILITY == 'registered' %} selected{% endif %}>{{ lang('ACP_PORTFOLIO_MIG_VIS_REGISTERED') }}</option>
+					<option value="keep"{% if PF_MIG_VISIBILITY == 'keep' %} selected{% endif %}>{{ lang('ACP_PORTFOLIO_MIG_VIS_KEEP') }}</option>
+					<option value="private"{% if PF_MIG_VISIBILITY == 'private' %} selected{% endif %}>{{ lang('ACP_PORTFOLIO_MIG_VIS_PRIVATE') }}</option>
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="mig_download">{{ lang('ACP_PORTFOLIO_MIG_DOWNLOAD') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_DOWNLOAD_EXPLAIN') }}</span></dt>
+			<dd><label><input type="checkbox" name="mig_download" id="mig_download" value="1"{% if PF_MIG_DOWNLOAD %} checked{% endif %}> {{ lang('YES') }}</label></dd>
+		</dl>
+		<dl>
 			<dt><label for="batch_size">{{ lang('ACP_PORTFOLIO_MIG_BATCH') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_MIG_BATCH_EXPLAIN') }}</span></dt>
 			<dd><input type="number" name="batch_size" id="batch_size" value="{{ PF_BATCH }}" min="1" max="100"></dd>
 		</dl>

@@ -81,7 +81,7 @@ class moderation extends base
 			$photo = $this->photos->get($approve_id);
 			$album = $photo ? $this->albums->get($photo['album_id']) : null;
 			if (!$photo || !$album || !check_link_hash($this->request->variable('hash', ''), 'pf_approve_' . $approve_id)
-				|| (!$this->access->can_approve() && !$this->access->can_manage_album($album)))
+				|| !$this->access->can_approve_album($album))
 			{
 				$this->deny();
 			}

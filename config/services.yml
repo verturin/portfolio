@@ -35,6 +35,28 @@ services:
             - '@verturin.portfolio.albums'
             - '%verturin.portfolio.tables.members%'
             - '%verturin.portfolio.tables.album_groups%'
+        calls:
+            - [set_group_limits, ['@verturin.portfolio.group_limits']]
+
+    verturin.portfolio.group_limits:
+        class: verturin\portfolio\service\group_limits
+        arguments:
+            - '@dbal.conn'
+            - '%verturin.portfolio.tables.group_limits%'
+
+    verturin.portfolio.pending_pm:
+        class: verturin\portfolio\service\pending_pm
+        arguments:
+            - '@dbal.conn'
+            - '@verturin.portfolio.settings'
+            - '@auth'
+            - '@user'
+            - '@language'
+            - '@controller.helper'
+            - '%verturin.portfolio.tables.activity%'
+            - '%verturin.portfolio.tables.photos%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
 
     verturin.portfolio.image:
         class: verturin\portfolio\service\image_processor
@@ -90,6 +112,29 @@ services:
             - '%verturin.portfolio.tables.comments%'
         calls:
             - [set_reactions_table, ['%verturin.portfolio.tables.reactions%']]
+            - [set_activity, ['@verturin.portfolio.activity']]
+
+    verturin.portfolio.ucp_controller:
+        class: verturin\portfolio\controller\ucp_controller
+        arguments:
+            - '@verturin.portfolio.settings'
+            - '@verturin.portfolio.access'
+            - '@verturin.portfolio.albums'
+            - '@verturin.portfolio.presenter'
+            - '@language'
+            - '@log'
+            - '@request'
+            - '@template'
+            - '@user'
+
+    verturin.portfolio.activity:
+        class: verturin\portfolio\service\activity
+        arguments:
+            - '@dbal.conn'
+            - '@verturin.portfolio.settings'
+            - '@notification_manager'
+            - '%verturin.portfolio.tables.activity%'
+            - '%verturin.portfolio.tables.photos%'
 
     verturin.portfolio.gallery_migrator:
         class: verturin\portfolio\service\gallery_migrator
@@ -200,6 +245,8 @@ services:
     verturin.portfolio.controller.upload:
         class: verturin\portfolio\controller\upload
         parent: verturin.portfolio.controller.base
+        calls:
+            - [set_pending_pm, ['@verturin.portfolio.pending_pm']]
 
     verturin.portfolio.controller.file:
         class: verturin\portfolio\controller\file
@@ -244,6 +291,9 @@ services:
             - [set_bbcode, ['@verturin.portfolio.bbcode']]
             - [set_pages, ['@verturin.portfolio.pages', '@verturin.portfolio.forum_link']]
             - [set_departed, ['@verturin.portfolio.departed']]
+            - [set_activity, ['@verturin.portfolio.activity']]
+            - [set_group_limits, ['@verturin.portfolio.group_limits']]
+            - [set_pending_pm, ['@verturin.portfolio.pending_pm']]
         arguments:
             - '@verturin.portfolio.settings'
             - '@template'
@@ -275,6 +325,7 @@ services:
             - '%verturin.portfolio.tables.photos%'
         calls:
             - [set_portfolio, ['@verturin.portfolio.access', '@verturin.portfolio.albums']]
+            - [set_ext_manager, ['@ext.manager']]
             - [set_display, ['@verturin.portfolio.photos', '@verturin.portfolio.presenter']]
             - [set_departed, ['@verturin.portfolio.departed']]
         tags:
@@ -305,6 +356,15 @@ services:
             - '@verturin.portfolio.watermark'
         calls:
             - [set_name, [cron.task.verturin.portfolio.watermark_cache]]
+        tags:
+            - { name: cron.task }
+
+    verturin.portfolio.cron.notify_digest:
+        class: verturin\portfolio\cron\task\notify_digest
+        arguments:
+            - '@verturin.portfolio.activity'
+        calls:
+            - [set_name, [cron.task.verturin.portfolio.notify_digest]]
         tags:
             - { name: cron.task }
 
@@ -352,6 +412,7 @@ services:
         calls:
             - [set_helper, ['@controller.helper']]
             - [set_user_loader, ['@user_loader']]
+            - [set_pf_settings, ['@verturin.portfolio.settings']]
         tags:
             - { name: notification.type }
 
@@ -362,6 +423,7 @@ services:
         calls:
             - [set_helper, ['@controller.helper']]
             - [set_user_loader, ['@user_loader']]
+            - [set_pf_settings, ['@verturin.portfolio.settings']]
         tags:
             - { name: notification.type }
 
@@ -372,5 +434,39 @@ services:
         calls:
             - [set_helper, ['@controller.helper']]
             - [set_user_loader, ['@user_loader']]
+            - [set_pf_settings, ['@verturin.portfolio.settings']]
+        tags:
+            - { name: notification.type }
+
+    verturin.portfolio.notification.type.rating:
+        class: verturin\portfolio\notification\type\rating
+        shared: false
+        parent: notification.type.base
+        calls:
+            - [set_helper, ['@controller.helper']]
+            - [set_user_loader, ['@user_loader']]
+            - [set_pf_settings, ['@verturin.portfolio.settings']]
+        tags:
+            - { name: notification.type }
+
+    verturin.portfolio.notification.type.reaction:
+        class: verturin\portfolio\notification\type\reaction
+        shared: false
+        parent: notification.type.base
+        calls:
+            - [set_helper, ['@controller.helper']]
+            - [set_user_loader, ['@user_loader']]
+            - [set_pf_settings, ['@verturin.portfolio.settings']]
+        tags:
+            - { name: notification.type }
+
+    verturin.portfolio.notification.type.digest:
+        class: verturin\portfolio\notification\type\digest
+        shared: false
+        parent: notification.type.base
+        calls:
+            - [set_helper, ['@controller.helper']]
+            - [set_user_loader, ['@user_loader']]
+            - [set_pf_settings, ['@verturin.portfolio.settings']]
         tags:
             - { name: notification.type }

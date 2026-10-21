@@ -55,21 +55,86 @@
 
 <p class="skin-actions">
 	<a class="button1" href="{{ U_PF_NEW_PUBLIC }}">{{ lang('PORTFOLIO_NEW_PUBLIC_ALBUM') }}</a>
-	<a class="button2"{% if PF_FILTER == 'all' %} style="font-weight: bold;"{% endif %} href="{{ U_ACTION }}&amp;filter=all">{{ lang('ACP_PORTFOLIO_FILTER') }} : {{ lang('ACP_PORTFOLIO_FILTER_ALL') }}</a>
-	<a class="button2"{% if PF_FILTER == 'public' %} style="font-weight: bold;"{% endif %} href="{{ U_ACTION }}&amp;filter=public">{{ lang('ACP_PORTFOLIO_FILTER_PUBLIC') }}</a>
-	<a class="button2"{% if PF_FILTER == 'members' %} style="font-weight: bold;"{% endif %} href="{{ U_ACTION }}&amp;filter=members">{{ lang('ACP_PORTFOLIO_FILTER_MEMBERS') }}</a>
+	<a class="button2"{% if PF_FILTER == 'all' %} style="font-weight: bold;"{% endif %} href="{{ U_ACTION }}&amp;filter=all&amp;vis={{ PF_VIS_FILTER }}{{ PF_LIST.extra }}">{{ lang('ACP_PORTFOLIO_FILTER') }} : {{ lang('ACP_PORTFOLIO_FILTER_ALL') }}</a>
+	<a class="button2"{% if PF_FILTER == 'public' %} style="font-weight: bold;"{% endif %} href="{{ U_ACTION }}&amp;filter=public&amp;vis={{ PF_VIS_FILTER }}{{ PF_LIST.extra }}">{{ lang('ACP_PORTFOLIO_FILTER_PUBLIC') }}</a>
+	<a class="button2"{% if PF_FILTER == 'members' %} style="font-weight: bold;"{% endif %} href="{{ U_ACTION }}&amp;filter=members&amp;vis={{ PF_VIS_FILTER }}{{ PF_LIST.extra }}">{{ lang('ACP_PORTFOLIO_FILTER_MEMBERS') }}</a>
+	<label class="pf-acp-visfilter">{{ lang('PORTFOLIO_VISIBILITY') }}{{ lang('COLON') }}
+		<select onchange="window.location.href = this.value;">
+			<option value="{{ U_ACTION }}&amp;filter={{ PF_FILTER }}&amp;vis=-1{{ PF_LIST.extra }}"{% if PF_VIS_FILTER < 0 %} selected{% endif %}>{{ lang('ACP_PORTFOLIO_FILTER_ALL') }}</option>
+			{% for v in PF_VIS_LIST %}<option value="{{ U_ACTION }}&amp;filter={{ PF_FILTER }}&amp;vis={{ v.id }}{{ PF_LIST.extra }}"{% if PF_VIS_FILTER == v.id %} selected{% endif %}>{{ v.label }}</option>{% endfor %}
+		</select>
+	</label>
 </p>
 
+<form id="pf-albums-owner" class="pf-acp-owner" method="post" action="{{ U_ACTION }}&amp;filter={{ PF_FILTER }}&amp;vis={{ PF_VIS_FILTER }}{% if PF_LIST.sorted %}&amp;sk={{ PF_LIST.sk }}&amp;sd={{ PF_LIST.sd }}{% endif %}">
+	<label for="pf-owner">{{ lang('ACP_PORTFOLIO_OWNER_FILTER') }}{{ lang('COLON') }}</label>
+	<input type="text" class="inputbox autowidth" name="owner" id="pf-owner" value="{{ PF_LIST.owner }}" size="22" placeholder="{{ lang('USERNAME') }}">
+	<a href="{{ PF_LIST.u_find }}" onclick="find_username(this.href); return false;">{{ lang('FIND_USERNAME') }}</a>
+	<button class="button2" type="submit">{{ lang('ACP_PORTFOLIO_OWNER_SHOW') }}</button>
+	{% if PF_LIST.owner %}<a href="{{ PF_LIST.u_clear_owner }}">{{ lang('ACP_PORTFOLIO_OWNER_CLEAR') }}</a>{% endif %}
+	{% if PF_LIST.owner_error %}<span class="skin-status skin-warn">{{ PF_LIST.owner_error }}</span>{% endif %}
+	{% if PF_LIST.sorted %}<a class="pf-acp-owner__tree" href="{{ PF_LIST.u_tree }}">{{ lang('ACP_PORTFOLIO_SORT_TREE') }}</a>{% endif %}
+</form>
+
+<form id="pf-albums-bulk" method="post" action="{{ U_ACTION }}">
 <fieldset>
-<legend>{{ lang('ACP_PORTFOLIO_ALBUMS') }}</legend>
+<legend>{{ lang('ACP_PORTFOLIO_ALBUMS') }} ({{ PF_ROWS|length }})</legend>
 {% if PF_ROWS|length %}
+<div class="pf-acp-bulk">
+	<strong>{{ lang('ACP_PORTFOLIO_BULK_TITLE') }}</strong>
+	<span class="pf-acp-bulk__count" data-pf-bulk-count>{{ lang('ACP_PORTFOLIO_BULK_SELECTED', 0) }}</span>
+	<label>{{ lang('PORTFOLIO_VISIBILITY') }}{{ lang('COLON') }}
+		<select name="bulk_visibility">
+			<option value="">{{ lang('ACP_PORTFOLIO_BULK_KEEP') }}</option>
+			{% for v in PF_VIS_LIST %}<option value="{{ v.id }}">{{ v.label }}</option>{% endfor %}
+		</select>
+	</label>
+	<label>{{ lang('ACP_PORTFOLIO_BULK_DOWNLOAD') }}{{ lang('COLON') }}
+		<select name="bulk_download">
+			<option value="">{{ lang('ACP_PORTFOLIO_BULK_KEEP') }}</option>
+			<option value="1">{{ lang('ACP_PORTFOLIO_BULK_ALLOWED') }}</option>
+			<option value="0">{{ lang('ACP_PORTFOLIO_BULK_FORBIDDEN') }}</option>
+		</select>
+	</label>
+	<label>{{ lang('ACP_PORTFOLIO_BULK_WM') }}{{ lang('COLON') }}
+		<select name="bulk_watermark">
+			<option value="">{{ lang('ACP_PORTFOLIO_BULK_KEEP') }}</option>
+			<option value="0">{{ lang('ACP_PORTFOLIO_BULK_WM_DISABLE') }}</option>
+			<option value="1">{{ lang('ACP_PORTFOLIO_BULK_WM_ENABLE') }}</option>
+		</select>
+	</label>
+	<label>{{ lang('ACP_PORTFOLIO_BULK_LOCK') }}{{ lang('COLON') }}
+		<select name="bulk_lock">
+			<option value="">{{ lang('ACP_PORTFOLIO_BULK_KEEP') }}</option>
+			<option value="1">{{ lang('ACP_PORTFOLIO_LOCK') }}</option>
+			<option value="0">{{ lang('ACP_PORTFOLIO_UNLOCK') }}</option>
+		</select>
+	</label>
+	<label>{{ lang('ACP_PORTFOLIO_BULK_PROTECT') }}{{ lang('COLON') }}
+		<select name="bulk_protect" title="{{ lang('ACP_PORTFOLIO_PAGE_PROTECT_EXPLAIN') }}">
+			<option value="">{{ lang('ACP_PORTFOLIO_BULK_KEEP') }}</option>
+			<option value="1">{{ lang('ACP_PORTFOLIO_PROTECT') }}</option>
+			<option value="0">{{ lang('ACP_PORTFOLIO_UNPROTECT') }}</option>
+		</select>
+	</label>
+	<label><input type="checkbox" name="bulk_children" value="1" checked> {{ lang('ACP_PORTFOLIO_BULK_CHILDREN') }}</label>
+	<input type="hidden" name="action" value="bulk">
+	<input type="hidden" name="filter" value="{{ PF_FILTER }}">
+	<input type="hidden" name="vis" value="{{ PF_VIS_FILTER }}">
+	{% if PF_LIST.sorted %}<input type="hidden" name="sk" value="{{ PF_LIST.sk }}"><input type="hidden" name="sd" value="{{ PF_LIST.sd }}">{% endif %}
+	{% if PF_LIST.owner and not PF_LIST.owner_error %}<input type="hidden" name="owner" value="{{ PF_LIST.owner }}">{% endif %}
+	<button class="button1" type="submit">{{ lang('ACP_PORTFOLIO_BULK_APPLY') }}</button>
+	<p class="pf-acp-bulk__hint">{{ lang('ACP_PORTFOLIO_BULK_EXPLAIN') }}</p>
+</div>
 <table class="table1 zebra-table skin-log">
 	<thead>
 		<tr>
-			<th>{{ lang('PORTFOLIO_ALBUM') }}</th>
-			<th>{{ lang('ACP_PORTFOLIO_OWNER') }}</th>
+			<th class="pf-acp-check"><input type="checkbox" data-pf-check-all title="{{ lang('ACP_PORTFOLIO_BULK_ALL') }}" aria-label="{{ lang('ACP_PORTFOLIO_BULK_ALL') }}"></th>
+			<th><a class="pf-acp-sort{% if PF_LIST.sort.name.active %} is-active{% endif %}" href="{{ PF_LIST.sort.name.url }}">{{ lang('PORTFOLIO_ALBUM') }}{% if PF_LIST.sort.name.active %} {{ PF_LIST.sort.name.dir == 'd' ? '▼' : '▲' }}{% endif %}</a></th>
+			<th><a class="pf-acp-sort{% if PF_LIST.sort.owner.active %} is-active{% endif %}" href="{{ PF_LIST.sort.owner.url }}">{{ lang('ACP_PORTFOLIO_OWNER') }}{% if PF_LIST.sort.owner.active %} {{ PF_LIST.sort.owner.dir == 'd' ? '▼' : '▲' }}{% endif %}</a></th>
 			<th>{{ lang('PORTFOLIO_VISIBILITY') }}</th>
-			<th>{{ lang('PORTFOLIO_STAT_PHOTOS') }}</th>
+			<th>{{ lang('ACP_PORTFOLIO_BULK_DOWNLOAD_SHORT') }}</th>
+			<th><a class="pf-acp-sort{% if PF_LIST.sort.photos.active %} is-active{% endif %}" href="{{ PF_LIST.sort.photos.url }}">{{ lang('PORTFOLIO_STAT_PHOTOS') }}{% if PF_LIST.sort.photos.active %} {{ PF_LIST.sort.photos.dir == 'd' ? '▼' : '▲' }}{% endif %}</a></th>
 			<th>{{ lang('ACP_PORTFOLIO_GROUP_RULES') }}</th>
 			<th>{{ lang('ACTION') }}</th>
 		</tr>
@@ -77,10 +142,12 @@
 	<tbody>
 	{% for row in PF_ROWS %}
 		<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
-			<td><span class="pf-acp-indent" style="width: {{ row.depth * 18 }}px"></span><a href="{{ row.u_view }}"><strong>{{ row.name }}</strong></a>
-				{% if row.locked %} <span class="skin-status skin-warn">{{ lang('PORTFOLIO_LOCKED') }}</span>{% endif %}{% if row.protected %} <span class="skin-status skin-warn">{{ lang('ACP_PORTFOLIO_PROTECTED') }}</span>{% endif %}</td>
+			<td class="pf-acp-check"><input type="checkbox" name="album_ids[]" value="{{ row.id }}" aria-label="{{ row.name }}"></td>
+			<td>{% if PF_LIST.sorted %}{% if row.path %}<span class="pf-acp-path">{{ row.path }} › </span>{% endif %}{% else %}<span class="pf-acp-indent" style="width: {{ row.depth * 18 }}px"></span>{% endif %}<a href="{{ row.u_view }}"><strong>{{ row.name }}</strong></a>
+				{% if row.locked %} <span class="skin-status skin-warn">{{ lang('PORTFOLIO_LOCKED') }}</span>{% endif %}{% if row.protected %} <span class="skin-status skin-warn">{{ lang('ACP_PORTFOLIO_PROTECTED') }}</span>{% endif %}{% if row.no_wm == 'self' %} <span class="skin-status skin-info">{{ lang('ACP_PORTFOLIO_NO_WM') }}</span>{% elseif row.no_wm == 'parent' %} <span class="skin-status skin-pending" title="{{ lang('ACP_PORTFOLIO_NO_WM_PARENT_EXPLAIN') }}">{{ lang('ACP_PORTFOLIO_NO_WM_PARENT') }}</span>{% endif %}</td>
 			<td>{% if row.is_public %}<span class="skin-status skin-info">{{ lang('PORTFOLIO_PUBLIC_ALBUM') }}</span>{% else %}{{ row.owner }}{% endif %}</td>
-			<td>{{ row.visibility }}</td>
+			<td class="pf-acp-nowrap">{{ row.visibility }}</td>
+			<td>{% if row.download %}<span class="skin-status skin-ok">{{ lang('YES') }}</span>{% else %}<span class="skin-status skin-pending">{{ lang('NO') }}</span>{% endif %}</td>
 			<td>{{ row.photos }}</td>
 			<td>{% if row.group_rules %}<span class="skin-status skin-info">{{ row.group_rules }}</span>{% else %}—{% endif %}</td>
 			<td class="pf-acp-actions">
@@ -95,10 +162,33 @@
 	{% endfor %}
 	</tbody>
 </table>
+<script>
+(function () {
+	var form = document.getElementById('pf-albums-bulk');
+	var all = form.querySelector('[data-pf-check-all]');
+	var boxes = form.querySelectorAll('input[name="album_ids[]"]');
+	var count = form.querySelector('[data-pf-bulk-count]');
+	var label = {{ lang('ACP_PORTFOLIO_BULK_SELECTED_JS')|json_encode|raw }};
+	function update() {
+		var n = 0;
+		Array.prototype.forEach.call(boxes, function (b) { if (b.checked) { n++; } });
+		count.textContent = label.replace('%d', n);
+		all.checked = n === boxes.length && n > 0;
+		all.indeterminate = n > 0 && n < boxes.length;
+	}
+	all.addEventListener('change', function () {
+		Array.prototype.forEach.call(boxes, function (b) { b.checked = all.checked; });
+		update();
+	});
+	Array.prototype.forEach.call(boxes, function (b) { b.addEventListener('change', update); });
+	update();
+})();
+</script>
 {% else %}
 <p>{{ lang('PORTFOLIO_NO_ALBUMS') }}</p>
 {% endif %}
 </fieldset>
+</form>
 
 {% endif %}
 

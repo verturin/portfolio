@@ -207,7 +207,6 @@ class photo extends base
 		$start = $this->page_start($per_page);
 		$social = $this->social($photo, $album, $start, $per_page);
 
-		$can_manage = $album && $this->access->can_manage_album($album);
 		$owner_side = $album && $this->access->is_photo_owner_side($album, $photo);
 		$can_tweak = $album && !$is_trash && $this->access->can_tweak_photo($album, $photo);
 		$can_edit = $album && !$is_trash && $this->access->can_edit_photo($album, $photo);
@@ -243,7 +242,7 @@ class photo extends base
 		$embed = $this->embed_codes($photo, $album);
 
 		// Le propriétaire ne voit pas le filigrane : on lui rappelle que les visiteurs le voient
-		$wm_skipped = $owner_side && $this->watermark && $this->watermark->is_enabled()
+		$wm_skipped = $owner_side && $this->watermark && $this->watermark->is_enabled() && !$this->albums->watermark_off($album) && !$this->access->owner_removed_watermark($photo, $album)
 			&& !$this->watermark->applies('medium', $this->access->role($album) >= \verturin\portfolio\service\access::ROLE_CONTRIBUTOR);
 
 		return $this->render('portfolio_photo.html', $photo['photo_title'], [
@@ -276,7 +275,7 @@ class photo extends base
 			'U_PF_DELETE'		=> $can_delete ? $this->route('photo_delete', ['photo_id' => $photo_id]) : '',
 			'U_PF_RESTORE'		=> $can_restore ? $this->route('photo_restore', ['photo_id' => $photo_id]) : '',
 			'U_PF_COVER'		=> ($album && $this->access->can_set_cover($album) && !$is_trash && $status === photo_manager::STATUS_APPROVED) ? $this->route('photo_cover', ['photo_id' => $photo_id, 'hash' => generate_link_hash('pf_cover_' . $photo_id)]) : '',
-			'U_PF_APPROVE'		=> ($status === photo_manager::STATUS_PENDING && ($this->access->can_approve() || $can_manage)) ? $this->route('queue', ['approve' => $photo_id, 'hash' => generate_link_hash('pf_approve_' . $photo_id)]) : '',
+			'U_PF_APPROVE'		=> ($status === photo_manager::STATUS_PENDING && $album && $this->access->can_approve_album($album)) ? $this->route('queue', ['approve' => $photo_id, 'hash' => generate_link_hash('pf_approve_' . $photo_id)]) : '',
 			'U_PF_DOWNLOAD'		=> ($album && $this->access->can_download($album)) || $can_restore ? $this->route('file', ['photo_id' => $photo_id, 'size' => 'source', 'dl' => 1]) : '',
 			'U_PF_SOURCE'		=> ($album && $this->access->can_download($album)) ? $this->presenter->file_url($photo, 'source') : '',
 			'U_PF_ACTION'		=> $this->route('photo', ['photo_id' => $photo_id]),
@@ -305,7 +304,7 @@ class photo extends base
 		}
 
 		$page_url = $this->presenter->route_abs('photo', ['photo_id' => $photo_id]);
-		$embed = [['key' => 'link', 'label' => $this->language->lang('PORTFOLIO_EMBED_LINK'), 'code' => $page_url]];
+		$embed = [];
 		$has_bbcode = $this->bbcode && $this->bbcode->is_installed();
 		foreach (['mini', 'medium', 'large'] as $size)
 		{
@@ -314,6 +313,8 @@ class photo extends base
 				: '[url=' . $page_url . '][img]' . $this->presenter->route_abs('embed', ['photo_id' => $photo_id, 'size' => $size]) . '[/img][/url]';
 			$embed[] = ['key' => $size, 'label' => $this->language->lang('PORTFOLIO_EMBED_' . strtoupper($size)), 'code' => $code];
 		}
+		// Lien seul en dernier, avec sa mise en garde : coller l'adresse entre [img] donne une image cassée (v1.10.7)
+		$embed[] = ['key' => 'link', 'label' => $this->language->lang('PORTFOLIO_EMBED_LINK'), 'code' => $page_url, 'note' => $this->language->lang('PORTFOLIO_EMBED_LINK_NOTE')];
 
 		return $embed;
 	}
@@ -597,12 +598,19 @@ class photo extends base
 				$this->deny('PORTFOLIO_DELETE_BLOCKED');
 			}
 
-			$this->photos->trash([(int) $photo['photo_id']], $this->request->variable('reason', '', true));
+			$reason = trim($this->request->variable('reason', '', true));
+			if ($reason === '' && $this->config['portfolio_trash_reason_required'])
+			{
+				// Motif obligatoire (v1.10.6) : retour au formulaire de confirmation
+				return $this->helper->message($this->language->lang('PORTFOLIO_REASON_MISSING') . '<br><br><a href="' . $this->route('photo_delete', ['photo_id' => (int) $photo['photo_id']]) . '">' . $this->language->lang('PORTFOLIO_REASON_BACK') . '</a>', [], 'PORTFOLIO_DELETE_PHOTO', 400);
+			}
+			$this->photos->trash([(int) $photo['photo_id']], $reason);
 
 			return $this->done('PORTFOLIO_PHOTO_TRASHED', $back);
 		}
 
 		$this->language->add_lang('common', 'verturin/portfolio');
+		$this->template->assign_var('PF_REASON_REQUIRED', (bool) $this->config['portfolio_trash_reason_required']);
 		confirm_box(false, $this->language->lang('PORTFOLIO_TRASH_CONFIRM', $photo['photo_title']), build_hidden_fields(['photo_id' => (int) $photo['photo_id']]), '@verturin_portfolio/portfolio_confirm_trash.html');
 
 		return new RedirectResponse($back);

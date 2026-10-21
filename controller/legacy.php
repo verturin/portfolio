@@ -72,6 +72,11 @@ class legacy
 		$target = $this->migrator->legacy_target('album', (int) $album_id);
 		if ($target === '')
 		{
+			// Album pas encore basculé : la galerie phpBB, si elle est encore active
+			if ($this->migrator->gallery_enabled())
+			{
+				return new RedirectResponse($this->base_url() . '/gallery/album/' . (int) $album_id, 302);
+			}
 			throw new http_exception(404, 'PORTFOLIO_ALBUM_NOT_FOUND');
 		}
 

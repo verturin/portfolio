@@ -23,6 +23,11 @@ class comment extends base_type
 		return 'verturin.portfolio.notification.type.comment';
 	}
 
+	public function is_available()
+	{
+		return $this->activity_available('portfolio_notify_comment', false);
+	}
+
 	public static function get_item_id($data)
 	{
 		return (int) $data['comment_id'];

@@ -14,6 +14,7 @@
 	</div>
 </header>
 
+{% if PF_ALBUMS|length or PF_IS_SELF or not PF_ELSEWHERE|length %}
 <section class="pf-section">
 	<h2 class="pf-section__title">{{ pf.icon(PF_IS_SELF ? 'user' : 'folder') }}{{ PF_IS_SELF ? lang('PORTFOLIO_MY_ALBUMS') : lang('PORTFOLIO_ALBUMS_OF', PF_OWNER_USERNAME) }}</h2>
 	{% if PF_ALBUMS|length %}
@@ -30,6 +31,7 @@
 	{{ pf.empty(lang('PORTFOLIO_NO_ALBUMS'), 'folder') }}
 	{% endif %}
 </section>
+{% endif %}
 
 {% if PF_SHARED|length %}
 <section class="pf-section">
@@ -46,6 +48,17 @@
 	<div class="pf-grid" data-pf-gallery>
 		{% for photo in PF_RECENT %}{{ pf.photo_card(photo, false) }}{% endfor %}
 	</div>
+</section>
+{% endif %}
+
+{% if PF_ELSEWHERE|length %}
+<section class="pf-section" id="pf-elsewhere">
+	<h2 class="pf-section__title">{{ pf.icon('users') }}{{ PF_IS_SELF ? lang('PORTFOLIO_MY_PHOTOS_ELSEWHERE') : lang('PORTFOLIO_PHOTOS_ELSEWHERE', PF_OWNER_USERNAME) }} <span class="pf-count">{{ PF_ELSEWHERE_TOTAL }}</span></h2>
+	<p class="pf-muted pf-small-note">{{ lang('PORTFOLIO_PHOTOS_ELSEWHERE_EXPLAIN') }}</p>
+	<div class="pf-grid" data-pf-gallery>
+		{% for photo in PF_ELSEWHERE %}{{ pf.photo_card(photo, false) }}{% endfor %}
+	</div>
+	{{ pf.pagination(PF_ELSEWHERE_PAGES) }}
 </section>
 {% endif %}
 

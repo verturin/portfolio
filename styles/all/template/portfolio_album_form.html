@@ -82,6 +82,15 @@
 		</div>
 		{% endif %}
 
+		{% if PF_CAN_WM_OPTOUT %}
+		<div class="pf-field pf-wm-optout">
+			<label class="pf-check pf-check--highlight"><input type="checkbox" name="album_wm_keep" value="1"{% if not PF_FORM.owner_no_wm %} checked{% endif %}> {{ lang('PORTFOLIO_OWNER_NO_WM') }}</label>
+			<small>{{ lang('PORTFOLIO_OWNER_NO_WM_EXPLAIN') }}</small>
+			<p class="pf-alert pf-alert--warn pf-wm-optout__warn">{{ pf.icon('alert') }}<span>{{ lang('PORTFOLIO_OWNER_NO_WM_WARN') }}</span></p>
+			{% if PF_FORM.has_children %}<label class="pf-check"><input type="checkbox" name="album_wm_children" value="1"> {{ lang('PORTFOLIO_OWNER_NO_WM_CHILDREN') }}</label>{% endif %}
+		</div>
+		{% endif %}
+
 		<div class="pf-form__footer">
 			<a class="pf-btn pf-btn--ghost" href="{{ U_PF_CANCEL }}">{{ lang('CANCEL') }}</a>
 			<button type="submit" name="submit" value="1" class="pf-btn pf-btn--primary">{{ pf.icon('check') }}{{ lang(PF_FORM.is_new ? 'PORTFOLIO_CREATE' : 'SUBMIT') }}</button>

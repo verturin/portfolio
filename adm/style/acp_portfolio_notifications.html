@@ -1,0 +1,71 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+<h1>{{ lang('ACP_PORTFOLIO_NOTIFICATIONS') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_NOTIFICATIONS_EXPLAIN') }}</p>
+
+<form id="acp_portfolio_notifications" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_NOTIFY_WHAT') }}</legend>
+		{% for type in ['rating', 'comment', 'reaction'] %}
+		<dl>
+			<dt><label for="portfolio_notify_{{ type }}">{{ lang('ACP_PORTFOLIO_NOTIFY_' ~ type|upper) }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_NOTIFY_' ~ type|upper ~ '_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="portfolio_notify_{{ type }}" id="portfolio_notify_{{ type }}" value="1"{% if attribute(PF_NOTIFY, type) %} checked{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="portfolio_notify_{{ type }}" value="0"{% if not attribute(PF_NOTIFY, type) %} checked{% endif %}> {{ lang('NO') }}</label>
+			</dd>
+		</dl>
+		{% endfor %}
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_NOTIFY_HOW') }}</legend>
+		<dl>
+			<dt><label>{{ lang('ACP_PORTFOLIO_NOTIFY_MODE') }}{{ lang('COLON') }}</label></dt>
+			<dd class="pf-acp-choices">
+				<label><input type="radio" class="radio" name="portfolio_notify_mode" value="each"{% if PF_NOTIFY.mode == 'each' %} checked{% endif %}> <strong>{{ lang('ACP_PORTFOLIO_NOTIFY_MODE_EACH') }}</strong><br><small>{{ lang('ACP_PORTFOLIO_NOTIFY_MODE_EACH_EXPLAIN') }}</small></label>
+				<label><input type="radio" class="radio" name="portfolio_notify_mode" value="digest"{% if PF_NOTIFY.mode == 'digest' %} checked{% endif %}> <strong>{{ lang('ACP_PORTFOLIO_NOTIFY_MODE_DIGEST') }}</strong><br><small>{{ lang('ACP_PORTFOLIO_NOTIFY_MODE_DIGEST_EXPLAIN') }}</small></label>
+			</dd>
+		</dl>
+		<dl data-pf-notify-delay>
+			<dt><label for="portfolio_notify_delay">{{ lang('ACP_PORTFOLIO_NOTIFY_DELAY') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_NOTIFY_DELAY_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="portfolio_notify_delay" id="portfolio_notify_delay">
+					{% for d in PF_DELAYS %}<option value="{{ d.value }}"{% if d.selected %} selected{% endif %}>{{ d.label }}</option>{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		{% if PF_NOTIFY.mode == 'digest' %}
+		<dl>
+			<dt><label>{{ lang('ACP_PORTFOLIO_NOTIFY_STATUS') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				{{ lang('ACP_PORTFOLIO_NOTIFY_PENDING', PF_NOTIFY.pending) }}{% if PF_NOTIFY.last_run %} · {{ lang('ACP_PORTFOLIO_NOTIFY_LAST_RUN', PF_NOTIFY.last_run) }}{% endif %}
+				{% if PF_NOTIFY.pending %}<br><input class="button2" type="submit" name="send_now" value="{{ lang('ACP_PORTFOLIO_NOTIFY_SEND_NOW') }}">{% endif %}
+			</dd>
+		</dl>
+		{% endif %}
+	</fieldset>
+
+	<div class="skin-note">{{ lang('ACP_PORTFOLIO_NOTIFY_MEMBERS', U_UCP_NOTIFY) }}</div>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}">
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+<script>
+(function () {
+	var form = document.getElementById('acp_portfolio_notifications');
+	var row = form.querySelector('[data-pf-notify-delay]');
+	function sync() {
+		var digest = form.querySelector('input[name="portfolio_notify_mode"]:checked');
+		row.style.display = digest && digest.value === 'digest' ? '' : 'none';
+	}
+	Array.prototype.forEach.call(form.querySelectorAll('input[name="portfolio_notify_mode"]'), function (r) { r.addEventListener('change', sync); });
+	sync();
+})();
+</script>
+
+{% include 'overall_footer.html' %}

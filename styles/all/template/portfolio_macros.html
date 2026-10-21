@@ -73,7 +73,9 @@
 			{% if photo.quick %}<span class="pf-photo__hint">{{ pf.icon('smile') }}{{ lang('PORTFOLIO_QUICK_HINT') }}</span>{% endif %}
 		</span>
 	</figcaption>
-	{% if photo.user_name %}
+	{% if photo.in_album_name %}
+	<div class="pf-photo__by pf-photo__in" title="{{ lang('PORTFOLIO_IN_ALBUM_TITLE', photo.in_album_name) }}">{{ pf.icon('folder') }}<span>{{ lang('PORTFOLIO_IN_ALBUM_SHORT') }}</span><a href="{{ photo.in_album_url }}">{{ photo.in_album_name }}</a>{% if photo.in_album_public %}<em class="pf-photo__in-tag">{{ lang('PORTFOLIO_IN_ALBUM_PUBLIC') }}</em>{% endif %}</div>
+	{% elseif photo.user_name %}
 	<div class="pf-photo__by">{{ pf.icon('user') }}<span>{{ lang('PORTFOLIO_POSTED_BY_SHORT') }}</span>{% if photo.user_url %}<a href="{{ photo.user_url }}"{% if photo.user_colour %} style="color: {{ photo.user_colour }} !important"{% endif %}>{{ photo.user_name }}</a>{% else %}<b>{{ photo.user_name }}</b>{% endif %}</div>
 	{% endif %}
 </figure>

@@ -79,7 +79,7 @@
 		<label class="pf-check"><input type="checkbox" data-pf-select-all> {{ lang('PORTFOLIO_SELECT_ALL') }}</label>
 		<span class="pf-bulk__count" data-pf-count data-label="{{ lang('PORTFOLIO_SELECTED_COUNT') }}">0</span>
 		<select name="action" class="pf-input pf-input--inline" data-pf-bulk-action>
-			<option value="delete">{{ lang('PORTFOLIO_BULK_TRASH') }}</option>
+			{% if PF_CAN_BULK_DELETE %}<option value="delete">{{ lang('PORTFOLIO_BULK_TRASH') }}</option>{% endif %}
 			{% if PF_MOVE_TARGETS|length %}<option value="move">{{ lang('PORTFOLIO_BULK_MOVE') }}</option>{% endif %}
 			{% if PF_CAN_APPROVE %}<option value="approve">{{ lang('PORTFOLIO_BULK_APPROVE') }}</option>{% endif %}
 		</select>
@@ -88,6 +88,7 @@
 			{% for target in PF_MOVE_TARGETS %}<option value="{{ target.id }}">{{ target.name }}{% if target.owner %} ({{ target.owner }}){% endif %}</option>{% endfor %}
 		</select>
 		{% endif %}
+		{% if PF_CAN_BULK_DELETE %}<input type="text" name="reason" class="pf-input pf-input--inline" maxlength="255" data-pf-bulk-reason{% if PF_REASON_REQUIRED %} data-required="1"{% endif %} placeholder="{{ lang(PF_REASON_REQUIRED ? 'PORTFOLIO_REASON_REQUIRED' : 'PORTFOLIO_REASON_OPTIONAL') }}" aria-label="{{ lang('PORTFOLIO_REASON') }}">{% endif %}
 		<button type="submit" class="pf-btn pf-btn--primary pf-btn--small">{{ lang('PORTFOLIO_APPLY') }}</button>
 		{{ S_FORM_TOKEN }}
 	</form>

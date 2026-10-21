@@ -52,7 +52,8 @@ class album extends base
 		$photos = $this->presenter->photos($rows, $sort !== $album['album_sort'] ? ['sort' => $sort] : []);
 		foreach ($photos as &$photo)
 		{
-			$photo['can_select'] = $this->access->can_delete_photo($album, $rows[$photo['id']]);
+			$photo['can_delete'] = $this->access->can_delete_photo($album, $rows[$photo['id']]);
+			$photo['can_select'] = $photo['can_delete'] || $this->access->can_move_photo($album, $rows[$photo['id']]);
 		}
 		unset($photo);
 
@@ -73,6 +74,10 @@ class album extends base
 
 		$depth_ok = $this->albums->depth($album_id) < max(1, (int) $this->config['portfolio_max_depth']);
 		$can_bulk = (bool) array_filter(array_column($photos, 'can_select'));
+		$can_bulk_delete = (bool) array_filter(array_column($photos, 'can_delete'));
+		$move_targets = $can_bulk ? $this->upload_targets($album_id, (int) $album['owner_id']) : [];
+		// Barre de sélection seulement s'il reste une action possible (suppression, déplacement ou validation)
+		$can_bulk = $can_bulk && ($can_bulk_delete || $move_targets || $this->access->can_approve_album($album));
 
 		add_form_key('verturin_portfolio_bulk');
 
@@ -94,8 +99,10 @@ class album extends base
 			'PF_PAGINATION'		=> $this->presenter->pagination('album', $pagination_params, $total, $per_page, $start),
 			'PF_CAN_MANAGE'		=> $can_manage,
 			'PF_CAN_BULK'		=> $can_bulk,
-			'PF_CAN_APPROVE'	=> $this->access->can_approve() || $can_manage,
-			'PF_MOVE_TARGETS'	=> $can_bulk ? $this->upload_targets($album_id, (int) $album['owner_id']) : [],
+			'PF_CAN_BULK_DELETE'	=> $can_bulk_delete,
+			'PF_REASON_REQUIRED'	=> (bool) $this->config['portfolio_trash_reason_required'],
+			'PF_CAN_APPROVE'	=> $this->access->can_approve_album($album),
+			'PF_MOVE_TARGETS'	=> $move_targets,
 			'U_PF_UPLOAD'		=> $this->access->can_upload($album) ? $this->route('upload', ['album_id' => $album_id]) : '',
 			'U_PF_EDIT'			=> $can_manage ? $this->route('album_edit', ['album_id' => $album_id]) : '',
 			'U_PF_DELETE'		=> $this->access->can_delete_album($album) ? $this->route('album_delete', ['album_id' => $album_id]) : '',
@@ -142,8 +149,8 @@ class album extends base
 			{
 				$this->deny();
 			}
-			$max = (int) $this->config['portfolio_user_max_albums'];
-			if ($max && !$this->access->acl('u_portfolio_unlimited') && $this->albums->count_user_albums($this->access->user_id()) >= $max)
+			$max = $this->access->album_quota();
+			if ($max && $this->albums->count_user_albums($this->access->user_id()) >= $max)
 			{
 				$this->deny('PORTFOLIO_MAX_ALBUMS_REACHED');
 			}
@@ -160,6 +167,8 @@ class album extends base
 			'album_locked'		=> 0,
 			'album_friends'		=> $parent ? (int) $parent['album_friends'] : 0,
 			'album_download'	=> $parent ? (int) $parent['album_download'] : (int) $this->config['portfolio_album_download_default'],
+			// Tout nouvel album démarre avec le filigrane : seul le membre décide de le retirer (v1.10.1)
+			'album_owner_no_wm'	=> 0,
 			'album_sort'		=> 'date_desc',
 			'parent_id'			=> $parent_id,
 			'owner_id'			=> $owner_id,
@@ -199,6 +208,12 @@ class album extends base
 		];
 		$current_groups = $album_id ? $this->albums->get_groups($album_id) : ($parent ? $this->albums->get_groups($parent['album_id']) : []);
 
+		// Filigrane retiré par le propriétaire sur ses propres photos, si l'administration l'y autorise (v1.10.0)
+		$wm_owner = (int) $album['owner_id'];
+		$can_wm_optout = $wm_owner > 0 && (bool) $this->config['portfolio_wm_enabled']
+			&& $this->access->wm_optout_allowed($wm_owner)
+			&& ($this->access->user_id() === $wm_owner || $this->access->is_admin());
+
 		// Destinations possibles pour déplacer l'album (même propriétaire, albums gérés)
 		$owner_id = (int) $album['owner_id'];
 		$parents = [];
@@ -228,6 +243,15 @@ class album extends base
 				'album_download'	=> $choice['download'] ? $this->request->variable('album_download', 0) : (int) $album['album_download'],
 				'album_sort'		=> $choice['sort'] ? $this->request->variable('album_sort', 'date_desc') : $album['album_sort'],
 			];
+			if ($can_wm_optout)
+			{
+				// Case « Protéger mes photos par le filigrane », cochée par défaut : décochée = sans filigrane
+				$data['album_owner_no_wm'] = $this->request->variable('album_wm_keep', 0) ? 0 : 1;
+			}
+			else if ($is_new)
+			{
+				$data['album_owner_no_wm'] = 0;
+			}
 
 			// Visibilité non proposée au membre : on garde le réglage par défaut du forum
 			if (!in_array($data['album_visibility'], $allowed_vis, true))
@@ -293,6 +317,16 @@ class album extends base
 				else
 				{
 					$this->albums->update($album_id, $data);
+
+					// Même choix pour les sous-albums du même propriétaire, si demandé
+					if ($can_wm_optout && $this->request->variable('album_wm_children', 0))
+					{
+						$all = $this->albums->get_all();
+						$children = array_values(array_filter($this->albums->descendants($album_id), function ($id) use ($all, $wm_owner) {
+							return isset($all[$id]) && (int) $all[$id]['owner_id'] === $wm_owner;
+						}));
+						$this->albums->update_many($children, ['album_owner_no_wm' => $data['album_owner_no_wm']]);
+					}
 				}
 
 				$this->save_view_groups($album_id, (int) $data['album_visibility'], $view_groups, $groups);
@@ -337,6 +371,8 @@ class album extends base
 				'desc'			=> $desc,
 				'locked'		=> (bool) $album['album_locked'],
 				'download'		=> !isset($album['album_download']) || (bool) $album['album_download'],
+				'owner_no_wm'	=> !empty($album['album_owner_no_wm']),
+				'has_children'	=> $album_id && (bool) $this->albums->descendants($album_id),
 				'is_public'		=> $owner_id === 0,
 				'parent_name'	=> $parent ? $parent['album_name'] : '',
 			],
@@ -345,6 +381,7 @@ class album extends base
 			'PF_CAN_GROUPS'		=> $can_groups,
 			'PF_CAN_FRIENDS'	=> in_array(access::VIS_FRIENDS, $allowed_vis, true) || $can_groups,
 			'PF_CHOICE'			=> $choice,
+			'PF_CAN_WM_OPTOUT'	=> $can_wm_optout,
 			'PF_GROUPS_SELECTED' => (int) $album['album_visibility'] === access::VIS_GROUPS,
 			'PF_ALLOW_FRIENDS'	=> !empty($album['album_friends']),
 			'PF_PERSONAL'		=> $owner_id !== 0,
@@ -782,7 +819,12 @@ class album extends base
 					$this->deny('PORTFOLIO_DELETE_BLOCKED');
 				}
 
-				$count = $this->photos->trash($allowed);
+				$reason = trim($this->request->variable('reason', '', true));
+				if ($allowed && $reason === '' && $this->config['portfolio_trash_reason_required'])
+				{
+					return $this->done('PORTFOLIO_REASON_MISSING', $back);
+				}
+				$count = $this->photos->trash($allowed, $reason);
 
 				return $this->done('PORTFOLIO_PHOTOS_TRASHED', $back, [$count]);
 
@@ -801,7 +843,7 @@ class album extends base
 				return $this->done('PORTFOLIO_PHOTOS_MOVED', $back, [$count, $target['album_name']]);
 
 			case 'approve':
-				if (!$this->access->can_approve() && !$this->access->can_manage_album($album))
+				if (!$this->access->can_approve_album($album))
 				{
 					$this->deny();
 				}
