@@ -1,0 +1,27 @@
+Screenshots to upload on phpBB.com (folder docs/screenshots/en/) — use the English set.
+Captures à publier (dossier docs/screenshots/fr/ pour un site francophone).
+
+File                               | English caption                                   | Légende en français
+-----------------------------------|---------------------------------------------------|------------------------------------------------
+01-home.png                        | Portfolio home page                               | Accueil du Portfolio
+02-member-portfolio.png            | A member's portfolio                              | Portfolio d'un membre
+03-album.png                       | Album with sub-albums and album tree              | Album, sous-albums et arborescence
+04-photo.png                       | Photo page: rating, reactions, insert codes       | Page photo : note, réactions, codes d'insertion
+05-quick-view.png                  | Quick view without leaving the album              | Aperçu rapide sans quitter l'album
+06-upload.png                      | Drag-and-drop upload with quota                   | Envoi par glisser-déposer avec quota
+07-album-settings.png              | Album settings: visibility, download, watermark   | Réglages d'un album : visibilité, téléchargement, filigrane
+08-sharing.png                     | Sharing albums with co-managers                   | Partage des albums avec des co-gestionnaires
+09a-embed-codes.png                | Ready-to-copy [portfolio] BBCodes                 | BBCode [portfolio] prêts à copier
+09b-photo-in-post.png              | A portfolio photo inside a forum post             | Une photo du portfolio dans un message
+10-notifications.png               | Notifications for ratings, comments, reactions    | Notifications des notes, commentaires et réactions
+11-recycle-bin.png                 | Recycle bin with deletion reason                  | Corbeille avec motif de suppression
+12-profile.png                     | Latest photos in the member profile               | Dernières photos dans le profil
+13-watermark.png                   | Traceable watermark (viewer ID)                   | Filigrane traçable (identifiant du visiteur)
+14-acp-settings.png                | ACP: settings                                     | ACP : réglages
+15-acp-albums.png                  | ACP: albums & permissions, bulk changes           | ACP : albums et droits, modification en nombre
+16-acp-watermark.png               | ACP: watermark with live preview                  | ACP : filigrane avec aperçu
+17-acp-quotas-approval.png         | ACP: per-group quotas and approval                | ACP : quotas et validation par groupe
+18-acp-notifications.png           | ACP: notifications                                | ACP : notifications
+19-acp-phpbb-gallery-import.png    | ACP: migration from phpBB Gallery                 | ACP : bascule depuis phpBB Gallery
+20-acp-backup.png                  | ACP: backup and restore                           | ACP : sauvegarde et restauration
+21-acp-permissions.png             | Portfolio permissions                             | Permissions du Portfolio

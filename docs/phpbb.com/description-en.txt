@@ -1,0 +1,63 @@
+[size=150][b]Portfolio — photo gallery for phpBB[/b][/size]
+
+A modern photo gallery fully integrated into phpBB: every member gets a personal portfolio with albums and sub-albums, administrators create public albums (contests, introductions, events…), and every feature is controlled by phpBB permissions. It can also import an existing [b]phpBB Gallery[/b] with ratings and comments.
+
+[size=120][b]Albums[/b][/size]
+[list]
+[*]Personal albums for every member and public albums created by administrators, with sub-albums on several levels, cover photo, sort order and lock.
+[*]Visibility per album: everyone, registered users, selected groups, the owner's phpBB friends, or private. A sub-album is never more open than its parent.
+[*]Albums managed together: share an album with a guest viewer, a contributor or a co-manager (sub-albums inherit the sharing).
+[*]Clear message when access is refused, with a button to ask the owner for access.
+[/list]
+
+[size=120][b]Photos[/b][/size]
+[list]
+[*]Multiple upload by drag and drop with progress bar.
+[*][b]EXIF / GPS / IPTC / XMP removed[/b], automatic rotation, real file-type check, oversized originals reduced automatically.
+[*]Images are never served directly: every file goes through a controller that checks permissions.
+[*]One-click rotation, move to another album (one by one or in bulk), original download that can be disabled per album.
+[*]Full-screen viewer (keyboard and swipe), quick view, photo and album navigation, album tree.
+[/list]
+
+[size=120][b]Community[/b][/size]
+[list]
+[*]1–5 star ratings, emoji reactions (list chosen in the ACP) and comments with BBCode.
+[*][b]phpBB notifications[/b] when someone rates, comments or reacts to your photo — one per action, or grouped every 1 to 60 minutes.
+[*][b][portfolio] BBCode[/b] and editor button to show a photo in any post (thumbnail, medium or large) — album permissions and watermark still apply.
+[*]Photo count and latest photos in member profiles, gallery link next to posts.
+[*]Portfolio pages published in the forum index (latest, top rated, latest comments, random, all albums, or one album).
+[/list]
+
+[size=120][b]Protection[/b][/size]
+[list]
+[*][b]Traceable watermark[/b] built for each viewer (site name, viewer ID…): text and/or logo, position, opacity, tile mode with adjustable density. Originals are never modified. Albums or trusted members can be exempted.
+[*][b]Recycle bin[/b] with deletion reason (required or optional); only an administrator deletes permanently. Mass-deletion alert and optional blocking.
+[*][b]Per-group quotas[/b] (photos and albums) and [b]mandatory approval per group[/b], with a private message to the team when a photo awaits approval.
+[*]Members' photos are kept when an account is deleted (moved to a chosen member, name kept).
+[/list]
+
+[size=120][b]Administration[/b][/size]
+[list]
+[*]Albums & permissions page: sort, search a member's albums, per-group rights per album, bulk changes (visibility, download, watermark, lock, protection).
+[*]Full ZIP backup and restore (also from the command line); members can export their own albums as ZIP.
+[*][b]phpBB Gallery migration[/b]: albums, photos, ratings and comments copied in time-limited batches, simulation first, member by member or the whole board. Old links and images in posts keep working. phpBB Gallery data is never modified.
+[/list]
+
+[size=120][b]Requirements[/b][/size]
+[list]
+[*]phpBB 3.3.15 or later (ready for phpBB 4)
+[*]PHP 7.2 to 8.4 with GD (EXIF recommended, ZIP for exports and backups)
+[*]MySQL / MariaDB (strict mode included) or SQLite
+[/list]
+
+[size=120][b]Installation[/b][/size]
+[list=1]
+[*]Copy the extension to [b]ext/verturin/portfolio/[/b].
+[*]ACP › Customise › Manage extensions › Portfolio › Enable.
+[*]Make sure [b]files/portfolio/[/b] is writable.
+[*]Set the group permissions (category “Portfolio”), then the settings in ACP › Extensions › Portfolio.
+[/list]
+
+Languages: English, French. Templates 100 % Twig, no jQuery, works with prosilver and its child styles.
+
+Source code, screenshots and changelog: [url=https://github.com/verturin/portfolio]github.com/verturin/portfolio[/url]
