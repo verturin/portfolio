@@ -15,6 +15,9 @@ class ext extends \phpbb\extension\base
 		'verturin.portfolio.notification.type.mass_delete',
 		'verturin.portfolio.notification.type.comment',
 		'verturin.portfolio.notification.type.approved',
+		'verturin.portfolio.notification.type.rating',
+		'verturin.portfolio.notification.type.reaction',
+		'verturin.portfolio.notification.type.digest',
 	];
 
 	/**

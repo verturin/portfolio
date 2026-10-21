@@ -802,7 +802,7 @@ class archive
 	protected function default_columns($table)
 	{
 		$defaults = [
-			'albums'		=> ['album_id', 'parent_id', 'owner_id', 'album_name', 'album_desc', 'album_desc_uid', 'album_desc_bitfield', 'album_desc_options', 'album_visibility', 'album_friends', 'album_download', 'album_protected', 'album_locked', 'album_order', 'album_sort', 'album_cover_id', 'album_photos', 'album_last_photo_id', 'album_last_time', 'album_time'],
+			'albums'		=> ['album_id', 'parent_id', 'owner_id', 'album_name', 'album_desc', 'album_desc_uid', 'album_desc_bitfield', 'album_desc_options', 'album_visibility', 'album_friends', 'album_download', 'album_protected', 'album_no_watermark', 'album_owner_no_wm', 'album_locked', 'album_order', 'album_sort', 'album_cover_id', 'album_photos', 'album_last_photo_id', 'album_last_time', 'album_time'],
 			'members'		=> ['member_id', 'owner_id', 'album_id', 'user_id', 'member_role', 'member_time'],
 			'album_groups'	=> ['album_id', 'group_id', 'can_view', 'can_upload', 'can_rate', 'can_comment'],
 			'photos'		=> ['photo_id', 'album_id', 'user_id', 'photo_title', 'photo_desc', 'photo_desc_uid', 'photo_desc_bitfield', 'photo_desc_options', 'photo_file', 'photo_realname', 'photo_ext', 'photo_mimetype', 'photo_filesize', 'photo_width', 'photo_height', 'photo_hash', 'photo_exif_stripped', 'photo_time', 'photo_status', 'photo_prev_status', 'photo_views', 'photo_rating_sum', 'photo_rating_count', 'photo_rating_avg', 'photo_comments', 'deleted_time', 'deleted_by', 'deleted_reason'],

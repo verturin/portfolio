@@ -66,7 +66,10 @@ class file extends base
 
 		// Filigrane dynamique : nom du site + ID du visiteur (v1.1.0)
 		$is_member = $album && $this->access->role($album) >= \verturin\portfolio\service\access::ROLE_CONTRIBUTOR;
-		if ($this->watermark && $this->watermark->applies($size, $is_member))
+		// Filigrane coupé pour cet album ou l'un de ses parents dans l'ACP (v1.9.9),
+		// ou par l'auteur lui-même pour ses photos de cet album, s'il y est autorisé (v1.10.0)
+		if ($this->watermark && !$this->albums->watermark_off($album) && !$this->access->owner_removed_watermark($photo, $album)
+			&& $this->watermark->applies($size, $is_member))
 		{
 			$marked = $this->watermark->get($photo, $path, $size);
 			if ($marked !== '')

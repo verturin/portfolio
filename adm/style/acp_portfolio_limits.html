@@ -1,0 +1,87 @@
+{% INCLUDECSS '@verturin_portfolio/portfolio_acp.css' %}
+{% include 'overall_header.html' %}
+<span class="acp-skin" hidden="hidden"></span>
+
+<h1>{{ lang('ACP_PORTFOLIO_LIMITS') }}</h1>
+<p>{{ lang('ACP_PORTFOLIO_LIMITS_EXPLAIN') }}</p>
+
+<div class="skin-note">
+	{{ lang('ACP_PORTFOLIO_LIMITS_GLOBAL', PF_LIMIT_GLOBAL.photos, PF_LIMIT_GLOBAL.albums, U_PF_SETTINGS) }}<br>
+	{{ lang('ACP_PORTFOLIO_LIMITS_RULES') }}<br>
+	{{ lang('ACP_PORTFOLIO_LIMITS_PERMS', U_PF_PERMISSIONS) }}
+</div>
+
+<form id="acp_portfolio_limits" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+	<legend>{{ lang('ACP_PORTFOLIO_LIMITS_GROUPS') }}</legend>
+	<table class="table1 zebra-table skin-log pf-acp-limits">
+		<thead>
+			<tr>
+				<th>{{ lang('GROUP') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_LIMIT_PHOTOS') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_LIMIT_ALBUMS') }}</th>
+				<th>{{ lang('ACP_PORTFOLIO_LIMIT_APPROVAL') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for group in PF_LIMIT_GROUPS %}
+			<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
+				<td><strong>{{ group.name }}</strong></td>
+				<td><input type="number" class="inputbox autowidth" min="0" max="1000000" name="limit_photos[{{ group.id }}]" value="{{ group.photos }}" placeholder="{{ PF_LIMIT_GLOBAL.photos }}" aria-label="{{ lang('ACP_PORTFOLIO_LIMIT_PHOTOS') }} — {{ group.name }}"></td>
+				<td><input type="number" class="inputbox autowidth" min="0" max="10000" name="limit_albums[{{ group.id }}]" value="{{ group.albums }}" placeholder="{{ PF_LIMIT_GLOBAL.albums }}" aria-label="{{ lang('ACP_PORTFOLIO_LIMIT_ALBUMS') }} — {{ group.name }}"></td>
+				<td><label><input type="checkbox" name="limit_approval[]" value="{{ group.id }}"{% if group.approval %} checked{% endif %}> {{ lang('ACP_PORTFOLIO_LIMIT_APPROVAL_SHORT') }}</label></td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	<p class="pf-acp-help">{{ lang('ACP_PORTFOLIO_LIMITS_HELP') }}</p>
+	</fieldset>
+
+	<fieldset>
+	<legend>{{ lang('ACP_PORTFOLIO_PENDING_PM') }}</legend>
+	<p>{{ lang('ACP_PORTFOLIO_PENDING_PM_EXPLAIN') }}</p>
+	<dl>
+		<dt><label for="pending_pm">{{ lang('ACP_PORTFOLIO_PENDING_PM_ENABLE') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="pending_pm" id="pending_pm" value="1"{% if PF_PENDING_PM.enabled %} checked{% endif %}> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="pending_pm" value="0"{% if not PF_PENDING_PM.enabled %} checked{% endif %}> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label>{{ lang('ACP_PORTFOLIO_PENDING_PM_WHO') }}{{ lang('COLON') }}</label></dt>
+		<dd class="pf-acp-choices">
+			<label><input type="checkbox" name="pending_pm_admins" value="1"{% if PF_PENDING_PM.admins %} checked{% endif %}> {{ lang('ACP_PORTFOLIO_PENDING_PM_ADMINS') }}</label>
+			<label><input type="checkbox" name="pending_pm_mods" value="1"{% if PF_PENDING_PM.mods %} checked{% endif %}> {{ lang('ACP_PORTFOLIO_PENDING_PM_MODS') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="pending_pm_groups">{{ lang('ACP_PORTFOLIO_PENDING_PM_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_PENDING_PM_GROUPS_EXPLAIN') }}</span></dt>
+		<dd>
+			<select name="pending_pm_groups[]" id="pending_pm_groups" multiple size="6">
+				{% for g in PF_PENDING_PM.groups %}<option value="{{ g.id }}"{% if g.selected %} selected{% endif %}>{{ g.name }}</option>{% endfor %}
+			</select>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="pending_pm_users">{{ lang('ACP_PORTFOLIO_PENDING_PM_USERS') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_PENDING_PM_USERS_EXPLAIN') }}</span></dt>
+		<dd>
+			<textarea name="pending_pm_users" id="pending_pm_users" rows="4" cols="30">{{ PF_PENDING_PM.users }}</textarea><br>
+			<a href="{{ PF_PENDING_PM.u_find }}" onclick="find_username(this.href); return false;">{{ lang('FIND_USERNAME') }}</a>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label>{{ lang('ACP_PORTFOLIO_PENDING_PM_NOW') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			{% if PF_PENDING_PM.count %}<strong>{{ PF_PENDING_PM.count }}</strong> · {{ PF_PENDING_PM.recipients|join(', ') }}{% if PF_PENDING_PM.count > PF_PENDING_PM.recipients|length %}…{% endif %}{% else %}<span class="skin-status skin-warn">{{ lang('ACP_PORTFOLIO_PENDING_PM_NOBODY') }}</span>{% endif %}
+			{% if PF_PENDING_PM.sender %}<br><span class="small">{{ lang('ACP_PORTFOLIO_PENDING_PM_SENDER', PF_PENDING_PM.sender) }}</span>{% endif %}
+		</dd>
+	</dl>
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}">
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+{% include 'overall_footer.html' %}

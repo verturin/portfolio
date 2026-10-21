@@ -11,6 +11,7 @@
 			<input type="text" id="pf-embed-{{ PF_PHOTO.id }}-{{ item.key }}" class="pf-input" value="{{ item.code }}" readonly data-pf-copy-source onclick="this.select()">
 			<button type="button" class="pf-btn pf-btn--small" data-pf-copy data-done="{{ lang('PORTFOLIO_COPIED') }}">{{ lang('PORTFOLIO_COPY') }}</button>
 		</div>
+		{% if item.note %}<p class="pf-muted pf-small-note pf-embed__note">{{ item.note }}</p>{% endif %}
 	</div>
 	{% endfor %}
 </details>

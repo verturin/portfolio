@@ -1,0 +1,41 @@
+{% include 'ucp_header.html' %}
+
+<h2>{{ lang('UCP_PORTFOLIO_WATERMARK') }}</h2>
+
+<form id="ucp_portfolio_watermark" method="post" action="{{ U_ACTION }}">
+<div class="panel">
+	<div class="inner">
+	{% if PF_WM_ALLOWED %}
+		<p>{{ lang('UCP_PORTFOLIO_WM_ALLOWED') }}</p>
+		<h3>{{ lang('UCP_PORTFOLIO_WM_RULES_TITLE') }}</h3>
+		<p>{{ lang('UCP_PORTFOLIO_WM_RULES') }}</p>
+
+		<h3>{{ lang('UCP_PORTFOLIO_WM_ALBUMS') }}</h3>
+		{% if PF_WM_ALBUMS|length %}
+		<ul style="margin: 6px 0 12px; padding-left: 1.6em; list-style: disc;">
+			{% for album in PF_WM_ALBUMS %}
+			<li><a href="{{ album.u_view }}"><strong>{{ album.name }}</strong></a> · <a href="{{ album.u_edit }}">{{ lang('UCP_PORTFOLIO_WM_EDIT') }}</a></li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<p>{{ lang('UCP_PORTFOLIO_WM_ALBUMS_NONE', '<a href="' ~ U_PF_MINE ~ '">', '</a>') }}</p>
+		{% endif %}
+
+		<h3>{{ lang('UCP_PORTFOLIO_WM_RENOUNCE_TITLE') }}</h3>
+		<p>{{ lang('UCP_PORTFOLIO_WM_RENOUNCE_EXPLAIN') }}</p>
+		<label><input type="checkbox" name="confirm_renounce" value="1"> {{ lang('UCP_PORTFOLIO_WM_RENOUNCE_CHECK') }}</label>
+	{% else %}
+		<p>{{ lang('UCP_PORTFOLIO_WM_NOT_ALLOWED') }}</p>
+	{% endif %}
+	</div>
+</div>
+
+{% if PF_WM_ALLOWED %}
+<fieldset class="submit-buttons">
+	<input type="submit" name="renounce" value="{{ lang('UCP_PORTFOLIO_WM_RENOUNCE') }}" class="button1">
+	{{ S_FORM_TOKEN }}
+</fieldset>
+{% endif %}
+</form>
+
+{% include 'ucp_footer.html' %}

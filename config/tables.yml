@@ -13,3 +13,5 @@ parameters:
     verturin.portfolio.storage: '%core.root_path%files/portfolio/'
     verturin.portfolio.tables.pages: '%core.table_prefix%portfolio_pages'
     verturin.portfolio.tables.departed: '%core.table_prefix%portfolio_departed'
+    verturin.portfolio.tables.activity: '%core.table_prefix%portfolio_activity'
+    verturin.portfolio.tables.group_limits: '%core.table_prefix%portfolio_group_limits'

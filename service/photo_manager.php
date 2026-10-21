@@ -37,6 +37,14 @@ class photo_manager
 	/** @var string */
 	protected $reactions_table = '';
 
+	/** @var activity|null Notes, commentaires et réactions notifiés (v1.10.0) */
+	protected $activity;
+
+	public function set_activity(activity $activity)
+	{
+		$this->activity = $activity;
+	}
+
 	public function set_reactions_table($table)
 	{
 		$this->reactions_table = $table;
@@ -364,6 +372,69 @@ class photo_manager
 		$this->db->sql_freeresult($result);
 
 		return $total;
+	}
+
+	/**
+	 * Photos publiées par un membre dans les albums donnés (albums publics ou d'autres membres) (v1.9.7).
+	 */
+	public function count_by_user_in_albums(array $album_ids, $user_id)
+	{
+		if (!$album_ids)
+		{
+			return 0;
+		}
+		$sql = 'SELECT COUNT(photo_id) AS total FROM ' . $this->photos_table . '
+			WHERE user_id = ' . (int) $user_id . '
+				AND photo_status = ' . self::STATUS_APPROVED . '
+				AND ' . $this->db->sql_in_set('album_id', array_map('intval', $album_ids));
+		$result = $this->db->sql_query($sql);
+		$total = (int) $this->db->sql_fetchfield('total');
+		$this->db->sql_freeresult($result);
+
+		return $total;
+	}
+
+	public function list_by_user_in_albums(array $album_ids, $user_id, $start, $limit)
+	{
+		if (!$album_ids)
+		{
+			return [];
+		}
+		$sql = 'SELECT * FROM ' . $this->photos_table . '
+			WHERE user_id = ' . (int) $user_id . '
+				AND photo_status = ' . self::STATUS_APPROVED . '
+				AND ' . $this->db->sql_in_set('album_id', array_map('intval', $album_ids)) . '
+			ORDER BY photo_time DESC, photo_id DESC';
+		$result = $this->db->sql_query_limit($sql, (int) $limit, (int) $start);
+		$rows = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$rows[(int) $row['photo_id']] = $row;
+		}
+		$this->db->sql_freeresult($result);
+
+		return $rows;
+	}
+
+	/**
+	 * Nombre de photos publiées par chaque membre, album par album (pour compter aussi celles des albums publics).
+	 *
+	 * @return array [user_id => [album_id => n]]
+	 */
+	public function spread_by_user()
+	{
+		$out = [];
+		$sql = 'SELECT user_id, album_id, COUNT(photo_id) AS n FROM ' . $this->photos_table . '
+			WHERE photo_status = ' . self::STATUS_APPROVED . '
+			GROUP BY user_id, album_id';
+		$result = $this->db->sql_query($sql);
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$out[(int) $row['user_id']][(int) $row['album_id']] = (int) $row['n'];
+		}
+		$this->db->sql_freeresult($result);
+
+		return $out;
 	}
 
 	public function count_user_photos($user_id)
@@ -788,6 +859,13 @@ class photo_manager
 		$this->db->sql_transaction('begin');
 		$this->db->sql_query('DELETE FROM ' . $this->photos_table . ' WHERE ' . $this->db->sql_in_set('photo_id', $ids));
 		$this->db->sql_query('DELETE FROM ' . $this->ratings_table . ' WHERE ' . $this->db->sql_in_set('photo_id', $ids));
+		if ($this->activity)
+		{
+			foreach ($ids as $purged_id)
+			{
+				$this->activity->forget_photo((int) $purged_id);
+			}
+		}
 		if ($this->reactions_table)
 		{
 			$this->db->sql_query('DELETE FROM ' . $this->reactions_table . ' WHERE ' . $this->db->sql_in_set('photo_id', $ids));
@@ -959,6 +1037,8 @@ class photo_manager
 
 		if ($code === '' || $code === $current)
 		{
+			$this->record_activity('reaction', $photo_id, $user_id, '');
+
 			return '';
 		}
 
@@ -968,8 +1048,26 @@ class photo_manager
 			'reaction'		=> $code,
 			'reaction_time'	=> time(),
 		]));
+		$this->record_activity('reaction', $photo_id, $user_id, $code);
 
 		return $code;
+	}
+
+	/** Notification au propriétaire de la photo (v1.10.0) */
+	protected function record_activity($type, $photo_id, $user_id, $value)
+	{
+		if (!$this->activity)
+		{
+			return;
+		}
+		$sql = 'SELECT photo_id, user_id, photo_title FROM ' . $this->photos_table . ' WHERE photo_id = ' . (int) $photo_id;
+		$result = $this->db->sql_query($sql);
+		$photo = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+		if ($photo)
+		{
+			$this->activity->record($type, $photo, (int) $user_id, $value);
+		}
 	}
 
 	public function rate($photo_id, $user_id, $rating)
@@ -993,6 +1091,8 @@ class photo_manager
 		$result = $this->db->sql_query($sql);
 		$row = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
+
+		$this->record_activity('rating', $photo_id, $user_id, $rating ? (string) $rating : '');
 
 		$count = (int) $row['total'];
 		$sum = (int) $row['sum_rating'];
@@ -1050,16 +1150,10 @@ class photo_manager
 
 		$this->sync_comments((int) $photo['photo_id']);
 
-		if ((int) $photo['user_id'] !== (int) $this->user->data['user_id'])
+		// Notification au propriétaire : aussitôt ou regroupée, selon l'ACP (v1.10.0)
+		if ($this->activity)
 		{
-			$this->notifications->add_notifications('verturin.portfolio.notification.type.comment', [
-				'comment_id'	=> $comment_id,
-				'photo_id'		=> (int) $photo['photo_id'],
-				'photo_title'	=> $photo['photo_title'],
-				'user_id'		=> (int) $photo['user_id'],
-				'actor_id'		=> (int) $this->user->data['user_id'],
-				'time'			=> time(),
-			]);
+			$this->activity->record('comment', $photo, (int) $this->user->data['user_id'], (string) $comment_id);
 		}
 
 		return $comment_id;
@@ -1070,6 +1164,10 @@ class photo_manager
 		$this->db->sql_query('DELETE FROM ' . $this->comments_table . ' WHERE comment_id = ' . (int) $comment['comment_id']);
 		$this->sync_comments((int) $comment['photo_id']);
 		$this->notifications->delete_notifications('verturin.portfolio.notification.type.comment', (int) $comment['comment_id']);
+		if ($this->activity)
+		{
+			$this->activity->forget('comment', (int) $comment['photo_id'], 0, (string) (int) $comment['comment_id']);
+		}
 	}
 
 	protected function sync_comments($photo_id)

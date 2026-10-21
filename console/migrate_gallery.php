@@ -45,6 +45,8 @@ class migrate_gallery extends \phpbb\console\command\command
 			->addOption('simulate', null, InputOption::VALUE_NONE, 'Affiche ce qui serait copié, sans rien modifier')
 			->addOption('no-public', null, InputOption::VALUE_NONE, 'Ne pas copier les photos des albums publics (avec --user ou --group)')
 			->addOption('keep-exif', null, InputOption::VALUE_NONE, 'Copier les originaux tels quels, sans retirer les données EXIF/GPS')
+			->addOption('visibility', null, InputOption::VALUE_REQUIRED, 'Visibilité des albums créés : registered (membres inscrits, défaut), keep (celle de phpBB Gallery) ou private', '')
+			->addOption('download', null, InputOption::VALUE_NONE, 'Autoriser le téléchargement des originaux dans les albums créés (interdit par défaut)')
 			->addOption('bbcode', null, InputOption::VALUE_NONE, 'Faire passer ensuite le BBCode [image] par le Portfolio');
 	}
 
@@ -99,6 +101,20 @@ class migrate_gallery extends \phpbb\console\command\command
 
 		$strip = !$input->getOption('keep-exif') && (bool) $this->settings['portfolio_strip_exif'];
 		$batch = max(1, (int) $this->settings['portfolio_migrate_batch']);
+
+		// Albums créés : réglage de l'ACP, sinon membres inscrits et sans téléchargement (v1.9.8)
+		$visibility = (string) $input->getOption('visibility');
+		if ($visibility === '')
+		{
+			$visibility = (string) $this->settings['portfolio_migrate_visibility'];
+		}
+		if (!in_array($visibility, ['registered', 'keep', 'private'], true))
+		{
+			$visibility = 'registered';
+		}
+		$download = $input->getOption('download') || (int) $this->settings['portfolio_migrate_download'];
+		$this->migrator->set_album_defaults($visibility, $download);
+		$output->writeln('Albums créés : visibilité ' . $visibility . ', téléchargement des originaux ' . ($download ? 'autorisé' : 'interdit'));
 		$copied = 0;
 		$skipped = 0;
 		do

@@ -1,6 +1,59 @@
 # Journal des versions — Portfolio (verturin/portfolio)
 
 
+### 1.10.8 — 2026-10-19
+- *ACP › Albums et droits* : la modification en nombre permet aussi de **verrouiller / déverrouiller** et de **protéger / ne plus protéger** plusieurs albums d'un coup (sous-albums compris si la case est cochée). Le message final signale les albums qui restent protégés par leur album parent. Filtres, tri et membre choisi restent en place après la confirmation.
+
+### 1.10.7 — 2026-10-18
+- Bloc « Insérer dans un message du forum » : les BBCode (vignette, moyenne, grande) passent en premier ; l'adresse de la page vient en dernier, renommée « Adresse de la page (lien à cliquer, sans image) », avec un avertissement : à coller telle quelle, jamais entre [img]…[/img].
+
+### 1.10.6 — 2026-10-18
+- La permission **« Peut supprimer ses propres photos et albums »** passe à **Non par défaut** : à accorder dans *Permissions* aux groupes ou membres voulus.
+- **Motif de suppression** obligatoire ou facultatif au choix de l'administrateur (*Réglages › Sécurité*), **obligatoire par défaut**, y compris pour la mise à la corbeille en lot.
+- Champ de profil laissé par phpBB Gallery (« GALLERY : USERS_PERSONAL_ALBUMS ») : traduit (« Portfolio : Voir ses photos ») tant que la galerie est désactivée, et son lien mène désormais au Portfolio du membre.
+
+### 1.10.5 — 2026-10-18
+- Nouvelle permission **« Peut supprimer ses propres photos et albums »** (`u_portfolio_delete`), **accordée par défaut dans cette version (Non par défaut depuis la 1.10.6). À « Jamais », le membre ou le groupe ne peut plus supprimer ses photos ni ses albums ; il peut toujours en ajouter et les déplacer.
+- *ACP › Albums et droits* : **tri** par album, propriétaire ou nombre de photos (clic sur l'en-tête de colonne, second clic pour inverser), et **recherche des albums d'un membre** avec la fenêtre « Rechercher un membre » de phpBB. Filtres et tri conservés après chaque action.
+
+### 1.10.4 — 2026-10-17
+- **Message privé quand une photo attend la validation**, réglé dans *ACP › Portfolio › Quotas et validation* : administrateurs du Portfolio (cochés par défaut), modérateurs pouvant valider, groupes et/ou membres choisis. Lien vers l'album et vers la file de validation ; un seul message par série d'envois (10 minutes) ; liste des destinataires visible dans l'ACP.
+
+### 1.10.3 — 2026-10-17
+- Nouvelle page **ACP › Portfolio › Quotas et validation** : quota de photos et d'albums **par groupe** (vide = réglage général, 0 = illimité ; la valeur la plus favorable l'emporte pour un membre de plusieurs groupes).
+- Case **« Validation obligatoire »** par groupe : toutes les photos du membre attendent un modérateur, y compris dans ses propres albums, et il ne peut plus les valider lui-même.
+- Nouvelle table `phpbb_portfolio_group_limits`.
+
+### 1.10.2 — 2026-10-16
+- Retrait du filigrane par les membres : bouton **« Rechercher un membre »** (fenêtre de recherche de phpBB, sélection de plusieurs membres) pour remplir la liste des membres autorisés.
+- **Message privé** envoyé une seule fois à chaque membre ajouté (au nom de l'administrateur) : fonctionnement album par album et règles de sécurité. Aucun nouveau message s'il est retiré puis rajouté.
+- Nouvelle page **Panneau de l'utilisateur › Portfolio › Filigrane de mes photos** : règles, albums sans filigrane, et « Réactiver le filigrane » (avec confirmation) qui remet le filigrane partout et sort le membre de la sélection ; journal d'administration et mention dans l'ACP.
+
+### 1.10.1 — 2026-10-15
+- Retrait du filigrane par le membre : la case devient « Protéger mes photos de cet album par le filigrane », **cochée par défaut** ; le membre autorisé la décoche album par album, sous-album par sous-album.
+- Tout nouvel album ou sous-album démarre **avec** le filigrane, même s'il est créé dans un album qui n'en a pas : c'est toujours le membre qui décide de le retirer.
+
+### 1.10.0 — 2026-10-15
+- **Notifications du forum** pour les notes, commentaires et réactions reçus sur ses photos, avec un lien vers la photo. Nouvelle page *ACP › Portfolio › Notifications* : chaque type activable séparément, envoi **une par action** (une nouvelle note ou réaction remplace la précédente, une note, réaction ou un commentaire retiré supprime la notification) ou **regroupé** toutes les 1, 5, 15, 30 ou 60 minutes (une notification par photo), file d'attente visible et « Envoyer maintenant ». Les membres règlent ces notifications dans leurs préférences
+- **Retrait du filigrane par le membre** : dans *Filigrane*, l'administration autorise des membres et/ou des groupes (avec un avertissement sur la sécurité et le vol de photos). Ces membres ont, dans chaque album et sous-album, la case « Afficher mes photos de cet album sans filigrane » (avec option pour les sous-albums). Ne vaut que pour leurs propres photos ; les autres albums gardent le filigrane sauf si leur propriétaire a fait le même choix. Liste des albums concernés et « Remettre le filigrane » dans l'ACP
+- Nouvelle table `phpbb_portfolio_activity`, nouvelle colonne `album_owner_no_wm` (conservée par la sauvegarde / restauration)
+
+### 1.9.10 — 2026-10-12
+- Filigrane en **mosaïque** : nouveau réglage « Fréquence des répétitions », de 1 (très espacé) à 10 (très serré), 5 par défaut (espacement d'avant). Affiché seulement quand la disposition « Mosaïque » est choisie ; changer la fréquence recalcule les images et force les navigateurs à les recharger
+
+### 1.9.9 — 2026-10-12
+- **Filigrane désactivable par album** : *ACP › Portfolio › Filigrane › Albums sans filigrane*, choix de l'album dans une liste ; l'album et tous ses sous-albums (même créés plus tard) sont servis sans filigrane, grande taille, vignettes et images des messages comprises. Rétablissement en un clic, journal d'administration, rechargement immédiat des images
+- *Albums et droits* : option « Filigrane » (appliqué / désactivé) dans la modification en nombre, étiquettes « Sans filigrane » / « Sans filigrane (album parent) » dans la liste
+- Sauvegarde / restauration : le réglage est conservé
+
+### 1.9.8 — 2026-10-11
+- ACP › Albums et droits : **modification en nombre** de la visibilité et du téléchargement des originaux des albums cochés (sous-albums compris au choix), avec confirmation et journal ; filtre par visibilité ; colonne « Téléchargement »
+- Bascule phpBB Gallery : les albums créés sont **réservés aux membres inscrits** et **sans téléchargement des originaux** par défaut ; deux réglages permettent de reprendre la visibilité de phpBB Gallery (ou de tout passer en privé) et d'autoriser le téléchargement. Mêmes options en ligne de commande (`--visibility`, `--download`)
+
+### 1.9.7 — 2026-10-10
+- Les photos qu'un membre publie dans un **album public** ou dans l'album d'un autre membre apparaissent aussi dans **son portfolio** (nouvelle section paginée), en bas de **son profil** et dans ses compteurs de photos (lien « Portfolio » du profil et des messages même s'il n'a aucun album à lui). Simple affichage : la photo reste dans son album, avec les droits de cet album
+- Mention de l'album d'origine sous chaque photo (« dans *Concours photo* » avec l'étiquette « public »), et sur les vignettes du profil
+
 ### 1.9.6 — 2026-10-10
 - Réglages › Réactions et profils : le nombre de photos affichées en bas du profil se choisit dans une liste (ne pas afficher, 3, 4, 5, 6, 8, 10, 12, 15, 20), **5 par défaut**
 - Bascule phpBB Gallery : une photo dont l'album a été supprimé de la galerie n'est plus refusée. Elle est copiée dans un album « Photos récupérées de la galerie » de son auteur (un seul par membre, visible des membres inscrits). Pour les photos déjà mises de côté, cliquez sur « Réessayer ces photos » puis relancez la bascule

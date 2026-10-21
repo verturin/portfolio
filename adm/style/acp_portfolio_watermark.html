@@ -12,7 +12,7 @@
 		<fieldset>
 			<legend>{{ lang('ACP_PORTFOLIO_WATERMARK') }}</legend>
 			{% for item in PF_ITEMS %}
-			<dl>
+			<dl data-pf-wm="{{ item.key }}">
 				<dt><label for="{{ item.key }}">{{ item.label }}{{ lang('COLON') }}</label>{% if item.explain %}<br><span>{{ item.explain }}</span>{% endif %}</dt>
 				<dd>
 					{% if item.type == 'bool' %}
@@ -57,5 +57,103 @@
 		<div class="skin-note">{{ lang('ACP_PORTFOLIO_WM_PLACEHOLDERS') }}</div>
 	</div>
 </div>
+
+<form id="acp_portfolio_wm_optout" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_WM_OPTOUT') }}</legend>
+		<p>{{ lang('ACP_PORTFOLIO_WM_OPTOUT_EXPLAIN') }}</p>
+		<div class="skin-note skin-note-warn"><strong>{{ lang('ACP_PORTFOLIO_WM_OPTOUT_WARN_TITLE') }}</strong><br>{{ lang('ACP_PORTFOLIO_WM_OPTOUT_WARN') }}</div>
+		<dl>
+			<dt><label for="wm_optout">{{ lang('ACP_PORTFOLIO_WM_OPTOUT_ENABLE') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="wm_optout" id="wm_optout" value="1"{% if PF_OPTOUT.enabled %} checked{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="wm_optout" value="0"{% if not PF_OPTOUT.enabled %} checked{% endif %}> {{ lang('NO') }}</label>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="wm_optout_users">{{ lang('ACP_PORTFOLIO_WM_OPTOUT_USERS') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_WM_OPTOUT_USERS_EXPLAIN') }}</span></dt>
+			<dd>
+				<textarea name="wm_optout_users" id="wm_optout_users" rows="4" cols="30">{{ PF_OPTOUT.users }}</textarea><br>
+				<a href="{{ PF_OPTOUT.u_find }}" onclick="find_username(this.href); return false;">{{ lang('FIND_USERNAME') }}</a>
+				{% if PF_OPTOUT.renounced|length %}<br><span class="small">{{ lang('ACP_PORTFOLIO_WM_OPTOUT_RENOUNCED', PF_OPTOUT.renounced|join(', ')) }}</span>{% endif %}
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="wm_optout_groups">{{ lang('ACP_PORTFOLIO_WM_OPTOUT_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_WM_OPTOUT_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="wm_optout_groups[]" id="wm_optout_groups" multiple size="6">
+					{% for g in PF_OPTOUT.groups %}<option value="{{ g.id }}"{% if g.selected %} selected{% endif %}>{{ g.name }}</option>{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<p class="submit-buttons"><input class="button1" type="submit" name="wm_optout_save" value="{{ lang('SUBMIT') }}"></p>
+
+		<h3>{{ lang('ACP_PORTFOLIO_WM_OPTOUT_ALBUMS') }}</h3>
+		{% if PF_OPTOUT.albums|length %}
+		<table class="table1 zebra-table skin-log">
+			<thead><tr><th>{{ lang('PORTFOLIO_ALBUM') }}</th><th>{{ lang('ACP_PORTFOLIO_OWNER') }}</th><th>{{ lang('ACP_PORTFOLIO_WM_OPTOUT_STATE') }}</th><th>{{ lang('ACTION') }}</th></tr></thead>
+			<tbody>
+			{% for row in PF_OPTOUT.albums %}
+				<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
+					<td><a href="{{ row.u_view }}"><strong>{{ row.name }}</strong></a></td>
+					<td>{{ row.owner }}</td>
+					<td>{% if row.active %}<span class="skin-status skin-warn">{{ lang('ACP_PORTFOLIO_WM_OPTOUT_ACTIVE') }}</span>{% else %}<span class="skin-status skin-pending" title="{{ lang('ACP_PORTFOLIO_WM_OPTOUT_INACTIVE_EXPLAIN') }}">{{ lang('ACP_PORTFOLIO_WM_OPTOUT_INACTIVE') }}</span>{% endif %}</td>
+					<td><button class="button2" type="submit" name="wm_optout_reset" value="{{ row.id }}">{{ lang('ACP_PORTFOLIO_WM_OPTOUT_RESET') }}</button></td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		{% else %}
+		<p class="small">{{ lang('ACP_PORTFOLIO_WM_OPTOUT_NONE') }}</p>
+		{% endif %}
+		{{ PF_OPTOUT.token }}
+	</fieldset>
+</form>
+
+<form id="acp_portfolio_wm_albums" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+		<legend>{{ lang('ACP_PORTFOLIO_WM_ALBUMS') }}</legend>
+		<p>{{ lang('ACP_PORTFOLIO_WM_ALBUMS_EXPLAIN') }}</p>
+		{% if PF_NO_WM|length %}
+		<table class="table1 zebra-table skin-log">
+			<thead><tr><th>{{ lang('PORTFOLIO_ALBUM') }}</th><th>{{ lang('ACP_PORTFOLIO_OWNER') }}</th><th>{{ lang('ACP_PORTFOLIO_WM_ALBUMS_CHILDREN') }}</th><th>{{ lang('ACTION') }}</th></tr></thead>
+			<tbody>
+			{% for row in PF_NO_WM %}
+				<tr class="{{ loop.index is odd ? 'row1' : 'row2' }}">
+					<td><a href="{{ row.u_view }}"><strong>{{ row.name }}</strong></a></td>
+					<td>{{ row.owner }}</td>
+					<td>{{ row.children }}</td>
+					<td><button class="button2" type="submit" name="wm_album_remove" value="{{ row.id }}">{{ lang('ACP_PORTFOLIO_WM_ALBUM_RESTORE') }}</button></td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		{% else %}
+		<p class="small">{{ lang('ACP_PORTFOLIO_WM_ALBUMS_NONE') }}</p>
+		{% endif %}
+		<dl>
+			<dt><label for="wm_album_id">{{ lang('ACP_PORTFOLIO_WM_ALBUM_PICK') }}{{ lang('COLON') }}</label><br><span>{{ lang('ACP_PORTFOLIO_WM_ALBUM_PICK_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="wm_album_id" id="wm_album_id">
+					{% for c in PF_NO_WM_CHOICES %}<option value="{{ c.id }}"{% if c.disabled %} disabled{% endif %}>{{ c.label }}{% if c.disabled %} — {{ lang('ACP_PORTFOLIO_WM_ALREADY_OFF') }}{% endif %}</option>{% endfor %}
+				</select>
+				<input class="button1" type="submit" name="wm_album_add" value="{{ lang('ACP_PORTFOLIO_WM_ALBUM_ADD') }}">
+			</dd>
+		</dl>
+		{{ PF_NO_WM_TOKEN }}
+	</fieldset>
+</form>
+
+<script>
+// Fréquence des répétitions : seulement utile avec la disposition « Mosaïque » (v1.9.10)
+(function () {
+	var pos = document.getElementById('portfolio_wm_position');
+	var row = document.querySelector('[data-pf-wm="portfolio_wm_tile_density"]');
+	if (!pos || !row) { return; }
+	function sync() { row.style.display = pos.value === 'tile' ? '' : 'none'; }
+	pos.addEventListener('change', sync);
+	sync();
+})();
+</script>
 
 {% include 'overall_footer.html' %}

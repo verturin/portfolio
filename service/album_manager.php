@@ -119,6 +119,89 @@ class album_manager
 		return isset($all[(int) $album_id]) ? $all[(int) $album_id] : null;
 	}
 
+	/**
+	 * Tous les sous-albums (enfants, petits-enfants…) d'un album, sans boucle possible.
+	 *
+	 * @return int[]
+	 */
+	public function descendants($album_id)
+	{
+		$by_parent = [];
+		foreach ($this->get_all() as $id => $album)
+		{
+			$by_parent[(int) $album['parent_id']][] = (int) $id;
+		}
+
+		$found = [];
+		$queue = isset($by_parent[(int) $album_id]) ? $by_parent[(int) $album_id] : [];
+		while ($queue)
+		{
+			$id = array_shift($queue);
+			if (isset($found[$id]) || $id === (int) $album_id)
+			{
+				continue;
+			}
+			$found[$id] = true;
+			if (isset($by_parent[$id]))
+			{
+				$queue = array_merge($queue, $by_parent[$id]);
+			}
+		}
+
+		return array_keys($found);
+	}
+
+	/**
+	 * Album qui coupe le filigrane pour cet album : lui-même ou l'un de ses parents (v1.9.9).
+	 * Retourne 0 si le filigrane s'applique normalement.
+	 *
+	 * @param array|int $album Ligne d'album ou identifiant
+	 */
+	public function no_watermark_from($album)
+	{
+		$all = $this->get_all();
+		$id = is_array($album) ? (int) $album['album_id'] : (int) $album;
+		$seen = [];
+		while ($id && isset($all[$id]) && !isset($seen[$id]))
+		{
+			$seen[$id] = true;
+			if (!empty($all[$id]['album_no_watermark']))
+			{
+				return $id;
+			}
+			$id = (int) $all[$id]['parent_id'];
+		}
+
+		return 0;
+	}
+
+	/** Le filigrane est-il coupé pour les photos de cet album (réglage de l'album ou d'un parent) ? */
+	public function watermark_off($album)
+	{
+		return $album ? $this->no_watermark_from($album) > 0 : false;
+	}
+
+	/**
+	 * Même modification sur plusieurs albums en une requête (visibilité, téléchargement…).
+	 */
+	public function update_many(array $album_ids, array $data)
+	{
+		$album_ids = array_values(array_unique(array_filter(array_map('intval', $album_ids))));
+		$row = $this->prepare_row($data);
+		if (!$album_ids || !$row)
+		{
+			return 0;
+		}
+
+		$sql = 'UPDATE ' . $this->albums_table . '
+			SET ' . $this->db->sql_build_array('UPDATE', $row) . '
+			WHERE ' . $this->db->sql_in_set('album_id', $album_ids);
+		$this->db->sql_query($sql);
+		$this->reset();
+
+		return count($album_ids);
+	}
+
 	public function get_children($album_id)
 	{
 		$children = [];
@@ -584,6 +667,16 @@ class album_manager
 		if (isset($data['album_protected']))
 		{
 			$row['album_protected'] = $data['album_protected'] ? 1 : 0;
+		}
+
+		if (isset($data['album_no_watermark']))
+		{
+			$row['album_no_watermark'] = $data['album_no_watermark'] ? 1 : 0;
+		}
+
+		if (isset($data['album_owner_no_wm']))
+		{
+			$row['album_owner_no_wm'] = $data['album_owner_no_wm'] ? 1 : 0;
 		}
 
 		if (isset($data['album_sort']))

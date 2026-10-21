@@ -1,0 +1,63 @@
+[size=150][b]Portfolio — galerie photos pour phpBB[/b][/size]
+
+Une galerie photos moderne, entièrement intégrée à phpBB : chaque membre dispose d'un portfolio personnel avec albums et sous-albums, l'administration crée des albums publics (concours, présentations, sorties…), et chaque fonction se règle par les permissions phpBB. Elle reprend aussi une galerie [b]phpBB Gallery[/b] existante, notes et commentaires compris.
+
+[size=120][b]Albums[/b][/size]
+[list]
+[*]Albums personnels pour chaque membre et albums publics créés par l'administration, sous-albums sur plusieurs niveaux, couverture, ordre de tri et verrouillage.
+[*]Visibilité par album : tout le monde, membres inscrits, groupes choisis, amis phpBB du propriétaire, ou privé. Un sous-album n'est jamais plus ouvert que son parent.
+[*]Albums gérés à plusieurs : partage avec un invité, un contributeur ou un co-gestionnaire (les sous-albums héritent du partage).
+[*]Message clair en cas de refus d'accès, avec un bouton pour demander l'accès au propriétaire.
+[/list]
+
+[size=120][b]Photos[/b][/size]
+[list]
+[*]Envoi multiple par glisser-déposer avec barre de progression.
+[*][b]Suppression des données EXIF / GPS / IPTC / XMP[/b], rotation automatique, contrôle du vrai type de fichier, originaux trop grands réduits automatiquement.
+[*]Les images ne sont jamais servies directement : chaque fichier passe par un contrôleur qui vérifie les droits.
+[*]Rotation en un clic, déplacement vers un autre album (une par une ou en lot), téléchargement de l'original désactivable par album.
+[*]Visionneuse plein écran (clavier et balayage), aperçu rapide, navigation entre photos et albums, arborescence.
+[/list]
+
+[size=120][b]Communauté[/b][/size]
+[list]
+[*]Notes de 1 à 5 étoiles, réactions par émoji (liste choisie dans l'ACP) et commentaires avec BBCode.
+[*][b]Notifications phpBB[/b] quand un membre note, commente ou réagit à vos photos — une par action, ou regroupées toutes les 1 à 60 minutes.
+[*][b]BBCode [portfolio][/b] et bouton dans l'éditeur pour afficher une photo dans n'importe quel message (vignette, moyenne ou grande) — droits de l'album et filigrane conservés.
+[*]Nombre de photos et dernières photos dans le profil, lien vers la galerie à côté des messages.
+[*]Pages Portfolio publiées dans l'index du forum (récentes, mieux notées, derniers commentaires, au hasard, tous les albums, ou un album).
+[/list]
+
+[size=120][b]Protection[/b][/size]
+[list]
+[*][b]Filigrane traçable[/b] construit pour chaque visiteur (nom du site, identifiant du visiteur…) : texte et/ou logo, position, opacité, mosaïque à densité réglable. Les originaux ne sont jamais modifiés. Albums ou membres de confiance exemptables.
+[*][b]Corbeille[/b] avec motif de suppression (obligatoire ou facultatif) ; seule l'administration supprime définitivement. Alerte et blocage optionnel des suppressions massives.
+[*][b]Quotas par groupe[/b] (photos et albums) et [b]validation obligatoire par groupe[/b], avec un message privé à l'équipe quand une photo attend.
+[*]Les photos d'un membre qui quitte le forum sont conservées (rattachées à un membre choisi, nom conservé).
+[/list]
+
+[size=120][b]Administration[/b][/size]
+[list]
+[*]Page Albums et droits : tri, recherche des albums d'un membre, droits par groupe et par album, modification en nombre (visibilité, téléchargement, filigrane, verrouillage, protection).
+[*]Sauvegarde et restauration complètes en ZIP (aussi en ligne de commande) ; les membres peuvent exporter leurs albums en ZIP.
+[*][b]Bascule depuis phpBB Gallery[/b] : albums, photos, notes et commentaires copiés par lots limités en temps, simulation préalable, membre par membre ou tout le forum. Les anciens liens et les images des messages continuent de fonctionner. phpBB Gallery n'est jamais modifiée.
+[/list]
+
+[size=120][b]Prérequis[/b][/size]
+[list]
+[*]phpBB 3.3.15 ou plus récent (préparée pour phpBB 4)
+[*]PHP 7.2 à 8.4 avec GD (EXIF conseillée, ZIP pour les exports et sauvegardes)
+[*]MySQL / MariaDB (mode strict compris) ou SQLite
+[/list]
+
+[size=120][b]Installation[/b][/size]
+[list=1]
+[*]Copier l'extension dans [b]ext/verturin/portfolio/[/b].
+[*]ACP › Personnaliser › Gérer les extensions › Portfolio › Activer.
+[*]Vérifier que [b]files/portfolio/[/b] est accessible en écriture.
+[*]Régler les permissions des groupes (catégorie « Portfolio »), puis les réglages dans ACP › Extensions › Portfolio.
+[/list]
+
+Langues : anglais, français. Gabarits 100 % Twig, sans jQuery, compatibles prosilver et ses styles dérivés.
+
+Code source, captures d'écran et journal des versions : [url=https://github.com/verturin/portfolio]github.com/verturin/portfolio[/url]

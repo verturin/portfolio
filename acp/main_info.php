@@ -26,6 +26,16 @@ class main_info
 					'auth'	=> 'ext_verturin/portfolio && acl_a_portfolio_manage',
 					'cat'	=> ['ACP_PORTFOLIO_TITLE'],
 				],
+				'notifications'	=> [
+					'title'	=> 'ACP_PORTFOLIO_NOTIFICATIONS',
+					'auth'	=> 'ext_verturin/portfolio && acl_a_portfolio_manage',
+					'cat'	=> ['ACP_PORTFOLIO_TITLE'],
+				],
+				'limits'	=> [
+					'title'	=> 'ACP_PORTFOLIO_LIMITS',
+					'auth'	=> 'ext_verturin/portfolio && acl_a_portfolio_manage',
+					'cat'	=> ['ACP_PORTFOLIO_TITLE'],
+				],
 				'watermark'	=> [
 					'title'	=> 'ACP_PORTFOLIO_WATERMARK',
 					'auth'	=> 'ext_verturin/portfolio && acl_a_portfolio_manage',

@@ -64,7 +64,23 @@ class main_listener implements EventSubscriberInterface
 			'ext_name' => 'verturin/portfolio',
 			'lang_set' => 'common',
 		];
+		// Champ de profil « GALLERY » laissé par phpBB Gallery : traduit tant que la galerie est désactivée (v1.10.6)
+		if ($this->ext_manager && !$this->ext_manager->is_enabled('phpbbgallery/core'))
+		{
+			$lang_set_ext[] = [
+				'ext_name' => 'verturin/portfolio',
+				'lang_set' => 'gallery_field',
+			];
+		}
 		$event['lang_set_ext'] = $lang_set_ext;
+	}
+
+	/** @var \phpbb\extension\manager|null */
+	protected $ext_manager;
+
+	public function set_ext_manager(\phpbb\extension\manager $ext_manager)
+	{
+		$this->ext_manager = $ext_manager;
 	}
 
 	public function add_permissions($event)
@@ -75,7 +91,7 @@ class main_listener implements EventSubscriberInterface
 
 		$permissions = $event['permissions'];
 		foreach ([
-			'u_portfolio_view', 'u_portfolio_create_album', 'u_portfolio_upload', 'u_portfolio_noapprove',
+			'u_portfolio_view', 'u_portfolio_create_album', 'u_portfolio_upload', 'u_portfolio_delete', 'u_portfolio_noapprove',
 			'u_portfolio_rate', 'u_portfolio_comment', 'u_portfolio_share', 'u_portfolio_restore',
 			'u_portfolio_download', 'u_portfolio_unlimited', 'u_portfolio_export', 'u_portfolio_react', 'u_portfolio_profile_link', 'u_portfolio_vis_groups',
 			'm_portfolio_approve', 'm_portfolio_edit', 'm_portfolio_delete', 'm_portfolio_comments',
@@ -143,6 +159,27 @@ class main_listener implements EventSubscriberInterface
 				$this->visible_counts[$owner]['albums']++;
 				$this->visible_counts[$owner]['photos'] += (int) $album['album_photos'];
 			}
+
+			// Photos publiées dans les albums publics ou d'autres membres (v1.9.7)
+			if ($this->photos)
+			{
+				$all = $this->albums->get_all();
+				foreach ($this->photos->spread_by_user() as $user_id => $per_album)
+				{
+					foreach ($per_album as $album_id => $n)
+					{
+						if (!isset($all[$album_id]) || (int) $all[$album_id]['owner_id'] === $user_id || !$this->access->can_view_album($all[$album_id]))
+						{
+							continue;
+						}
+						if (!isset($this->visible_counts[$user_id]))
+						{
+							$this->visible_counts[$user_id] = ['albums' => 0, 'photos' => 0];
+						}
+						$this->visible_counts[$user_id]['photos'] += $n;
+					}
+				}
+			}
 		}
 
 		return $this->visible_counts;
@@ -196,16 +233,30 @@ class main_listener implements EventSubscriberInterface
 		if ($limit > 0 && $this->photos && $this->presenter)
 		{
 			$album_ids = [];
+			$elsewhere = [];
 			foreach ($this->albums->get_all() as $album)
 			{
-				if ((int) $album['owner_id'] === $user_id && $this->access->can_view_album($album))
+				if (!$this->access->can_view_album($album))
+				{
+					continue;
+				}
+				if ((int) $album['owner_id'] === $user_id)
 				{
 					$album_ids[] = (int) $album['album_id'];
 				}
+				else
+				{
+					$elsewhere[] = (int) $album['album_id'];
+				}
 			}
-			$rows = $this->photos->list_in_albums($album_ids, 'date', $limit);
+			// Ses albums, plus ses photos des albums publics ou d'autres membres (v1.9.7)
+			$rows = $this->photos->list_in_albums($album_ids, 'date', $limit) + $this->photos->list_by_user_in_albums($elsewhere, $user_id, 0, $limit);
+			uasort($rows, function ($a, $b) {
+				return ((int) $b['photo_time'] <=> (int) $a['photo_time']) ?: ((int) $b['photo_id'] <=> (int) $a['photo_id']);
+			});
+			$rows = array_slice($rows, 0, $limit, true);
 			$this->template->assign_vars([
-				'PORTFOLIO_PROFILE_RECENT'	=> $this->presenter->photos($rows),
+				'PORTFOLIO_PROFILE_RECENT'	=> $this->album_mentions($this->presenter->photos($rows), $user_id),
 				'PORTFOLIO_PROFILE_NAME'	=> $event['member']['username'],
 			]);
 		}
@@ -275,5 +326,23 @@ class main_listener implements EventSubscriberInterface
 				return $language->lang('PORTFOLIO_DEPARTED_REASON', $username);
 			}
 		);
+	}
+
+	/**
+	 * Photos publiées dans un album public ou d'un autre membre : nom de l'album affiché sur la vignette (v1.9.7).
+	 */
+	protected function album_mentions(array $cards, $user_id)
+	{
+		foreach ($cards as &$card)
+		{
+			$album = $this->albums->get($card['album_id']);
+			if ($album && (int) $album['owner_id'] !== (int) $user_id)
+			{
+				$card['in_album_name'] = $album['album_name'];
+			}
+		}
+		unset($card);
+
+		return $cards;
 	}
 }

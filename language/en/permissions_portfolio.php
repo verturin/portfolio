@@ -25,6 +25,7 @@ $lang = array_merge($lang, [
 	'ACL_U_PORTFOLIO_RATE'			=> 'Can rate photos',
 	'ACL_U_PORTFOLIO_COMMENT'		=> 'Can comment on photos',
 	'ACL_U_PORTFOLIO_SHARE'			=> 'Can share own albums with co-managers',
+	'ACL_U_PORTFOLIO_DELETE'		=> 'Can delete own photos and albums (moved to the recycle bin)',
 	'ACL_U_PORTFOLIO_RESTORE'		=> 'Can restore own photos from the trash',
 	'ACL_U_PORTFOLIO_DOWNLOAD'		=> 'Can download original photos',
 	'ACL_U_PORTFOLIO_EXPORT'		=> 'Can export own albums as ZIP',

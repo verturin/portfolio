@@ -17,6 +17,14 @@ class upload extends base
 {
 	const FORM_KEY = 'verturin_portfolio_upload';
 
+	/** @var \verturin\portfolio\service\pending_pm|null Message privé « photo en attente » (v1.10.4) */
+	protected $pending_pm;
+
+	public function set_pending_pm(\verturin\portfolio\service\pending_pm $pending_pm)
+	{
+		$this->pending_pm = $pending_pm;
+	}
+
 	public function upload($album_id)
 	{
 		$this->init();
@@ -137,6 +145,10 @@ class upload extends base
 				$pending = $this->access->needs_approval($album);
 				$photo_id = $this->photos->add($album, $result, trim($this->request->variable('title', '', true)), $pending);
 				$photo = $this->photos->get($photo_id);
+				if ($pending && $this->pending_pm && $photo)
+				{
+					$this->pending_pm->photo_pending($photo, $album);
+				}
 
 				if (!$ajax)
 				{

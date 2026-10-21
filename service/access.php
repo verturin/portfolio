@@ -101,6 +101,64 @@ class access
 		return (bool) $this->auth->acl_get($permission);
 	}
 
+	/** @var array Membres autorisés à retirer le filigrane de leurs photos (cache de la page) */
+	protected $wm_optout_cache = [];
+
+	/**
+	 * Le membre fait-il partie de ceux que l'administration autorise à retirer le filigrane
+	 * de ses propres photos (page Filigrane, v1.10.0) ?
+	 */
+	public function wm_optout_allowed($user_id)
+	{
+		$user_id = (int) $user_id;
+		if ($user_id <= ANONYMOUS || !$this->config['portfolio_wm_optout'])
+		{
+			return false;
+		}
+		if (isset($this->wm_optout_cache[$user_id]))
+		{
+			return $this->wm_optout_cache[$user_id];
+		}
+		// Le membre a renoncé lui-même à cette option dans son panneau de l'utilisateur (v1.10.2)
+		if (in_array($user_id, array_map('intval', explode(',', (string) $this->config['portfolio_wm_optout_excluded'])), true))
+		{
+			return $this->wm_optout_cache[$user_id] = false;
+		}
+
+		$users = array_filter(array_map('intval', explode(',', (string) $this->config['portfolio_wm_optout_users'])));
+		$allowed = in_array($user_id, $users, true);
+		$groups = array_filter(array_map('intval', explode(',', (string) $this->config['portfolio_wm_optout_groups'])));
+		if (!$allowed && $groups)
+		{
+			$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . '
+				WHERE user_id = ' . $user_id . '
+					AND user_pending = 0
+					AND ' . $this->db->sql_in_set('group_id', $groups);
+			$result = $this->db->sql_query_limit($sql, 1);
+			$allowed = (bool) $this->db->sql_fetchrow($result);
+			$this->db->sql_freeresult($result);
+		}
+
+		return $this->wm_optout_cache[$user_id] = $allowed;
+	}
+
+	public function reset_wm_optout_cache()
+	{
+		$this->wm_optout_cache = [];
+	}
+
+	/**
+	 * Photo affichée sans filigrane parce que son auteur l'a demandé pour cet album (v1.10.0) :
+	 * seulement pour les photos du propriétaire de l'album, et tant qu'il reste autorisé.
+	 */
+	public function owner_removed_watermark(array $photo, ?array $album)
+	{
+		return $album && !empty($album['album_owner_no_wm'])
+			&& (int) $album['owner_id'] > 0
+			&& (int) $photo['user_id'] === (int) $album['owner_id']
+			&& $this->wm_optout_allowed((int) $album['owner_id']);
+	}
+
 	public function is_admin()
 	{
 		return $this->acl('a_portfolio_manage');
@@ -404,7 +462,7 @@ class access
 
 	public function can_delete_album(array $album)
 	{
-		return $this->is_admin() || (!$this->is_protected($album) && $this->role($album) === self::ROLE_OWNER);
+		return $this->is_admin() || (!$this->is_protected($album) && $this->role($album) === self::ROLE_OWNER && $this->can_delete_own());
 	}
 
 	public function can_upload(array $album)
@@ -449,20 +507,90 @@ class access
 	 */
 	public function needs_approval(array $album)
 	{
+		if ($this->approval_forced())
+		{
+			return true;
+		}
+
 		return !$this->acl('u_portfolio_noapprove')
 			&& !$this->can_manage_album($album)
 			&& !$this->acl('m_portfolio_approve');
 	}
 
-	public function upload_quota_left()
+	/** @var group_limits|null Quotas et validation par groupe (v1.10.3) */
+	protected $group_limits;
+
+	public function set_group_limits(group_limits $group_limits)
 	{
-		$quota = (int) $this->config['portfolio_user_quota'];
-		if (!$quota || $this->acl('u_portfolio_unlimited') || $this->is_admin())
+		$this->group_limits = $group_limits;
+	}
+
+	/**
+	 * Un des groupes du membre impose la validation de toutes ses photos, y compris dans
+	 * ses propres albums (v1.10.3). Modérateurs et administrateurs n'y sont pas soumis.
+	 */
+	public function approval_forced()
+	{
+		if (!$this->group_limits || !$this->is_registered() || $this->acl('m_portfolio_approve') || $this->is_admin())
 		{
-			return -1;
+			return false;
+		}
+		$limits = $this->group_limits->for_user($this->user_id());
+
+		return $limits['approval'];
+	}
+
+	/**
+	 * Peut valider les photos en attente de cet album : modérateur, ou gestionnaire de l'album
+	 * qui n'est pas lui-même soumis à la validation obligatoire.
+	 */
+	public function can_approve_album(array $album)
+	{
+		return $this->can_approve() || ($this->can_manage_album($album) && !$this->approval_forced());
+	}
+
+	/**
+	 * Nombre maximum de photos du membre (0 = illimité) : réglage de ses groupes, sinon réglage général.
+	 */
+	public function photo_quota()
+	{
+		return $this->resolve_quota('photos', 'portfolio_user_quota');
+	}
+
+	/**
+	 * Nombre maximum d'albums du membre (0 = illimité).
+	 */
+	public function album_quota()
+	{
+		return $this->resolve_quota('albums', 'portfolio_user_max_albums');
+	}
+
+	protected function resolve_quota($key, $setting)
+	{
+		if ($this->acl('u_portfolio_unlimited') || $this->is_admin())
+		{
+			return 0;
+		}
+		if ($this->group_limits)
+		{
+			$limits = $this->group_limits->for_user($this->user_id());
+			if ($limits[$key] >= 0)
+			{
+				return $limits[$key];
+			}
 		}
 
-		return $quota;
+		return max(0, (int) $this->config[$setting]);
+	}
+
+	/**
+	 * Quota de photos applicable, ou -1 si illimité.
+	 */
+	public function upload_quota_left()
+	{
+		$quota = $this->photo_quota();
+
+		return $quota > 0 ? $quota : -1;
 	}
 
 	/* ------------------------------------------------------------------
@@ -536,7 +664,17 @@ class access
 			return $this->is_admin() || $this->acl('m_portfolio_delete');
 		}
 
-		return $this->is_photo_owner_side($album, $photo) || $this->acl('m_portfolio_delete');
+		// Permission « Peut supprimer ses photos » (v1.10.5), accordée par défaut
+		return ($this->is_photo_owner_side($album, $photo) && $this->can_delete_own())
+			|| $this->acl('m_portfolio_delete');
+	}
+
+	/**
+	 * Le membre peut-il mettre ses propres photos (et albums) à la corbeille ?
+	 */
+	public function can_delete_own()
+	{
+		return $this->is_admin() || $this->acl('u_portfolio_delete');
 	}
 
 	/** Déplacer une photo hors de son album : interdit aux membres dans un album protégé. */

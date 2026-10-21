@@ -46,6 +46,18 @@ class main_module
 				$controller->pages();
 			break;
 
+			case 'notifications':
+				$this->tpl_name = 'acp_portfolio_notifications';
+				$this->page_title = $language->lang('ACP_PORTFOLIO_NOTIFICATIONS');
+				$controller->notifications();
+			break;
+
+			case 'limits':
+				$this->tpl_name = 'acp_portfolio_limits';
+				$this->page_title = $language->lang('ACP_PORTFOLIO_LIMITS');
+				$controller->limits();
+			break;
+
 			case 'departed':
 				$this->tpl_name = 'acp_portfolio_departed';
 				$this->page_title = $language->lang('ACP_PORTFOLIO_DEPARTED');

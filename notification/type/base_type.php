@@ -31,9 +31,36 @@ abstract class base_type extends \phpbb\notification\type\base
 		$this->user_loader = $user_loader;
 	}
 
+	/** @var \verturin\portfolio\service\settings|null */
+	protected $pf_settings;
+
+	public function set_pf_settings(\verturin\portfolio\service\settings $settings)
+	{
+		$this->pf_settings = $settings;
+	}
+
 	public function is_available()
 	{
 		return true;
+	}
+
+	/**
+	 * Type proposé dans le panneau de l'utilisateur selon la page ACP « Notifications » (v1.10.0) :
+	 * notifications « une par action » ou « regroupées ».
+	 */
+	protected function activity_available($setting, $digest)
+	{
+		if (!$this->pf_settings)
+		{
+			return true;
+		}
+		$is_digest = $this->pf_settings['portfolio_notify_mode'] === 'digest';
+		if ($digest)
+		{
+			return $is_digest && ($this->pf_settings['portfolio_notify_rating'] || $this->pf_settings['portfolio_notify_comment'] || $this->pf_settings['portfolio_notify_reaction']);
+		}
+
+		return !$is_digest && (bool) $this->pf_settings[$setting];
 	}
 
 	public function users_to_query()

@@ -641,3 +641,9 @@ textarea.pf-input { resize: vertical; min-height: 80px; }
 
 /* v1.9.0 : membre parti (nom conservé, sans lien) */
 .pf-departed { font-style: italic; color: var(--pf-muted); }
+.pf-photo__in a { color: var(--pf-text); }
+.pf-photo__in-tag { flex: none; margin-left: auto; padding: 1px 6px; border-radius: 999px; font-size: 10px; font-style: normal; font-weight: 700; background: var(--pf-line); color: var(--pf-muted); }
+
+/* Lien seul : en dernier, séparé des BBCode, avec sa mise en garde (v1.10.7) */
+.pf-embed__row:last-of-type:not(:first-of-type) { border-top: 1px dashed var(--pf-line); margin-top: 4px; padding-top: 10px; }
+.pf-embed__note { margin: 6px 0 0; line-height: 1.4; }

@@ -97,6 +97,7 @@ class acp_controller
 			'portfolio_alert_window'		=> ['int', 60, 604800],
 			'portfolio_alert_block'			=> ['bool'],
 			'portfolio_trash_autopurge'		=> ['int', 0, 3650],
+			'portfolio_trash_reason_required'	=> ['bool'],
 		],
 		'PORTFOLIO_LEGEND_SOCIAL' => [
 			'portfolio_reactions_enabled'	=> ['bool'],
@@ -373,6 +374,217 @@ class acp_controller
 	public function set_departed(\verturin\portfolio\service\departed $departed)
 	{
 		$this->departed = $departed;
+	}
+
+	/** @var \verturin\portfolio\service\activity */
+	protected $activity;
+
+	public function set_activity(\verturin\portfolio\service\activity $activity)
+	{
+		$this->activity = $activity;
+	}
+
+	/** @var \verturin\portfolio\service\group_limits */
+	protected $group_limits;
+
+	public function set_group_limits(\verturin\portfolio\service\group_limits $group_limits)
+	{
+		$this->group_limits = $group_limits;
+	}
+
+	/** @var \verturin\portfolio\service\pending_pm */
+	protected $pending_pm;
+
+	public function set_pending_pm(\verturin\portfolio\service\pending_pm $pending_pm)
+	{
+		$this->pending_pm = $pending_pm;
+	}
+
+	/* ------------------------------------------------------------------
+	 * Quotas et validation par groupe (v1.10.3)
+	 * ------------------------------------------------------------------ */
+
+	public function limits()
+	{
+		$form_key = 'verturin_portfolio_acp_limits';
+		add_form_key($form_key);
+
+		$groups = [];
+		$result = $this->db->sql_query('SELECT group_id, group_name, group_type FROM ' . GROUPS_TABLE . " WHERE group_name NOT IN ('BOTS', 'GUESTS') ORDER BY group_type DESC, group_name ASC");
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$groups[(int) $row['group_id']] = (int) $row['group_type'] === GROUP_SPECIAL ? $this->language->lang('G_' . $row['group_name']) : $row['group_name'];
+		}
+		$this->db->sql_freeresult($result);
+
+		if ($this->request->is_set_post('submit'))
+		{
+			if (!check_form_key($form_key))
+			{
+				trigger_error($this->language->lang('FORM_INVALID') . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+
+			$photos = $this->request->variable('limit_photos', [0 => '']);
+			$albums = $this->request->variable('limit_albums', [0 => '']);
+			$approval = array_map('intval', $this->request->variable('limit_approval', [0]));
+			$rows = [];
+			foreach (array_keys($groups) as $group_id)
+			{
+				$rows[$group_id] = [
+					'photos'	=> self::limit_value(isset($photos[$group_id]) ? $photos[$group_id] : '', 1000000),
+					'albums'	=> self::limit_value(isset($albums[$group_id]) ? $albums[$group_id] : '', 10000),
+					'approval'	=> in_array($group_id, $approval, true),
+				];
+			}
+			$this->group_limits->save($rows);
+
+			// Message privé « photo en attente » (v1.10.4)
+			$pm_users = [];
+			foreach (preg_split('/[\r\n]+/', $this->request->variable('pending_pm_users', '', true)) as $name)
+			{
+				if (trim($name) !== '')
+				{
+					$pm_users[] = $this->find_user_id($name);
+				}
+			}
+			$pm_groups = array_filter(array_map('intval', $this->request->variable('pending_pm_groups', [0])));
+			$this->config->set('portfolio_pending_pm', $this->request->variable('pending_pm', 0) ? 1 : 0);
+			$this->config->set('portfolio_pending_pm_admins', $this->request->variable('pending_pm_admins', 0) ? 1 : 0);
+			$this->config->set('portfolio_pending_pm_mods', $this->request->variable('pending_pm_mods', 0) ? 1 : 0);
+			$this->config->set('portfolio_pending_pm_users', implode(',', array_values(array_unique($pm_users))));
+			$this->config->set('portfolio_pending_pm_groups', implode(',', array_values(array_unique($pm_groups))));
+			$this->config->set('portfolio_pending_pm_from', (int) $this->user->data['user_id']);
+
+			$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_LIMITS');
+			trigger_error($this->language->lang('PORTFOLIO_SETTINGS_SAVED') . adm_back_link($this->u_action));
+		}
+
+		$saved = $this->group_limits->all();
+		$list = [];
+		foreach ($groups as $group_id => $name)
+		{
+			$row = isset($saved[$group_id]) ? $saved[$group_id] : ['photos' => -1, 'albums' => -1, 'approval' => false];
+			$list[] = [
+				'id'		=> $group_id,
+				'name'		=> $name,
+				'photos'	=> $row['photos'] >= 0 ? (string) $row['photos'] : '',
+				'albums'	=> $row['albums'] >= 0 ? (string) $row['albums'] : '',
+				'approval'	=> $row['approval'],
+			];
+		}
+
+		$global = function ($value) {
+			return (int) $value ? (string) (int) $value : $this->language->lang('ACP_PORTFOLIO_LIMIT_UNLIMITED');
+		};
+
+		$pm_groups = $this->id_list('portfolio_pending_pm_groups');
+		$pm_group_list = [];
+		foreach ($groups as $group_id => $name)
+		{
+			$pm_group_list[] = ['id' => $group_id, 'name' => $name, 'selected' => in_array($group_id, $pm_groups, true)];
+		}
+		$recipients = $this->pending_pm->recipients();
+		$sender = $this->pending_pm->sender();
+
+		$this->template->assign_vars([
+			'PF_PENDING_PM'		=> [
+				'enabled'		=> (bool) $this->config['portfolio_pending_pm'],
+				'admins'		=> (bool) $this->config['portfolio_pending_pm_admins'],
+				'mods'			=> (bool) $this->config['portfolio_pending_pm_mods'],
+				'users'			=> implode("\n", $this->usernames($this->id_list('portfolio_pending_pm_users'))),
+				'groups'		=> $pm_group_list,
+				'recipients'	=> $this->usernames(array_slice($recipients, 0, 40)),
+				'count'			=> count($recipients),
+				'sender'		=> $sender ? $sender['username'] : '',
+				'u_find'		=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=searchuser&amp;form=acp_portfolio_limits&amp;field=pending_pm_users'),
+			],
+			'PF_LIMIT_GROUPS'	=> $list,
+			'PF_LIMIT_GLOBAL'	=> [
+				'photos'	=> $global($this->config['portfolio_user_quota']),
+				'albums'	=> $global($this->config['portfolio_user_max_albums']),
+			],
+			'U_PF_SETTINGS'		=> append_sid($this->root_path . 'adm/index.' . $this->php_ext, 'i=-verturin-portfolio-acp-main_module&amp;mode=settings'),
+			'U_PF_PERMISSIONS'	=> append_sid($this->root_path . 'adm/index.' . $this->php_ext, 'i=acp_permissions&amp;mode=setting_group_global'),
+			'U_ACTION'			=> $this->u_action,
+		]);
+	}
+
+	/**
+	 * Champ vide = réglage général (-1), sinon nombre entre 0 (illimité) et $max.
+	 */
+	protected static function limit_value($value, $max)
+	{
+		$value = trim((string) $value);
+		if ($value === '' || !preg_match('/^\d+$/', $value))
+		{
+			return -1;
+		}
+
+		return min($max, (int) $value);
+	}
+
+	/* ------------------------------------------------------------------
+	 * Notifications : notes, commentaires, réactions (v1.10.0)
+	 * ------------------------------------------------------------------ */
+
+	public function notifications()
+	{
+		$form_key = 'verturin_portfolio_acp_notifications';
+		add_form_key($form_key);
+
+		if ($this->request->is_set_post('submit') || $this->request->is_set_post('send_now'))
+		{
+			if (!check_form_key($form_key))
+			{
+				trigger_error($this->language->lang('FORM_INVALID') . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+
+			if ($this->request->is_set_post('send_now'))
+			{
+				$sent = $this->activity->send_digest();
+				trigger_error($this->language->lang('ACP_PORTFOLIO_NOTIFY_SENT', $sent) . adm_back_link($this->u_action));
+			}
+
+			$was_digest = $this->activity->mode() === 'digest';
+			foreach (['rating', 'comment', 'reaction'] as $type)
+			{
+				$this->config->set('portfolio_notify_' . $type, $this->request->variable('portfolio_notify_' . $type, 0) ? 1 : 0);
+			}
+			$mode = $this->request->variable('portfolio_notify_mode', 'each') === 'digest' ? 'digest' : 'each';
+			$delay = $this->request->variable('portfolio_notify_delay', 1);
+			$this->config->set('portfolio_notify_mode', $mode);
+			$this->config->set('portfolio_notify_delay', in_array($delay, \verturin\portfolio\service\activity::DELAYS, true) ? $delay : 1);
+
+			// Passage au mode « une par action » : ce qui attendait le regroupement part tout de suite
+			if ($was_digest && $mode === 'each' && $this->activity->pending_count())
+			{
+				$this->activity->send_digest();
+			}
+
+			$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_NOTIFY_SETTINGS');
+			trigger_error($this->language->lang('PORTFOLIO_SETTINGS_SAVED') . adm_back_link($this->u_action));
+		}
+
+		$delays = [];
+		foreach (\verturin\portfolio\service\activity::DELAYS as $minutes)
+		{
+			$delays[] = ['value' => $minutes, 'label' => $this->language->lang('ACP_PORTFOLIO_NOTIFY_DELAY_N', $minutes), 'selected' => $minutes === $this->activity->delay_minutes()];
+		}
+		$last = (int) $this->config['portfolio_notify_last_run'];
+
+		$this->template->assign_vars([
+			'PF_NOTIFY'		=> [
+				'rating'	=> (bool) $this->config['portfolio_notify_rating'],
+				'comment'	=> (bool) $this->config['portfolio_notify_comment'],
+				'reaction'	=> (bool) $this->config['portfolio_notify_reaction'],
+				'mode'		=> $this->activity->mode(),
+				'pending'	=> $this->activity->pending_count(),
+				'last_run'	=> $last ? $this->user->format_date($last) : '',
+			],
+			'PF_DELAYS'		=> $delays,
+			'U_UCP_NOTIFY'	=> append_sid($this->root_path . 'ucp.' . $this->php_ext, 'i=ucp_notifications&amp;mode=notification_options'),
+			'U_ACTION'		=> $this->u_action,
+		]);
 	}
 
 	/* ------------------------------------------------------------------
@@ -823,6 +1035,11 @@ class acp_controller
 		$strip_exif = (bool) $this->request->variable('strip_exif', (int) $this->config['portfolio_strip_exif']);
 		$users = $scope === 'all' ? null : $this->migrator->scope_users($scope, $value);
 
+		// Albums créés par la bascule : membres inscrits et sans téléchargement des originaux par défaut (v1.9.8)
+		$mig_visibility = in_array($this->config['portfolio_migrate_visibility'], ['registered', 'keep', 'private'], true) ? $this->config['portfolio_migrate_visibility'] : 'registered';
+		$mig_download = (int) $this->config['portfolio_migrate_download'] ? 1 : 0;
+		$this->migrator->set_album_defaults($mig_visibility, $mig_download);
+
 		$scope_params = '&amp;scope=' . $scope . '&amp;value=' . (int) $value . '&amp;include_public=' . (int) $include_public . '&amp;strip_exif=' . (int) $strip_exif;
 		$progress = null;
 		$plan = null;
@@ -867,6 +1084,12 @@ class acp_controller
 					if ($this->request->is_set_post('batch_size'))
 					{
 						$this->config->set('portfolio_migrate_batch', min(100, max(1, $this->request->variable('batch_size', 10))));
+						$mig_visibility = $this->request->variable('mig_visibility', 'registered');
+						$mig_visibility = in_array($mig_visibility, ['registered', 'keep', 'private'], true) ? $mig_visibility : 'registered';
+						$mig_download = $this->request->variable('mig_download', 0) ? 1 : 0;
+						$this->config->set('portfolio_migrate_visibility', $mig_visibility);
+						$this->config->set('portfolio_migrate_download', $mig_download);
+						$this->migrator->set_album_defaults($mig_visibility, $mig_download);
 					}
 					$this->migrator->set_fallback_name($this->language->lang('PORTFOLIO_MIG_FALLBACK_ALBUM'));
 					$result = $this->migrator->run_batch($users, $include_public, max(1, (int) $this->config['portfolio_migrate_batch']), $strip_exif);
@@ -1035,6 +1258,8 @@ class acp_controller
 			'PF_STRIP_EXIF'		=> $strip_exif,
 			'PF_REDIRECT'		=> (bool) $this->config['portfolio_legacy_redirect'],
 			'PF_BATCH'			=> (int) $this->config['portfolio_migrate_batch'],
+			'PF_MIG_VISIBILITY'	=> $mig_visibility,
+			'PF_MIG_DOWNLOAD'	=> $mig_download,
 			'U_ACTION'			=> $this->u_action,
 			'U_PF_BACKUP'		=> str_replace('mode=migrate', 'mode=backup', $this->u_action),
 			'U_PF_FIND_USER'	=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=searchuser&amp;form=acp_portfolio_migrate&amp;field=username&amp;select_single=true'),
@@ -1365,6 +1590,87 @@ class acp_controller
 	{
 		$form_key = 'verturin_portfolio_acp_watermark';
 
+		// Membres autorisés à retirer le filigrane de leurs propres photos (v1.10.0)
+		if ($this->request->is_set_post('wm_optout_save') || $this->request->is_set_post('wm_optout_reset'))
+		{
+			if (!check_form_key('verturin_portfolio_acp_wm_optout'))
+			{
+				trigger_error($this->language->lang('FORM_INVALID') . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+
+			if ($this->request->is_set_post('wm_optout_reset'))
+			{
+				$reset = $this->albums->get($this->request->variable('wm_optout_reset', 0));
+				if ($reset)
+				{
+					$this->albums->update((int) $reset['album_id'], ['album_owner_no_wm' => 0]);
+					$this->config->increment('portfolio_wm_revision', 1);
+					$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_WM_OPTOUT_RESET', false, [$reset['album_name']]);
+				}
+				trigger_error($this->language->lang('ACP_PORTFOLIO_WM_OPTOUT_RESET_DONE') . adm_back_link($this->u_action));
+			}
+
+			$user_ids = [];
+			foreach (preg_split('/[\r\n]+/', $this->request->variable('wm_optout_users', '', true)) as $name)
+			{
+				if (trim($name) !== '')
+				{
+					$user_ids[] = $this->find_user_id($name);
+				}
+			}
+			$group_ids = array_filter(array_map('intval', $this->request->variable('wm_optout_groups', [0])));
+
+			$user_ids = array_values(array_unique($user_ids));
+			$enabled = $this->request->variable('wm_optout', 0) ? 1 : 0;
+			$this->config->set('portfolio_wm_optout', $enabled);
+			$this->config->set('portfolio_wm_optout_users', implode(',', $user_ids));
+			$this->config->set('portfolio_wm_optout_groups', implode(',', array_unique($group_ids)));
+
+			// Un membre ajouté par l'administration n'est plus « renonçant » (v1.10.2)
+			$excluded = array_diff($this->id_list('portfolio_wm_optout_excluded'), $user_ids);
+			$this->config->set('portfolio_wm_optout_excluded', implode(',', $excluded));
+
+			// Message privé de rappel des règles, une seule fois par membre (v1.10.2)
+			$sent = [];
+			if ($enabled)
+			{
+				$notified = $this->id_list('portfolio_wm_optout_notified');
+				$new = array_values(array_diff($user_ids, $notified));
+				if ($new)
+				{
+					$sent = $this->send_optout_pm($new);
+					$this->config->set('portfolio_wm_optout_notified', implode(',', array_unique(array_merge($notified, $sent))));
+				}
+			}
+
+			$this->config->increment('portfolio_wm_revision', 1);
+			$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_WM_OPTOUT');
+			$message = $this->language->lang('PORTFOLIO_SETTINGS_SAVED');
+			if ($sent)
+			{
+				$message .= '<br>' . $this->language->lang('ACP_PORTFOLIO_WM_OPTOUT_PM_SENT', count($sent));
+			}
+			trigger_error($message . adm_back_link($this->u_action));
+		}
+
+		// Albums sans filigrane (v1.9.9) : l'album choisi et tous ses sous-albums
+		if ($this->request->is_set_post('wm_album_add') || $this->request->is_set_post('wm_album_remove'))
+		{
+			if (!check_form_key('verturin_portfolio_acp_wm_albums'))
+			{
+				trigger_error($this->language->lang('FORM_INVALID') . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+			$add = $this->request->is_set_post('wm_album_add');
+			$album_id = $add ? $this->request->variable('wm_album_id', 0) : $this->request->variable('wm_album_remove', 0);
+			$album = $album_id ? $this->albums->get($album_id) : null;
+			if (!$album)
+			{
+				trigger_error($this->language->lang('PORTFOLIO_ALBUM_NOT_FOUND') . adm_back_link($this->u_action), E_USER_WARNING);
+			}
+			$this->set_no_watermark([$album_id], $add);
+			trigger_error($this->language->lang($add ? 'ACP_PORTFOLIO_WM_ALBUM_ADDED' : 'ACP_PORTFOLIO_WM_ALBUM_REMOVED', $album['album_name'], count($this->albums->descendants($album_id))) . adm_back_link($this->u_action));
+		}
+
 		$fields = [
 			'portfolio_wm_enabled'			=> ['bool'],
 			'portfolio_wm_skip_members'		=> ['bool'],
@@ -1372,6 +1678,7 @@ class acp_controller
 			'portfolio_wm_text_enabled'		=> ['bool'],
 			'portfolio_wm_text'				=> ['text'],
 			'portfolio_wm_position'			=> ['choice', \verturin\portfolio\service\watermark::POSITIONS],
+			'portfolio_wm_tile_density'		=> ['int', 1, 10],
 			'portfolio_wm_text_size'		=> ['int', 1, 30],
 			'portfolio_wm_text_color'		=> ['color'],
 			'portfolio_wm_opacity'			=> ['int', 5, 100],
@@ -1451,8 +1758,6 @@ class acp_controller
 			trigger_error($this->language->lang('PORTFOLIO_SETTINGS_SAVED') . adm_back_link($this->u_action));
 		}
 
-		add_form_key($form_key);
-
 		$items = [];
 		foreach ($fields as $key => $def)
 		{
@@ -1494,7 +1799,94 @@ class acp_controller
 
 		$logo = $this->watermark->logo_path();
 
+		// Albums sans filigrane : ceux réglés directement, et le choix pour en ajouter un
+		$no_wm = [];
+		$choices = [];
+		$owners = [];
+		foreach ($this->albums->get_all() as $row)
+		{
+			$owners[] = (int) $row['owner_id'];
+		}
+		$this->presenter->load_users($owners);
+		foreach ($this->albums->flat_tree() as $id => $node)
+		{
+			$row = $node['album'];
+			$owner = (int) $row['owner_id'] ? $this->presenter->username($row['owner_id']) : $this->language->lang('PORTFOLIO_PUBLIC_ALBUM');
+			if (!empty($row['album_no_watermark']))
+			{
+				$no_wm[] = [
+					'id'		=> $id,
+					'name'		=> $row['album_name'],
+					'owner'		=> $owner,
+					'children'	=> count($this->albums->descendants($id)),
+					'u_view'	=> $this->presenter->route_abs('album', ['album_id' => $id]),
+				];
+			}
+			$from = $this->albums->no_watermark_from($id);
+			$choices[] = [
+				'id'		=> $id,
+				'label'		=> str_repeat('— ', (int) $node['depth']) . $row['album_name'] . ' (' . strip_tags($owner) . ')',
+				'disabled'	=> $from > 0,
+			];
+		}
+		add_form_key('verturin_portfolio_acp_wm_albums');
+		$wm_albums_token = $this->template->retrieve_var('S_FORM_TOKEN');
+
+		// Retrait du filigrane par les membres : membres et groupes autorisés, albums concernés
+		$optout_users = array_filter(array_map('intval', explode(',', (string) $this->config['portfolio_wm_optout_users'])));
+		$optout_groups = array_filter(array_map('intval', explode(',', (string) $this->config['portfolio_wm_optout_groups'])));
+		$names = [];
+		if ($optout_users)
+		{
+			$result = $this->db->sql_query('SELECT username FROM ' . USERS_TABLE . ' WHERE ' . $this->db->sql_in_set('user_id', $optout_users) . ' ORDER BY username_clean');
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$names[] = $row['username'];
+			}
+			$this->db->sql_freeresult($result);
+		}
+		$group_list = [];
+		$result = $this->db->sql_query('SELECT group_id, group_name, group_type FROM ' . GROUPS_TABLE . " WHERE group_name NOT IN ('BOTS', 'GUESTS') ORDER BY group_type DESC, group_name ASC");
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$group_list[] = [
+				'id'		=> (int) $row['group_id'],
+				'name'		=> (int) $row['group_type'] === GROUP_SPECIAL ? $this->language->lang('G_' . $row['group_name']) : $row['group_name'],
+				'selected'	=> in_array((int) $row['group_id'], $optout_groups, true),
+			];
+		}
+		$this->db->sql_freeresult($result);
+		$optout_albums = [];
+		foreach ($this->albums->get_all() as $id => $row)
+		{
+			if (!empty($row['album_owner_no_wm']) && (int) $row['owner_id'])
+			{
+				$optout_albums[] = [
+					'id'		=> (int) $id,
+					'name'		=> $row['album_name'],
+					'owner'		=> $this->presenter->username($row['owner_id']),
+					'active'	=> $this->access->wm_optout_allowed((int) $row['owner_id']),
+					'u_view'	=> $this->presenter->route_abs('album', ['album_id' => (int) $id]),
+				];
+			}
+		}
+		add_form_key('verturin_portfolio_acp_wm_optout');
+		$wm_optout_token = $this->template->retrieve_var('S_FORM_TOKEN');
+		add_form_key($form_key);
+
 		$this->template->assign_vars([
+			'PF_NO_WM'			=> $no_wm,
+			'PF_NO_WM_CHOICES'	=> $choices,
+			'PF_NO_WM_TOKEN'	=> $wm_albums_token,
+			'PF_OPTOUT'			=> [
+				'u_find'	=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=searchuser&amp;form=acp_portfolio_wm_optout&amp;field=wm_optout_users'),
+				'renounced'	=> $this->usernames($this->id_list('portfolio_wm_optout_excluded')),
+				'enabled'	=> (bool) $this->config['portfolio_wm_optout'],
+				'users'		=> implode("\n", $names),
+				'groups'	=> $group_list,
+				'albums'	=> $optout_albums,
+				'token'		=> $wm_optout_token,
+			],
 			'PF_ITEMS'			=> $items,
 			'PF_PREVIEW'		=> $preview,
 			'PF_HAS_LOGO'		=> is_file($logo),
@@ -1503,6 +1895,100 @@ class acp_controller
 			'PF_SAMPLE_TEXT'	=> $this->watermark->text_for_viewer(['photo_id' => 0]),
 			'U_ACTION'			=> $this->u_action,
 		]);
+	}
+
+	/**
+	 * Coupe (ou rétablit) le filigrane des albums donnés ; les sous-albums suivent leur parent.
+	 * Les navigateurs rechargent les images (nouvelle révision dans l'adresse).
+	 */
+	protected function set_no_watermark(array $album_ids, $off)
+	{
+		$count = $this->albums->update_many($album_ids, ['album_no_watermark' => $off ? 1 : 0]);
+		if ($count)
+		{
+			$this->config->increment('portfolio_wm_revision', 1);
+			foreach ($album_ids as $album_id)
+			{
+				$album = $this->albums->get($album_id);
+				$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, $off ? 'LOG_PORTFOLIO_WM_ALBUM_OFF' : 'LOG_PORTFOLIO_WM_ALBUM_ON', false, [$album ? $album['album_name'] : $album_id]);
+			}
+		}
+
+		return $count;
+	}
+
+	/** Noms des membres, dans l'ordre alphabétique */
+	protected function usernames(array $ids)
+	{
+		$names = [];
+		if ($ids)
+		{
+			$result = $this->db->sql_query('SELECT username FROM ' . USERS_TABLE . ' WHERE ' . $this->db->sql_in_set('user_id', $ids) . ' ORDER BY username_clean');
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$names[] = $row['username'];
+			}
+			$this->db->sql_freeresult($result);
+		}
+
+		return $names;
+	}
+
+	/** Liste d'identifiants enregistrée dans un réglage (« 2,15,48 ») */
+	protected function id_list($key)
+	{
+		return array_values(array_filter(array_map('intval', explode(',', (string) $this->config[$key]))));
+	}
+
+	/**
+	 * Message privé envoyé par l'administrateur à chaque membre nouvellement autorisé à retirer le filigrane :
+	 * fonctionnement, règles de sécurité, comment y renoncer (v1.10.2).
+	 *
+	 * @return int[] Membres à qui le message a été envoyé
+	 */
+	protected function send_optout_pm(array $user_ids)
+	{
+		if (!function_exists('submit_pm'))
+		{
+			include_once($this->root_path . 'includes/functions_privmsgs.' . $this->php_ext);
+		}
+
+		$sent = [];
+		$sql = 'SELECT user_id, username, user_lang FROM ' . USERS_TABLE . '
+			WHERE ' . $this->db->sql_in_set('user_id', array_map('intval', $user_ids)) . '
+				AND user_type <> ' . USER_IGNORE;
+		$result = $this->db->sql_query($sql);
+		$rows = $this->db->sql_fetchrowset($result);
+		$this->db->sql_freeresult($result);
+
+		$u_ucp = generate_board_url() . '/ucp.' . $this->php_ext . '?i=-verturin-portfolio-ucp-main_module&mode=watermark';
+		foreach ($rows as $row)
+		{
+			$subject = $this->language->lang('PORTFOLIO_WM_OPTOUT_PM_SUBJECT');
+			$text = $this->language->lang('PORTFOLIO_WM_OPTOUT_PM_BODY', $row['username'], $u_ucp);
+			$uid = $bitfield = '';
+			$flags = 0;
+			generate_text_for_storage($text, $uid, $bitfield, $flags, true, true, true);
+
+			$pm_data = [
+				'from_user_id'		=> (int) $this->user->data['user_id'],
+				'from_user_ip'		=> $this->user->ip,
+				'from_username'		=> $this->user->data['username'],
+				'enable_sig'		=> false,
+				'enable_bbcode'		=> true,
+				'enable_smilies'	=> true,
+				'enable_urls'		=> true,
+				'icon_id'			=> 0,
+				'bbcode_bitfield'	=> $bitfield,
+				'bbcode_uid'		=> $uid,
+				'message'			=> $text,
+				'address_list'		=> ['u' => [(int) $row['user_id'] => 'to']],
+			];
+			submit_pm('post', $subject, $pm_data, false);
+			$sent[] = (int) $row['user_id'];
+		}
+
+		return $sent;
 	}
 
 	/**
@@ -1564,6 +2050,14 @@ class acp_controller
 		$album_id = $this->request->variable('album_id', 0);
 		$album = $album_id ? $this->albums->get($album_id) : null;
 
+		// Modification en nombre : visibilité et téléchargement des albums cochés (v1.9.8)
+		if ($action === 'bulk')
+		{
+			$this->albums_bulk();
+
+			return;
+		}
+
 		if ($action && !$album)
 		{
 			trigger_error($this->language->lang('PORTFOLIO_ALBUM_NOT_FOUND') . adm_back_link($this->u_action), E_USER_WARNING);
@@ -1596,7 +2090,7 @@ class acp_controller
 				{
 					$this->albums->move_order($album_id, $action === 'move_up' ? 'up' : 'down');
 				}
-				redirect($this->u_action);
+				redirect($this->u_action . $this->album_list_query());
 			break;
 
 			case 'delete':
@@ -1620,6 +2114,26 @@ class acp_controller
 		}
 
 		$filter = $this->request->variable('filter', 'all');
+		$vis_filter = $this->request->variable('vis', -1);
+		$list = $this->album_list_state();
+		$list_q = $this->album_list_query();
+		$owner_id = 0;
+		$owner_error = '';
+		if ($list['owner'] !== '')
+		{
+			$result = $this->db->sql_query('SELECT user_id, username FROM ' . USERS_TABLE . " WHERE username_clean = '" . $this->db->sql_escape(utf8_clean_string($list['owner'])) . "'");
+			$found = $this->db->sql_fetchrow($result);
+			$this->db->sql_freeresult($result);
+			if ($found)
+			{
+				$owner_id = (int) $found['user_id'];
+				$list['owner'] = $found['username'];
+			}
+			else
+			{
+				$owner_error = $this->language->lang('PORTFOLIO_ERR_USER_UNKNOWN', $list['owner']);
+			}
+		}
 		$owners = [];
 		foreach ($this->albums->get_all() as $row)
 		{
@@ -1636,6 +2150,15 @@ class acp_controller
 			{
 				continue;
 			}
+			if ($vis_filter >= 0 && (int) $row['album_visibility'] !== $vis_filter)
+			{
+				continue;
+			}
+			// Albums d'un membre (v1.10.5) ; membre introuvable : liste vide plutôt que tout afficher
+			if (($owner_id && (int) $row['owner_id'] !== $owner_id) || $owner_error)
+			{
+				continue;
+			}
 
 			$hash = generate_link_hash('pf_acp_album_' . $id);
 			$groups = $this->albums->get_groups($id);
@@ -1647,27 +2170,309 @@ class acp_controller
 				'is_public'		=> $is_public,
 				'visibility'	=> $this->language->lang(['PORTFOLIO_VIS_ALL', 'PORTFOLIO_VIS_REGISTERED', 'PORTFOLIO_VIS_GROUPS', 'PORTFOLIO_VIS_PRIVATE', 'PORTFOLIO_VIS_FRIENDS'][(int) $row['album_visibility']] ?? 'PORTFOLIO_VIS_PRIVATE'),
 				'photos'		=> (int) $row['album_photos'],
+				'download'		=> !isset($row['album_download']) || (bool) $row['album_download'],
+				'no_wm'			=> !empty($row['album_no_watermark']) ? 'self' : ($this->albums->watermark_off($row) ? 'parent' : ''),
+				'vis_code'		=> (int) $row['album_visibility'],
 				'locked'		=> (bool) $row['album_locked'],
 				'protected'		=> !empty($row['album_protected']),
-				'u_protect'		=> $this->u_action . '&amp;action=protect&amp;album_id=' . $id . '&amp;hash=' . $hash,
+				'u_protect'		=> $this->u_action . '&amp;action=protect&amp;album_id=' . $id . '&amp;hash=' . $hash . $list_q,
 				'group_rules'	=> count($groups),
 				'u_view'		=> $this->presenter->route_abs('album', ['album_id' => $id]),
 				'u_edit'		=> $this->presenter->route_abs('album_edit', ['album_id' => $id]),
 				'u_members'		=> $this->presenter->route_abs('album_members', ['album_id' => $id]),
 				'u_groups'		=> $this->u_action . '&amp;action=groups&amp;album_id=' . $id,
-				'u_up'			=> $this->u_action . '&amp;action=move_up&amp;album_id=' . $id . '&amp;hash=' . $hash,
-				'u_down'		=> $this->u_action . '&amp;action=move_down&amp;album_id=' . $id . '&amp;hash=' . $hash,
-				'u_lock'		=> $this->u_action . '&amp;action=lock&amp;album_id=' . $id . '&amp;hash=' . $hash,
+				'u_up'			=> $this->u_action . '&amp;action=move_up&amp;album_id=' . $id . '&amp;hash=' . $hash . $list_q,
+				'u_down'		=> $this->u_action . '&amp;action=move_down&amp;album_id=' . $id . '&amp;hash=' . $hash . $list_q,
+				'u_lock'		=> $this->u_action . '&amp;action=lock&amp;album_id=' . $id . '&amp;hash=' . $hash . $list_q,
 				'u_delete'		=> $this->u_action . '&amp;action=delete&amp;album_id=' . $id,
+				'path'			=> $node['depth'] ? $this->album_path($id) : '',
+				'sort_name'		=> utf8_strtolower($node['depth'] ? $this->album_path($id) . ' › ' . $row['album_name'] : $row['album_name']),
+				'sort_owner'	=> $is_public ? '' : utf8_strtolower($this->presenter->username((int) $row['owner_id'], 'username')),
+			];
+		}
+
+		// Tri par album, propriétaire ou nombre de photos (v1.10.5) ; par défaut l'arborescence
+		if ($list['sk'] !== 'tree')
+		{
+			$dir = $list['sd'] === 'd' ? -1 : 1;
+			usort($rows, function ($a, $b) use ($list, $dir) {
+				switch ($list['sk'])
+				{
+					case 'photos':
+						$cmp = $a['photos'] <=> $b['photos'];
+					break;
+					case 'owner':
+						// Albums publics toujours en fin de liste croissante
+						$cmp = ($a['sort_owner'] === '') <=> ($b['sort_owner'] === '');
+						$cmp = $cmp ?: strnatcmp($a['sort_owner'], $b['sort_owner']);
+					break;
+					default:
+						$cmp = 0;
+				}
+
+				return $dir * ($cmp ?: strnatcmp($a['sort_name'], $b['sort_name']));
+			});
+		}
+
+		$sort_links = [];
+		foreach (['name', 'owner', 'photos'] as $key)
+		{
+			$active = $list['sk'] === $key;
+			$next = $active && $list['sd'] === 'a' ? 'd' : ($active ? 'a' : ($key === 'photos' ? 'd' : 'a'));
+			$sort_links[$key] = [
+				'url'		=> $this->u_action . $this->album_list_query(['sk' => $key, 'sd' => $next]),
+				'active'	=> $active,
+				'dir'		=> $list['sd'],
 			];
 		}
 
 		$this->template->assign_vars([
 			'PF_ROWS'			=> $rows,
 			'PF_FILTER'			=> $filter,
+			'PF_VIS_FILTER'		=> $vis_filter,
+			'PF_VIS_LIST'		=> [
+				['id' => access::VIS_ALL, 'label' => $this->language->lang('PORTFOLIO_VIS_ALL')],
+				['id' => access::VIS_REGISTERED, 'label' => $this->language->lang('PORTFOLIO_VIS_REGISTERED')],
+				['id' => access::VIS_GROUPS, 'label' => $this->language->lang('PORTFOLIO_VIS_GROUPS')],
+				['id' => access::VIS_FRIENDS, 'label' => $this->language->lang('ACP_PORTFOLIO_VIS_FRIENDS_OWNER')],
+				['id' => access::VIS_PRIVATE, 'label' => $this->language->lang('PORTFOLIO_VIS_PRIVATE')],
+			],
 			'U_ACTION'			=> $this->u_action,
 			'U_PF_NEW_PUBLIC'	=> $this->presenter->route_abs('album_create', ['public' => 1]),
+			'PF_LIST'			=> $list + [
+				'sorted'		=> $list['sk'] !== 'tree',
+				'sort'			=> $sort_links,
+				'owner_error'	=> $owner_error,
+				'u_tree'		=> $this->u_action . $this->album_list_query(['sk' => 'tree', 'sd' => 'a']),
+				'u_clear_owner'	=> $this->u_action . $this->album_list_query(['owner' => '']),
+				'u_find'		=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=searchuser&amp;form=pf-albums-owner&amp;field=owner&amp;select_single=true'),
+				'query'			=> $this->album_list_query(),
+				'extra'			=> ($list['sk'] !== 'tree' ? '&amp;sk=' . $list['sk'] . '&amp;sd=' . $list['sd'] : '') . ($list['owner'] !== '' && !$owner_error ? '&amp;owner=' . urlencode($list['owner']) : ''),
+			],
 		]);
+	}
+
+	/**
+	 * Filtres et tri de la liste des albums, conservés d'une action à l'autre (v1.10.5).
+	 */
+	protected function album_list_state()
+	{
+		$sk = $this->request->variable('sk', 'tree');
+		$sd = $this->request->variable('sd', 'a');
+
+		return [
+			'filter'	=> in_array($f = $this->request->variable('filter', 'all'), ['all', 'public', 'members'], true) ? $f : 'all',
+			'vis'		=> $this->request->variable('vis', -1),
+			'sk'		=> in_array($sk, ['tree', 'name', 'owner', 'photos'], true) ? $sk : 'tree',
+			'sd'		=> $sd === 'd' ? 'd' : 'a',
+			'owner'		=> trim($this->request->variable('owner', '', true)),
+		];
+	}
+
+	protected function album_list_query(array $override = [])
+	{
+		$state = array_merge($this->album_list_state(), $override);
+		$query = '&amp;filter=' . urlencode($state['filter']) . '&amp;vis=' . (int) $state['vis'];
+		if ($state['sk'] !== 'tree')
+		{
+			$query .= '&amp;sk=' . $state['sk'] . '&amp;sd=' . $state['sd'];
+		}
+		if ($state['owner'] !== '')
+		{
+			$query .= '&amp;owner=' . urlencode($state['owner']);
+		}
+
+		return $query;
+	}
+
+	/** « Album parent › Sous-album » : chemin des parents d'un sous-album */
+	protected function album_path($album_id)
+	{
+		$names = [];
+		foreach ($this->albums->get_chain((int) $album_id) as $node)
+		{
+			if ((int) $node['album_id'] !== (int) $album_id)
+			{
+				$names[] = $node['album_name'];
+			}
+		}
+
+		return implode(' › ', $names);
+	}
+
+	/**
+	 * Visibilité et téléchargement des originaux pour plusieurs albums à la fois.
+	 * « Mes amis » n'a de sens que pour un album de membre : les albums publics cochés gardent alors la leur.
+	 */
+	protected function albums_bulk()
+	{
+		$ids = array_values(array_unique(array_filter(array_map('intval', $this->request->variable('album_ids', [0])))));
+		$vis = $this->request->variable('bulk_visibility', '');
+		$download = $this->request->variable('bulk_download', '');
+		$wm = $this->request->variable('bulk_watermark', '');
+		$lock = $this->request->variable('bulk_lock', '');
+		$protect = $this->request->variable('bulk_protect', '');
+		$children = (bool) $this->request->variable('bulk_children', 0);
+		$filter = $this->request->variable('filter', 'all');
+		$back = $this->u_action . $this->album_list_query();
+
+		$vis = ($vis !== '' && in_array((int) $vis, [access::VIS_ALL, access::VIS_REGISTERED, access::VIS_GROUPS, access::VIS_PRIVATE, access::VIS_FRIENDS], true)) ? (int) $vis : null;
+		$download = in_array($download, ['0', '1'], true) ? (int) $download : null;
+		$wm = in_array($wm, ['0', '1'], true) ? (int) $wm : null;
+		// Verrouillage et protection en nombre (v1.10.8)
+		$lock = in_array($lock, ['0', '1'], true) ? (int) $lock : null;
+		$protect = in_array($protect, ['0', '1'], true) ? (int) $protect : null;
+
+		if (!$ids)
+		{
+			trigger_error($this->language->lang('ACP_PORTFOLIO_BULK_NONE') . adm_back_link($back), E_USER_WARNING);
+		}
+		if ($vis === null && $download === null && $wm === null && $lock === null && $protect === null)
+		{
+			trigger_error($this->language->lang('ACP_PORTFOLIO_BULK_NOTHING') . adm_back_link($back), E_USER_WARNING);
+		}
+
+		$all = $this->albums->get_all();
+		$targets = [];
+		foreach ($ids as $id)
+		{
+			if (!isset($all[$id]))
+			{
+				continue;
+			}
+			$targets[$id] = true;
+			if ($children)
+			{
+				foreach ($this->albums->descendants($id) as $child)
+				{
+					$targets[$child] = true;
+				}
+			}
+		}
+		$targets = array_keys($targets);
+
+		if (!confirm_box(true))
+		{
+			$changes = [];
+			if ($vis !== null)
+			{
+				$changes[] = $this->language->lang('PORTFOLIO_VISIBILITY') . ' → ' . $this->language->lang(['PORTFOLIO_VIS_ALL', 'PORTFOLIO_VIS_REGISTERED', 'PORTFOLIO_VIS_GROUPS', 'PORTFOLIO_VIS_PRIVATE', 'PORTFOLIO_VIS_FRIENDS'][$vis]);
+			}
+			if ($download !== null)
+			{
+				$changes[] = $this->language->lang($download ? 'ACP_PORTFOLIO_BULK_DOWNLOAD_ON' : 'ACP_PORTFOLIO_BULK_DOWNLOAD_OFF');
+			}
+			if ($wm !== null)
+			{
+				$changes[] = $this->language->lang($wm ? 'ACP_PORTFOLIO_BULK_WM_ON' : 'ACP_PORTFOLIO_BULK_WM_OFF');
+			}
+			if ($lock !== null)
+			{
+				$changes[] = $this->language->lang($lock ? 'ACP_PORTFOLIO_BULK_LOCK_ON' : 'ACP_PORTFOLIO_BULK_LOCK_OFF');
+			}
+			if ($protect !== null)
+			{
+				$changes[] = $this->language->lang($protect ? 'ACP_PORTFOLIO_BULK_PROTECT_ON' : 'ACP_PORTFOLIO_BULK_PROTECT_OFF');
+			}
+			confirm_box(false, $this->language->lang('ACP_PORTFOLIO_BULK_CONFIRM', count($targets), implode(' ; ', $changes)), build_hidden_fields([
+				'action'			=> 'bulk',
+				'album_ids'			=> $ids,
+				'bulk_visibility'	=> $vis === null ? '' : (string) $vis,
+				'bulk_download'		=> $download === null ? '' : (string) $download,
+				'bulk_watermark'	=> $wm === null ? '' : (string) $wm,
+				'bulk_lock'			=> $lock === null ? '' : (string) $lock,
+				'bulk_protect'		=> $protect === null ? '' : (string) $protect,
+				'bulk_children'		=> (int) $children,
+				'filter'			=> $filter,
+			] + array_filter([
+				'vis'				=> $this->request->variable('vis', -1),
+				'sk'				=> $this->request->variable('sk', ''),
+				'sd'				=> $this->request->variable('sd', ''),
+				'owner'				=> $this->request->variable('owner', '', true),
+			], function ($v) {
+				return $v !== '' && $v !== -1;
+			})));
+			redirect($back);
+		}
+
+		$done_vis = 0;
+		$skipped = 0;
+		$no_rules = 0;
+		if ($vis !== null)
+		{
+			$apply = [];
+			foreach ($targets as $id)
+			{
+				if ($vis === access::VIS_FRIENDS && !(int) $all[$id]['owner_id'])
+				{
+					$skipped++;
+					continue;
+				}
+				$apply[] = $id;
+				if ($vis === access::VIS_GROUPS && !$this->albums->get_groups($id))
+				{
+					$no_rules++;
+				}
+			}
+			$done_vis = $this->albums->update_many($apply, ['album_visibility' => $vis]);
+		}
+		$done_dl = $download !== null ? $this->albums->update_many($targets, ['album_download' => $download]) : 0;
+		// Filigrane : 1 = appliqué (réglage normal), 0 = coupé pour ces albums (v1.9.9)
+		$done_wm = $wm !== null ? $this->set_no_watermark($targets, !$wm) : 0;
+		$done_lock = $lock !== null ? $this->albums->update_many($targets, ['album_locked' => $lock]) : 0;
+		$done_protect = $protect !== null ? $this->albums->update_many($targets, ['album_protected' => $protect]) : 0;
+
+		$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_PORTFOLIO_ALBUMS_BULK', false, [count($targets)]);
+
+		$message = $this->language->lang('ACP_PORTFOLIO_BULK_DONE', count($targets));
+		if ($vis !== null)
+		{
+			$message .= '<br>' . $this->language->lang('ACP_PORTFOLIO_BULK_DONE_VIS', $done_vis);
+		}
+		if ($download !== null)
+		{
+			$message .= '<br>' . $this->language->lang($download ? 'ACP_PORTFOLIO_BULK_DONE_DL_ON' : 'ACP_PORTFOLIO_BULK_DONE_DL_OFF', $done_dl);
+		}
+		if ($wm !== null)
+		{
+			$message .= '<br>' . $this->language->lang($wm ? 'ACP_PORTFOLIO_BULK_DONE_WM_ON' : 'ACP_PORTFOLIO_BULK_DONE_WM_OFF', $done_wm);
+			$still = 0;
+			foreach ($wm ? $targets : [] as $id)
+			{
+				$still += $this->albums->watermark_off($id) ? 1 : 0;
+			}
+			if ($still)
+			{
+				$message .= '<br>' . $this->language->lang('ACP_PORTFOLIO_BULK_WM_PARENT', $still);
+			}
+		}
+		if ($lock !== null)
+		{
+			$message .= '<br>' . $this->language->lang($lock ? 'ACP_PORTFOLIO_BULK_DONE_LOCK_ON' : 'ACP_PORTFOLIO_BULK_DONE_LOCK_OFF', $done_lock);
+		}
+		if ($protect !== null)
+		{
+			$message .= '<br>' . $this->language->lang($protect ? 'ACP_PORTFOLIO_BULK_DONE_PROTECT_ON' : 'ACP_PORTFOLIO_BULK_DONE_PROTECT_OFF', $done_protect);
+			// La protection d'un album parent couvre aussi ses sous-albums
+			$still = 0;
+			foreach ($protect ? [] : $targets as $id)
+			{
+				$still += $this->access->is_protected($all[$id]) ? 1 : 0;
+			}
+			if ($still)
+			{
+				$message .= '<br>' . $this->language->lang('ACP_PORTFOLIO_BULK_PROTECT_PARENT', $still);
+			}
+		}
+		if ($skipped)
+		{
+			$message .= '<br>' . $this->language->lang('ACP_PORTFOLIO_BULK_SKIPPED_FRIENDS', $skipped);
+		}
+		if ($no_rules)
+		{
+			$message .= '<br>' . $this->language->lang('ACP_PORTFOLIO_BULK_NO_RULES', $no_rules);
+		}
+		trigger_error($message . adm_back_link($back));
 	}
 
 	protected function album_groups(array $album)

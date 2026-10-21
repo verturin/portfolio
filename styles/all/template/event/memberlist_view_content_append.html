@@ -8,8 +8,9 @@
 		{% if PORTFOLIO_PROFILE_RECENT|length %}
 		<div class="pf-profile-strip">
 			{% for photo in PORTFOLIO_PROFILE_RECENT %}
-			<a class="pf-profile-strip__item" href="{{ photo.url }}" title="{{ photo.title }}">
+			<a class="pf-profile-strip__item" href="{{ photo.url }}" title="{{ photo.title }}{% if photo.in_album_name %} — {{ lang('PORTFOLIO_IN_ALBUM_TITLE', photo.in_album_name) }}{% endif %}">
 				<img src="{{ photo.thumb }}" alt="{{ photo.title }}" loading="lazy" decoding="async">
+				{% if photo.in_album_name %}<span class="pf-profile-strip__album"><i class="icon fa-folder-o fa-fw" aria-hidden="true"></i>{{ photo.in_album_name }}</span>{% endif %}
 				<span class="pf-profile-strip__title">{{ photo.title }}</span>
 			</a>
 			{% endfor %}

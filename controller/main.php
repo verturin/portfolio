@@ -189,18 +189,34 @@ class main extends base
 		$shared = $is_self ? $this->shared_with($user_id) : [];
 
 		$viewable = [];
+		$elsewhere = [];
 		foreach ($this->albums->get_all() as $album)
 		{
-			if ((int) $album['owner_id'] === $user_id && $this->access->can_view_album($album))
+			if (!$this->access->can_view_album($album))
+			{
+				continue;
+			}
+			if ((int) $album['owner_id'] === $user_id)
 			{
 				$viewable[] = (int) $album['album_id'];
+			}
+			else
+			{
+				$elsewhere[] = (int) $album['album_id'];
 			}
 		}
 		$recent = $this->photos->list_in_albums($viewable, 'date', 12);
 
-		$max_albums = (int) $this->config['portfolio_user_max_albums'];
+		// Ses photos publiées dans les albums publics ou d'autres membres : simple affichage,
+		// chaque photo garde les droits de son album (v1.9.7)
+		$per_page = max(1, (int) $this->config['portfolio_per_page']);
+		$start = $this->page_start($per_page);
+		$other_total = $this->photos->count_by_user_in_albums($elsewhere, $user_id);
+		$others = $other_total ? $this->photos->list_by_user_in_albums($elsewhere, $user_id, $start, $per_page) : [];
+
+		$max_albums = $is_self ? $this->access->album_quota() : 0;
 		$can_create = $is_self && $this->access->can_create_root_album()
-			&& (!$max_albums || $this->access->acl('u_portfolio_unlimited') || $this->albums->count_user_albums($user_id) < $max_albums);
+			&& (!$max_albums || $this->albums->count_user_albums($user_id) < $max_albums);
 
 		return $this->render('portfolio_user.html', $this->language->lang('PORTFOLIO_OF', $username), [
 			'PF_OWNER_NAME'		=> $this->presenter->username($user_id),
@@ -210,9 +226,32 @@ class main extends base
 			'PF_ALBUMS'			=> $this->presenter->albums($roots),
 			'PF_SHARED'			=> $this->presenter->albums($shared),
 			'PF_RECENT'			=> $this->presenter->photos($recent),
+			'PF_ELSEWHERE'		=> $this->with_album_mention($this->presenter->photos($others)),
+			'PF_ELSEWHERE_TOTAL'	=> $other_total,
+			'PF_ELSEWHERE_PAGES'	=> $this->presenter->pagination('user', ['user_id' => $user_id], $other_total, $per_page, $start),
 			'PF_PHOTO_COUNT'	=> $this->photos->count_user_photos($user_id),
 			'U_PF_NEW_ALBUM'	=> $can_create ? $this->route('album_create') : '',
 			'U_PF_EXPORT_ALL'	=> ($is_self && $roots && ($this->access->acl('u_portfolio_export') || $this->access->is_admin())) ? $this->route('export') : '',
 		]);
+	}
+
+	/**
+	 * Mention de l'album d'origine sous chaque photo publiée ailleurs que dans les albums du membre (v1.9.7).
+	 */
+	protected function with_album_mention(array $cards)
+	{
+		foreach ($cards as &$card)
+		{
+			$album = $this->albums->get($card['album_id']);
+			if ($album)
+			{
+				$card['in_album_name'] = $album['album_name'];
+				$card['in_album_url'] = $this->route('album', ['album_id' => (int) $album['album_id']]);
+				$card['in_album_public'] = !(int) $album['owner_id'];
+			}
+		}
+		unset($card);
+
+		return $cards;
 	}
 }
