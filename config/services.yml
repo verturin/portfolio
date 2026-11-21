@@ -44,6 +44,15 @@ services:
             - '@dbal.conn'
             - '%verturin.portfolio.tables.group_limits%'
 
+    verturin.portfolio.media_stats:
+        class: verturin\portfolio\service\media_stats
+        arguments:
+            - '@dbal.conn'
+            - '@ext.manager'
+            - '@dbal.tools'
+            - '%core.table_prefix%'
+            - '%verturin.portfolio.tables.photos%'
+
     verturin.portfolio.pending_pm:
         class: verturin\portfolio\service\pending_pm
         arguments:
@@ -228,6 +237,8 @@ services:
     verturin.portfolio.controller.main:
         class: verturin\portfolio\controller\main
         parent: verturin.portfolio.controller.base
+        calls:
+            - [set_media_stats, ['@verturin.portfolio.media_stats', '@dispatcher']]
 
     verturin.portfolio.controller.album:
         class: verturin\portfolio\controller\album
@@ -294,6 +305,7 @@ services:
             - [set_activity, ['@verturin.portfolio.activity']]
             - [set_group_limits, ['@verturin.portfolio.group_limits']]
             - [set_pending_pm, ['@verturin.portfolio.pending_pm']]
+            - [set_media_stats, ['@verturin.portfolio.media_stats']]
         arguments:
             - '@verturin.portfolio.settings'
             - '@template'

@@ -11,11 +11,10 @@
 			{% if U_PF_CREATE_PUBLIC %}<a class="pf-btn" href="{{ U_PF_CREATE_PUBLIC }}">{{ pf.icon('globe') }}{{ lang('PORTFOLIO_NEW_PUBLIC_ALBUM') }}</a>{% endif %}
 		</div>
 	</div>
-	<dl class="pf-stats">
-		<div><dt>{{ lang('PORTFOLIO_STAT_PHOTOS') }}</dt><dd>{{ PF_STATS.photos }}</dd></div>
-		<div><dt>{{ lang('PORTFOLIO_STAT_ALBUMS') }}</dt><dd>{{ PF_STATS.albums }}</dd></div>
-		<div><dt>{{ lang('PORTFOLIO_STAT_RATINGS') }}</dt><dd>{{ PF_STATS.ratings }}</dd></div>
-		<div><dt>{{ lang('PORTFOLIO_STAT_COMMENTS') }}</dt><dd>{{ PF_STATS.comments }}</dd></div>
+	<dl class="pf-stats{% if PF_STATS.count > 4 %} pf-stats--3{% endif %}">
+		{% for tile in PF_STATS.tiles %}
+		<div class="pf-stats__{{ tile.key }}"><dt>{{ tile.label }}</dt><dd>{{ tile.value }}</dd></div>
+		{% endfor %}
 	</dl>
 </header>
 

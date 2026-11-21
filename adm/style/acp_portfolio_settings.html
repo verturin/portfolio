@@ -9,6 +9,8 @@
 <div class="pf-acp-cards">
 	<div class="pf-acp-card">{{ lang('PORTFOLIO_STAT_ALBUMS') }}<b>{{ PF_STATS.albums }}</b></div>
 	<div class="pf-acp-card">{{ lang('PORTFOLIO_STAT_PHOTOS') }}<b>{{ PF_STATS.approved }}</b></div>
+	{% if PF_STATS.videos is not null %}<div class="pf-acp-card">{{ lang('PORTFOLIO_STAT_VIDEOS') }}<b>{{ PF_STATS.videos }}</b></div>{% endif %}
+	{% if PF_STATS.documents is not null %}<div class="pf-acp-card">{{ lang('PORTFOLIO_STAT_DOCUMENTS') }}<b>{{ PF_STATS.documents }}</b></div>{% endif %}
 	<div class="pf-acp-card{% if PF_STATS.pending %} is-warn{% endif %}">{{ lang('PORTFOLIO_QUEUE') }}<b>{{ PF_STATS.pending }}</b></div>
 	<div class="pf-acp-card{% if PF_STATS.trash %} is-warn{% endif %}">{{ lang('PORTFOLIO_TRASH') }}<b>{{ PF_STATS.trash }}</b></div>
 	<div class="pf-acp-card">{{ lang('ACP_PORTFOLIO_DISK') }}<b>{{ PF_STATS.disk }}</b></div>
