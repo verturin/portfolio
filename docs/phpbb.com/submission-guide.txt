@@ -1,0 +1,125 @@
+=====================================================================
+ PORTFOLIO — PUBLICATION ON phpBB.com (Customisation Database)
+ Everything to copy into the submission form, in English.
+=====================================================================
+
+Where: https://www.phpbb.com/customise/db/  ›  log in  ›  "New Contribution"
+(Your phpBB.com account must exist; the extension then goes through the
+Extensions Team validation queue. Expect several weeks for a first release.)
+
+---------------------------------------------------------------------
+1. CONTRIBUTION DETAILS
+---------------------------------------------------------------------
+
+Contribution name:
+Portfolio
+
+Contribution type:
+Extension
+
+Permalink (URL name, lowercase, no spaces):
+portfolio
+   (if already taken: portfolio_gallery)
+
+Categories (tick the closest ones offered by the form):
+- Entertainment
+- Add-ons
+   (if a "Gallery / Media" category exists, choose it first)
+
+phpBB branch:
+3.3.x
+
+Contribution description (BBCode — paste the whole block):
+>>> see the file docs/phpbb.com/description-en.txt <<<
+
+Demo URL (optional):
+(leave empty, or the address of a public test board)
+
+GitHub repository / source (field "Contribution source" or in the description):
+https://github.com/verturin/portfolio
+
+License:
+GNU General Public License v2 (GPL-2.0-only)
+
+Screenshots (upload in this order, with these captions) — folder docs/screenshots/en/:
+01-home.png                       Portfolio home page
+04-photo.png                      Photo page: rating, reactions, insert codes
+03-album.png                      Album with sub-albums and album tree
+02-member-portfolio.png           A member's portfolio
+05-quick-view.png                 Quick view without leaving the album
+06-upload.png                     Drag-and-drop upload with quota
+07-album-settings.png             Album settings: visibility, download, watermark
+08-sharing.png                    Sharing albums with co-managers
+09a-embed-codes.png               Ready-to-copy [portfolio] BBCodes
+09b-photo-in-post.png             A portfolio photo inside a forum post
+10-notifications.png              Notifications for ratings, comments, reactions
+11-recycle-bin.png                Recycle bin with deletion reason
+12-profile.png                    Latest photos in the member profile
+13-watermark.png                  Traceable watermark (viewer ID)
+14-acp-settings.png               ACP: settings
+15-acp-albums.png                 ACP: albums & permissions, bulk changes
+16-acp-watermark.png              ACP: watermark with live preview
+17-acp-quotas-approval.png        ACP: per-group quotas and approval
+18-acp-notifications.png          ACP: notifications
+19-acp-phpbb-gallery-import.png   ACP: migration from phpBB Gallery
+20-acp-backup.png                 ACP: backup and restore
+21-acp-permissions.png            Portfolio permissions
+
+---------------------------------------------------------------------
+2. REVISION (the package)
+---------------------------------------------------------------------
+
+Revision file:
+verturin_portfolio - v 1.10.13.zip
+   (the zip must contain verturin/portfolio/ at its root — already the case)
+
+Revision version:
+1.10.13
+
+Revision name (optional):
+First public release
+
+phpBB versions:
+3.3.15 and later (3.3.x)
+
+License:
+GPL-2.0-only
+
+Notes to the validators (paste as is):
+-------------------------------------------------
+Hello,
+
+This is the first submission of Portfolio, a photo gallery extension.
+
+- Requirements: phpBB 3.3.15+, PHP 7.2 to 8.4, GD (EXIF recommended, ZIP for
+  exports and backups). Tested on MySQL/MariaDB (strict mode) and SQLite.
+- Languages: English and French.
+- The extension uses its own tables (phpbb_portfolio_*) and its own settings
+  table; no core table is altered. Files are stored in files/portfolio/ and
+  served only through a controller that checks permissions (.htaccess blocks
+  direct access).
+- Templates are Twig only; no jQuery, no external resources (inline SVG icons).
+- A [portfolio] BBCode is installed on enable (and removed on purge).
+- Notification types: comment, approved, mass_delete, rating, reaction, digest.
+- Cron tasks: recycle-bin purge (disabled by default), export cleanup,
+  notification digest, watermark cache cleanup.
+- CLI commands: portfolio:backup, portfolio:restore, portfolio:migrate-gallery.
+- Optional migration from phpBB Gallery (phpbbgallery/core): data is copied,
+  phpBB Gallery tables are only read, never modified.
+- The bundled font fonts/DejaVuSans-Bold.ttf (watermark) is free software;
+  its license is in fonts/DejaVu-LICENSE.txt.
+
+EPV result: 0 fatal, 0 error, 0 notice. The only warning is the bundled
+TrueType font (fonts/DejaVuSans-Bold.ttf), reported as a binary file.
+
+Thank you for your time.
+verturin
+-------------------------------------------------
+
+---------------------------------------------------------------------
+3. AFTER APPROVAL
+---------------------------------------------------------------------
+- phpBB.com creates a support topic: answer questions there (in English).
+- For each new version: Contribution page › "New revision", upload the new
+  zip, same notes (only what changed). The version in composer.json must
+  match the revision version.
