@@ -94,7 +94,7 @@ class album_manager
 		if (!isset($this->member_map[$owner_id]))
 		{
 			$this->member_map[$owner_id] = [];
-			$sql = 'SELECT album_id, user_id FROM ' . $this->members_table . ' WHERE owner_id = ' . $owner_id;
+			$sql = 'SELECT album_id, user_id FROM ' . $this->members_table . ' WHERE owner_id = ' . (int) $owner_id;
 			$result = $this->db->sql_query($sql);
 			while ($row = $this->db->sql_fetchrow($result))
 			{
@@ -360,8 +360,11 @@ class album_manager
 		$row['album_order'] = $this->next_order(isset($row['parent_id']) ? $row['parent_id'] : 0);
 
 		/**
+		 * Modify the album data before it is inserted
+		 *
 		 * @event verturin.portfolio.album_create_before
-		 * @var array row Données de l'album à insérer
+		 * @var array row Album row to insert
+		 * @since 1.0.0
 		 */
 		$vars = ['row'];
 		extract($this->dispatcher->trigger_event('verturin.portfolio.album_create_before', compact($vars)));
@@ -417,9 +420,9 @@ class album_manager
 		}
 
 		$this->db->sql_transaction('begin');
-		$this->db->sql_query('DELETE FROM ' . $this->albums_table . ' WHERE album_id = ' . $album_id);
-		$this->db->sql_query('DELETE FROM ' . $this->members_table . ' WHERE album_id = ' . $album_id);
-		$this->db->sql_query('DELETE FROM ' . $this->album_groups_table . ' WHERE album_id = ' . $album_id);
+		$this->db->sql_query('DELETE FROM ' . $this->albums_table . ' WHERE album_id = ' . (int) $album_id);
+		$this->db->sql_query('DELETE FROM ' . $this->members_table . ' WHERE album_id = ' . (int) $album_id);
+		$this->db->sql_query('DELETE FROM ' . $this->album_groups_table . ' WHERE album_id = ' . (int) $album_id);
 		$this->db->sql_transaction('commit');
 
 		$this->reset();
@@ -470,7 +473,7 @@ class album_manager
 
 		$sql = 'SELECT COUNT(photo_id) AS total, MAX(photo_id) AS last_id, MAX(photo_time) AS last_time
 			FROM ' . $this->photos_table . '
-			WHERE album_id = ' . $album_id . '
+			WHERE album_id = ' . (int) $album_id . '
 				AND photo_status = ' . photo_manager::STATUS_APPROVED;
 		$result = $this->db->sql_query($sql);
 		$row = $this->db->sql_fetchrow($result);
@@ -488,7 +491,7 @@ class album_manager
 		{
 			$sql = 'SELECT photo_id FROM ' . $this->photos_table . '
 				WHERE photo_id = ' . (int) $album['album_cover_id'] . '
-					AND album_id = ' . $album_id . '
+					AND album_id = ' . (int) $album_id . '
 					AND photo_status = ' . photo_manager::STATUS_APPROVED;
 			$result = $this->db->sql_query($sql);
 			if (!$this->db->sql_fetchrow($result))
@@ -498,7 +501,7 @@ class album_manager
 			$this->db->sql_freeresult($result);
 		}
 
-		$this->db->sql_query('UPDATE ' . $this->albums_table . ' SET ' . $this->db->sql_build_array('UPDATE', $update) . ' WHERE album_id = ' . $album_id);
+		$this->db->sql_query('UPDATE ' . $this->albums_table . ' SET ' . $this->db->sql_build_array('UPDATE', $update) . ' WHERE album_id = ' . (int) $album_id);
 		$this->reset();
 	}
 
@@ -537,7 +540,7 @@ class album_manager
 	public function set_groups($album_id, array $groups)
 	{
 		$album_id = (int) $album_id;
-		$this->db->sql_query('DELETE FROM ' . $this->album_groups_table . ' WHERE album_id = ' . $album_id);
+		$this->db->sql_query('DELETE FROM ' . $this->album_groups_table . ' WHERE album_id = ' . (int) $album_id);
 
 		$insert = [];
 		foreach ($groups as $group_id => $flags)

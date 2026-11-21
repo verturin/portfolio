@@ -123,7 +123,7 @@ class file extends base
 		{
 			$this->language->add_lang('common', 'verturin/portfolio');
 			$key = $e->getStatusCode() === 404 ? 'PORTFOLIO_EMBED_MISSING' : 'PORTFOLIO_EMBED_DENIED';
-			$text = htmlspecialchars($this->language->lang($key), ENT_QUOTES);
+			$text = utf8_htmlspecialchars($this->language->lang($key));
 			$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" rx="14" fill="#eef1f5"/>'
 				. '<g fill="none" stroke="#a5b4c8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><rect x="132" y="48" width="56" height="44" rx="6"/><circle cx="148" cy="64" r="5"/><path d="m188 82-12-12-26 22"/></g>'
 				. '<text x="160" y="132" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#5b6574">' . $text . '</text></svg>';

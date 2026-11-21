@@ -103,7 +103,8 @@ class upload extends base
 						http_response_code(500);
 						header('Content-Type: application/json');
 					}
-					echo json_encode(['success' => false, 'message' => $language->lang('PORTFOLIO_ERR_SERVER', $error['message'] . ' (' . basename($error['file']) . ':' . $error['line'] . ')')]);
+					// Gestionnaire d'arrêt : plus de réponse Symfony possible, on écrit directement la réponse JSON
+					file_put_contents('php://output', json_encode(['success' => false, 'message' => $language->lang('PORTFOLIO_ERR_SERVER', $error['message'] . ' (' . basename($error['file']) . ':' . $error['line'] . ')')]));
 				}
 			});
 		}

@@ -13,7 +13,7 @@ A modern photo gallery for phpBB: personal and public albums with sub-albums, al
 | | |
 |---|---|
 | **Extension name** | `verturin/portfolio` |
-| **Version** | 1.10.8 |
+| **Version** | 1.10.13 |
 | **phpBB** | 3.3.15 or later, ready for phpBB 4 |
 | **PHP** | 7.2 to 8.4 · GD extension required (EXIF recommended, ZIP for exports and backups) |
 | **Databases tested** | MySQL / MariaDB (strict mode included), SQLite |

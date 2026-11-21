@@ -400,6 +400,14 @@ class acp_controller
 		$this->pending_pm = $pending_pm;
 	}
 
+	/** @var \verturin\portfolio\service\media_stats */
+	protected $media_stats;
+
+	public function set_media_stats(\verturin\portfolio\service\media_stats $media_stats)
+	{
+		$this->media_stats = $media_stats;
+	}
+
 	/* ------------------------------------------------------------------
 	 * Quotas et validation par groupe (v1.10.3)
 	 * ------------------------------------------------------------------ */
@@ -987,9 +995,14 @@ class acp_controller
 			}
 		}
 
+		// Modules Vidéo et Documents : comptés à part (v1.10.10)
+		$media = $this->media_stats ? $this->media_stats->counts() : [];
+
 		return [
 			'albums'	=> count($this->albums->get_all()),
-			'approved'	=> $this->photos->count_by_status(photo_manager::STATUS_APPROVED),
+			'approved'	=> max(0, $this->photos->count_by_status(photo_manager::STATUS_APPROVED) - array_sum($media)),
+			'videos'	=> isset($media['videos']) ? $media['videos'] : null,
+			'documents'	=> isset($media['documents']) ? $media['documents'] : null,
 			'pending'	=> $this->photos->count_by_status(photo_manager::STATUS_PENDING),
 			'trash'		=> $this->photos->count_by_status(photo_manager::STATUS_TRASH),
 			'disk'		=> get_formatted_filesize($disk),

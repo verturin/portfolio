@@ -58,7 +58,7 @@ class legacy
 		{
 			// Vignette d'un message : petite image neutre plutôt qu'une image cassée
 			$this->language->add_lang('common', 'verturin/portfolio');
-			$text = htmlspecialchars($this->language->lang('PORTFOLIO_LEGACY_UNAVAILABLE'), ENT_QUOTES);
+			$text = utf8_htmlspecialchars($this->language->lang('PORTFOLIO_LEGACY_UNAVAILABLE'));
 			$svg = '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160"><rect width="240" height="160" rx="12" fill="#eef1f5"/><path d="M95 62h50v36H95z" fill="none" stroke="#a5b4c8" stroke-width="4"/><circle cx="108" cy="74" r="5" fill="#a5b4c8"/><text x="120" y="128" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#6b7684">' . $text . '</text></svg>';
 
 			return new Response($svg, 200, ['Content-Type' => 'image/svg+xml', 'Cache-Control' => 'public, max-age=3600']);

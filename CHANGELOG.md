@@ -1,6 +1,25 @@
 # Journal des versions — Portfolio (verturin/portfolio)
 
 
+### 1.10.13 — 2026-11-12
+- **Correctif filigrane** : sur certains hébergements, le texte du filigrane provoquait les avertissements « imagettfbbox(): Could not find/open font » et « Trying to access array offset on false » (service/watermark.php). La police est maintenant chargée par son chemin absolu, avec un second chemin de secours ; si elle reste introuvable, le filigrane utilise la police interne de GD, sans aucun avertissement. Les images filigranées déjà en cache sont recalculées automatiquement. Pas de migration. Merci au membre de caforum.fr qui a proposé le correctif.
+
+### 1.10.12 — 2026-11-06
+- Préparation de la publication sur phpBB.com : le validateur officiel **EPV** ne signale plus que la police du filigrane (fichier binaire, normal). Requêtes SQL du module de migration réécrites, empreintes `md5` / `sha1` remplacées par `sha256` (noms de fichiers et cache du filigrane). Le cache du filigrane se régénère tout seul. Pas de migration.
+
+### 1.10.11 — 2026-11-06
+- **Correctif** : désactiver le Portfolio alors que le module **Portfolio Documents** ou **Portfolio Vidéo** restait actif provoquait l'erreur « Parent definition "verturin.portfolio.controller.base" does not exist » et phpBB désactivait temporairement toutes les extensions. Le Portfolio désactive désormais d'abord ces modules ; après sa réactivation, réactivez-les dans *Gérer les extensions*.
+
+### 1.10.10 — 2026-11-06
+- Accueil du Portfolio : quand le module **Portfolio Vidéo** (`verturin/portfoliovideo`) et/ou **Portfolio Documents** (`verturin/portfoliodocs`) est activé, le bandeau affiche aussi le nombre de **vidéos** et de **documents**. Le compteur « Photos » ne compte alors plus que les vraies photos (vidéos et documents déduits). Sans module, rien ne change (4 compteurs).
+- Avec 5 ou 6 compteurs, la grille passe sur 3 colonnes (2 sur mobile).
+- *ACP › Réglages* : les cartes de statistiques affichent aussi vidéos et documents quand les modules sont actifs.
+- Nouvel évènement développeur `verturin.portfolio.index_stats` (variables `tiles`, `viewable`) pour ajouter ou modifier des compteurs. Pas de migration.
+
+### 1.10.9 — 2026-10-21
+- Préparation de la publication sur phpBB.com : passage sans erreur du validateur officiel EPV (Extension Pre-Validator). Évènements documentés au format phpBB (`@since`), `utf8_htmlspecialchars` au lieu de `htmlspecialchars`, plus d'`echo` direct, identifiants convertis explicitement en entiers dans toutes les requêtes signalées.
+- Description de `composer.json` en anglais. Aucun changement de fonctionnement, pas de migration.
+
 ### 1.10.8 — 2026-10-19
 - *ACP › Albums et droits* : la modification en nombre permet aussi de **verrouiller / déverrouiller** et de **protéger / ne plus protéger** plusieurs albums d'un coup (sous-albums compris si la case est cochée). Le message final signale les albums qui restent protégés par leur album parent. Filtres, tri et membre choisi restent en place après la confirmation.
 

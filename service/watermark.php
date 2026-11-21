@@ -44,7 +44,15 @@ class watermark
 		$this->board_config = $board_config;
 		$this->user = $user;
 		$this->storage = rtrim($storage, '/') . '/';
-		$this->font = rtrim($ext_path, '/') . '/fonts/DejaVuSans-Bold.ttf';
+		// Chemin absolu : avec un chemin relatif (« ./ext/… »), certaines versions de GD
+		// cherchent la police dans leur propre dossier de polices et ne la trouvent pas (v1.10.13).
+		$font = rtrim($ext_path, '/') . '/fonts/DejaVuSans-Bold.ttf';
+		$real = @realpath($font);
+		if ($real === false)
+		{
+			$real = @realpath(__DIR__ . '/../fonts/DejaVuSans-Bold.ttf');
+		}
+		$this->font = ($real !== false) ? $real : $font;
 	}
 
 	/* ------------------------------------------------------------------
@@ -95,7 +103,7 @@ class watermark
 	{
 		$viewer_id = (int) $this->user->data['user_id'];
 		$ext = strtolower(pathinfo($source, PATHINFO_EXTENSION));
-		$key = sha1(implode('|', [$photo['photo_id'], $photo['photo_hash'], $size, $viewer_id, $this->settings_hash()]));
+		$key = substr(hash('sha256', implode('|', [$photo['photo_id'], $photo['photo_hash'], $size, $viewer_id, $this->settings_hash()])), 0, 40);
 		$cached = $this->storage . 'cache/' . substr($key, 0, 2) . '/' . $key . '.' . $ext;
 
 		if (is_file($cached))
@@ -210,7 +218,8 @@ class watermark
 			$values[] = $this->settings['portfolio_wm_' . $key];
 		}
 
-		return md5(implode('|', $values) . '|' . $this->board_config['sitename']);
+		// « font2 » : force le recalcul des images déjà en cache après le correctif de police (v1.10.13)
+		return substr(hash('sha256', implode('|', $values) . '|' . $this->board_config['sitename'] . '|font2'), 0, 32);
 	}
 
 	protected function render($source, $target, $text)
@@ -389,9 +398,9 @@ class watermark
 		$shadow_alpha = (int) min(127, $alpha + (127 - $alpha) * 0.25);
 		$pad = (int) max(3, $font_px * 0.2);
 
-		if (function_exists('imagettftext') && is_file($this->font))
+		$box = (function_exists('imagettftext') && is_file($this->font)) ? @imagettfbbox($font_px, 0, $this->font, $text) : false;
+		if (is_array($box))
 		{
-			$box = imagettfbbox($font_px, 0, $this->font, $text);
 			$tw = abs($box[2] - $box[0]);
 			$th = abs($box[7] - $box[1]);
 			$layer = $this->blank($tw + $pad * 2, $th + $pad * 2);

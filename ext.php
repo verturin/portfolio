@@ -20,6 +20,12 @@ class ext extends \phpbb\extension\base
 		'verturin.portfolio.notification.type.digest',
 	];
 
+	/** Modules complémentaires qui s'appuient sur les services du Portfolio */
+	const ADDONS = [
+		'verturin/portfoliovideo',
+		'verturin/portfoliodocs',
+	];
+
 	/**
 	 * phpBB 3.3.15 minimum, GD obligatoire.
 	 */
@@ -53,6 +59,11 @@ class ext extends \phpbb\extension\base
 	{
 		if ($old_state === false)
 		{
+			// Les modules vidéo et documents héritent des services du Portfolio :
+			// laissés actifs sans lui, ils empêcheraient phpBB de construire son conteneur.
+			// On les désactive donc d'abord (à réactiver après le Portfolio).
+			$this->disable_addons();
+
 			$manager = $this->container->get('notification_manager');
 			foreach (self::NOTIFICATION_TYPES as $type)
 			{
@@ -94,6 +105,21 @@ class ext extends \phpbb\extension\base
 		}
 
 		return parent::purge_step($old_state);
+	}
+
+	/**
+	 * Désactive les modules complémentaires encore actifs.
+	 */
+	protected function disable_addons()
+	{
+		$ext_manager = $this->container->get('ext.manager');
+		foreach (self::ADDONS as $name)
+		{
+			if ($ext_manager->is_enabled($name))
+			{
+				$ext_manager->disable($name);
+			}
+		}
 	}
 
 	protected function storage_root()

@@ -121,7 +121,7 @@ class departed
 			$row['album_id'] = (int) $album_id;
 		}
 
-		$this->db->sql_query('DELETE FROM ' . $this->tables['departed'] . ' WHERE user_id = ' . $user_id);
+		$this->db->sql_query('DELETE FROM ' . $this->tables['departed'] . ' WHERE user_id = ' . (int) $user_id);
 		$this->db->sql_query('INSERT INTO ' . $this->tables['departed'] . ' ' . $this->db->sql_build_array('INSERT', $row));
 		$this->registry[$user_id] = $row;
 	}
@@ -198,7 +198,7 @@ class departed
 				$this->trash_photos_of($user_id, $reason($username));
 			}
 			// Ses accès aux albums des autres disparaissent avec lui
-			$this->db->sql_query('DELETE FROM ' . $this->tables['members'] . ' WHERE user_id = ' . $user_id);
+			$this->db->sql_query('DELETE FROM ' . $this->tables['members'] . ' WHERE user_id = ' . (int) $user_id);
 		}
 	}
 
@@ -220,7 +220,7 @@ class departed
 			return 0;
 		}
 
-		$sql = 'SELECT album_id, parent_id, album_visibility FROM ' . $this->tables['albums'] . ' WHERE owner_id = ' . $user_id;
+		$sql = 'SELECT album_id, parent_id, album_visibility FROM ' . $this->tables['albums'] . ' WHERE owner_id = ' . (int) $user_id;
 		$result = $this->db->sql_query($sql);
 		$rows = $this->db->sql_fetchrowset($result);
 		$this->db->sql_freeresult($result);
@@ -255,11 +255,11 @@ class departed
 		$this->db->sql_query('UPDATE ' . $this->tables['albums'] . ' SET parent_id = ' . (int) $container . ' WHERE ' . $this->db->sql_in_set('album_id', $roots));
 		$this->db->sql_query('UPDATE ' . $this->tables['albums'] . ' SET album_visibility = ' . access::VIS_PRIVATE . ' WHERE album_visibility = ' . access::VIS_FRIENDS . ' AND ' . $this->db->sql_in_set('album_id', $ids));
 		$this->db->sql_query('UPDATE ' . $this->tables['albums'] . ' SET album_friends = 0 WHERE ' . $this->db->sql_in_set('album_id', $ids));
-		$this->db->sql_query('UPDATE ' . $this->tables['albums'] . ' SET owner_id = ' . $heir_id . ' WHERE owner_id = ' . $user_id);
+		$this->db->sql_query('UPDATE ' . $this->tables['albums'] . ' SET owner_id = ' . (int) $heir_id . ' WHERE owner_id = ' . (int) $user_id);
 
 		// Partages : le repreneur devient propriétaire, il n'a plus besoin de son propre partage
-		$this->db->sql_query('DELETE FROM ' . $this->tables['members'] . ' WHERE owner_id = ' . $user_id . ' AND user_id = ' . $heir_id);
-		$this->db->sql_query('UPDATE ' . $this->tables['members'] . ' SET owner_id = ' . $heir_id . ' WHERE owner_id = ' . $user_id);
+		$this->db->sql_query('DELETE FROM ' . $this->tables['members'] . ' WHERE owner_id = ' . (int) $user_id . ' AND user_id = ' . (int) $heir_id);
+		$this->db->sql_query('UPDATE ' . $this->tables['members'] . ' SET owner_id = ' . (int) $heir_id . ' WHERE owner_id = ' . (int) $user_id);
 
 		$this->record($user_id, null, $heir_id, $container);
 		$this->albums->reset();
@@ -451,7 +451,7 @@ class departed
 		{
 			return 0;
 		}
-		$this->db->sql_query('UPDATE ' . $this->tables['photos'] . ' SET user_id = ' . $to_id . ' WHERE user_id = ' . $user_id);
+		$this->db->sql_query('UPDATE ' . $this->tables['photos'] . ' SET user_id = ' . (int) $to_id . ' WHERE user_id = ' . (int) $user_id);
 
 		return (int) $this->db->sql_affectedrows();
 	}

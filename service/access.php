@@ -131,7 +131,7 @@ class access
 		if (!$allowed && $groups)
 		{
 			$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . '
-				WHERE user_id = ' . $user_id . '
+				WHERE user_id = ' . (int) $user_id . '
 					AND user_pending = 0
 					AND ' . $this->db->sql_in_set('group_id', $groups);
 			$result = $this->db->sql_query_limit($sql, 1);
@@ -295,7 +295,7 @@ class access
 		{
 			$sql = 'SELECT user_id FROM ' . ZEBRA_TABLE . '
 				WHERE user_id = ' . (int) $owner_id . '
-					AND zebra_id = ' . $this->user_id() . '
+					AND zebra_id = ' . (int) $this->user_id() . '
 					AND friend = 1';
 			$result = $this->db->sql_query_limit($sql, 1);
 			$this->friend_of[$owner_id] = (bool) $this->db->sql_fetchrow($result);
@@ -858,7 +858,7 @@ class access
 			$this->user_groups = [];
 			$sql = 'SELECT group_id
 				FROM ' . USER_GROUP_TABLE . '
-				WHERE user_id = ' . $this->user_id() . '
+				WHERE user_id = ' . (int) $this->user_id() . '
 					AND user_pending = 0';
 			$result = $this->db->sql_query($sql);
 			while ($row = $this->db->sql_fetchrow($result))
@@ -880,7 +880,7 @@ class access
 			{
 				$sql = 'SELECT owner_id, album_id, member_role
 					FROM ' . $this->members_table . '
-					WHERE user_id = ' . $this->user_id();
+					WHERE user_id = ' . (int) $this->user_id();
 				$result = $this->db->sql_query($sql);
 				while ($row = $this->db->sql_fetchrow($result))
 				{

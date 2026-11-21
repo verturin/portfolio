@@ -92,7 +92,7 @@ class bbcode
 
 		if ($id)
 		{
-			$this->db->sql_query('UPDATE ' . $this->table . ' SET ' . $this->db->sql_build_array('UPDATE', $fields) . ' WHERE bbcode_id = ' . $id);
+			$this->db->sql_query('UPDATE ' . $this->table . ' SET ' . $this->db->sql_build_array('UPDATE', $fields) . ' WHERE bbcode_id = ' . (int) $id);
 
 			return true;
 		}

@@ -118,7 +118,7 @@ class group_limits
 		{
 			$photos = $albums = [];
 			$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . '
-				WHERE user_id = ' . $user_id . '
+				WHERE user_id = ' . (int) $user_id . '
 					AND user_pending = 0
 					AND ' . $this->db->sql_in_set('group_id', array_keys($rows));
 			$result = $this->db->sql_query($sql);

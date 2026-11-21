@@ -40,6 +40,8 @@ $lang = array_merge($lang, [
 
 	// Statistiques
 	'PORTFOLIO_STAT_PHOTOS'			=> 'Photos',
+	'PORTFOLIO_STAT_VIDEOS'			=> 'Vidéos',
+	'PORTFOLIO_STAT_DOCUMENTS'		=> 'Documents',
 	'PORTFOLIO_STAT_ALBUMS'			=> 'Albums',
 	'PORTFOLIO_STAT_RATINGS'		=> 'Notes',
 	'PORTFOLIO_STAT_COMMENTS'		=> 'Commentaires',

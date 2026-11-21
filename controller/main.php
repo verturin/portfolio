@@ -71,13 +71,65 @@ class main extends base
 			'PF_RECENT'			=> $this->presenter->photos($recent),
 			'PF_TOP'			=> $this->presenter->photos($top),
 			'PF_TOP_USERS'		=> $top_users,
-			'PF_STATS'			=> [
-				'albums'	=> count($viewable),
-				'photos'	=> $stats['photos'],
-				'ratings'	=> $stats['ratings'],
-				'comments'	=> $stats['comments'],
-			],
+			'PF_STATS'			=> $this->index_stats($viewable, $stats),
 		]);
+	}
+
+	/** @var \verturin\portfolio\service\media_stats|null */
+	protected $media_stats;
+
+	/** @var \phpbb\event\dispatcher_interface|null */
+	protected $pf_dispatcher;
+
+	public function set_media_stats(\verturin\portfolio\service\media_stats $media_stats, \phpbb\event\dispatcher_interface $dispatcher)
+	{
+		$this->media_stats = $media_stats;
+		$this->pf_dispatcher = $dispatcher;
+	}
+
+	/**
+	 * Chiffres de l'accueil. Avec les modules Vidéo et Documents, vidéos et documents sont comptés
+	 * à part et retirés du nombre de photos (v1.10.10).
+	 */
+	protected function index_stats(array $viewable, array $stats)
+	{
+		$media = ($this->media_stats && $viewable) ? $this->media_stats->counts($viewable) : [];
+		$photos = max(0, $stats['photos'] - array_sum($media));
+
+		$tiles = [['key' => 'photos', 'label' => $this->language->lang('PORTFOLIO_STAT_PHOTOS'), 'value' => $photos]];
+		if (isset($media['videos']))
+		{
+			$tiles[] = ['key' => 'videos', 'label' => $this->language->lang('PORTFOLIO_STAT_VIDEOS'), 'value' => $media['videos']];
+		}
+		if (isset($media['documents']))
+		{
+			$tiles[] = ['key' => 'documents', 'label' => $this->language->lang('PORTFOLIO_STAT_DOCUMENTS'), 'value' => $media['documents']];
+		}
+		$tiles[] = ['key' => 'albums', 'label' => $this->language->lang('PORTFOLIO_STAT_ALBUMS'), 'value' => count($viewable)];
+		$tiles[] = ['key' => 'ratings', 'label' => $this->language->lang('PORTFOLIO_STAT_RATINGS'), 'value' => $stats['ratings']];
+		$tiles[] = ['key' => 'comments', 'label' => $this->language->lang('PORTFOLIO_STAT_COMMENTS'), 'value' => $stats['comments']];
+
+		/**
+		 * Add or change the statistics shown on the Portfolio home page
+		 *
+		 * @event verturin.portfolio.index_stats
+		 * @var array tiles    Tiles shown, in order: key, label, value
+		 * @var array viewable IDs of the albums the visitor can see
+		 * @since 1.10.10
+		 */
+		if ($this->pf_dispatcher)
+		{
+			$vars = ['tiles', 'viewable'];
+			extract($this->pf_dispatcher->trigger_event('verturin.portfolio.index_stats', compact($vars)));
+		}
+
+		$out = ['tiles' => $tiles, 'count' => count($tiles)];
+		foreach ($tiles as $tile)
+		{
+			$out[$tile['key']] = $tile['value'];
+		}
+
+		return $out;
 	}
 
 	/**
