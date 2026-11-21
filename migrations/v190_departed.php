@@ -72,7 +72,7 @@ class v190_departed extends \phpbb\db\migration\migration
 	{
 		foreach (['portfolio_heir_id' => '0', 'portfolio_departed_mode' => 'transfer'] as $name => $value)
 		{
-			$this->db->sql_query('DELETE FROM ' . $this->table_prefix . "portfolio_config WHERE config_name = '" . $name . "'");
+			$this->db->sql_query('DELETE FROM ' . $this->table_prefix . "portfolio_config WHERE config_name = '" . $this->db->sql_escape($name) . "'");
 			$this->db->sql_query('INSERT INTO ' . $this->table_prefix . 'portfolio_config ' . $this->db->sql_build_array('INSERT', [
 				'config_name'	=> $name,
 				'config_value'	=> $value,

@@ -529,7 +529,7 @@ class image_processor
 
 	protected function new_name($ext)
 	{
-		$hash = md5(unique_id() . microtime() . random_bytes(8));
+		$hash = substr(hash('sha256', unique_id() . microtime() . random_bytes(8)), 0, 32);
 
 		return substr($hash, 0, 2) . '/' . $hash . '.' . $ext;
 	}

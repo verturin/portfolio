@@ -496,6 +496,11 @@ class gallery_migrator
 
 	public function stats()
 	{
+		$sql_missing = 'SELECT COUNT(legacy_id) AS n FROM ' . $this->tables['legacy'] . "
+			WHERE legacy_type = 'image' AND new_id = 0 AND legacy_note <> 'dropped'";
+		$sql_dropped = 'SELECT COUNT(legacy_id) AS n FROM ' . $this->tables['legacy'] . "
+			WHERE legacy_type = 'image' AND new_id = 0 AND legacy_note = 'dropped'";
+
 		$stats = [
 			'available'			=> $this->gallery_available(),
 			'enabled'			=> $this->gallery_enabled(),
@@ -504,8 +509,8 @@ class gallery_migrator
 			'users'				=> 0,
 			'migrated_albums'	=> $this->count_map('album'),
 			'migrated_images'	=> $this->count_map('image'),
-			'missing_files'		=> $this->scalar('SELECT COUNT(legacy_id) AS n FROM ' . $this->tables['legacy'] . " WHERE legacy_type = 'image' AND new_id = 0 AND legacy_note <> 'dropped'"),
-			'dropped_files'		=> $this->scalar('SELECT COUNT(legacy_id) AS n FROM ' . $this->tables['legacy'] . " WHERE legacy_type = 'image' AND new_id = 0 AND legacy_note = 'dropped'"),
+			'missing_files'		=> $this->scalar($sql_missing),
+			'dropped_files'		=> $this->scalar($sql_dropped),
 			'migrated_comments'	=> $this->count_map('comment'),
 			'bbcode'			=> $this->bbcode_state(),
 			'rewritten_posts'	=> $this->count_rewritten('post'),
@@ -775,7 +780,7 @@ class gallery_migrator
 			return 0;
 		}
 
-		$rows = $this->fetch('SELECT * FROM ' . $this->gtable('albums') . ' WHERE album_id = ' . $gallery_album_id);
+		$rows = $this->fetch('SELECT * FROM ' . $this->gtable('albums') . ' WHERE album_id = ' . (int) $gallery_album_id);
 		if (!$rows)
 		{
 			return 0;
@@ -924,7 +929,10 @@ class gallery_migrator
 
 		// Commentaires, avec leur auteur et leur date
 		$comments = 0;
-		foreach ($this->fetch('SELECT * FROM ' . $this->gtable('comments') . ' WHERE comment_image_id = ' . (int) $row['image_id'] . ' ORDER BY comment_id ASC') as $comment)
+		$sql_comments = 'SELECT * FROM ' . $this->gtable('comments') . '
+			WHERE comment_image_id = ' . (int) $row['image_id'] . '
+			ORDER BY comment_id ASC';
+		foreach ($this->fetch($sql_comments) as $comment)
 		{
 			$this->db->sql_query('INSERT INTO ' . $this->tables['comments'] . ' ' . $this->db->sql_build_array('INSERT', [
 				'photo_id'			=> $photo_id,
@@ -945,7 +953,7 @@ class gallery_migrator
 			'photo_rating_count'	=> $count,
 			'photo_rating_avg'		=> $count ? (int) round($sum * 100 / $count) : 0,
 			'photo_comments'		=> $comments,
-		]) . ' WHERE photo_id = ' . $photo_id);
+		]) . ' WHERE photo_id = ' . (int) $photo_id);
 
 		return $photo_id;
 	}

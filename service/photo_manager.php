@@ -530,9 +530,12 @@ class photo_manager
 		]);
 
 		/**
+		 * Modify the photo data before it is inserted
+		 *
 		 * @event verturin.portfolio.photo_add_before
-		 * @var array row   Ligne insérée
-		 * @var array album Album de destination
+		 * @var array row   Photo row to insert
+		 * @var array album Target album
+		 * @since 1.0.0
 		 */
 		$vars = ['row', 'album'];
 		extract($this->dispatcher->trigger_event('verturin.portfolio.photo_add_before', compact($vars)));
@@ -708,9 +711,12 @@ class photo_manager
 		}
 
 		/**
+		 * Modify the list of photos and the reason before they are moved to the recycle bin
+		 *
 		 * @event verturin.portfolio.photo_trash_before
-		 * @var array ids    Photos concernées
-		 * @var string reason Motif
+		 * @var array  ids    Photo IDs
+		 * @var string reason Deletion reason
+		 * @since 1.0.0
 		 */
 		$vars = ['ids', 'reason'];
 		extract($this->dispatcher->trigger_event('verturin.portfolio.photo_trash_before', compact($vars)));
@@ -1076,7 +1082,7 @@ class photo_manager
 		$user_id = (int) $user_id;
 		$rating = max(0, min(5, (int) $rating));
 
-		$this->db->sql_query('DELETE FROM ' . $this->ratings_table . ' WHERE photo_id = ' . $photo_id . ' AND user_id = ' . $user_id);
+		$this->db->sql_query('DELETE FROM ' . $this->ratings_table . ' WHERE photo_id = ' . (int) $photo_id . ' AND user_id = ' . (int) $user_id);
 		if ($rating)
 		{
 			$this->db->sql_query('INSERT INTO ' . $this->ratings_table . ' ' . $this->db->sql_build_array('INSERT', [
@@ -1087,7 +1093,7 @@ class photo_manager
 			]));
 		}
 
-		$sql = 'SELECT COUNT(user_id) AS total, SUM(rating) AS sum_rating FROM ' . $this->ratings_table . ' WHERE photo_id = ' . $photo_id;
+		$sql = 'SELECT COUNT(user_id) AS total, SUM(rating) AS sum_rating FROM ' . $this->ratings_table . ' WHERE photo_id = ' . (int) $photo_id;
 		$result = $this->db->sql_query($sql);
 		$row = $this->db->sql_fetchrow($result);
 		$this->db->sql_freeresult($result);
@@ -1102,7 +1108,7 @@ class photo_manager
 			'photo_rating_sum'		=> $sum,
 			'photo_rating_count'	=> $count,
 			'photo_rating_avg'		=> $avg,
-		]) . ' WHERE photo_id = ' . $photo_id);
+		]) . ' WHERE photo_id = ' . (int) $photo_id);
 
 		return ['avg' => $avg / 100, 'count' => $count];
 	}

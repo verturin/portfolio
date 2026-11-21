@@ -39,6 +39,8 @@ $lang = array_merge($lang, [
 	'PORTFOLIO_CREATE'				=> 'Create album',
 
 	'PORTFOLIO_STAT_PHOTOS'			=> 'Photos',
+	'PORTFOLIO_STAT_VIDEOS'			=> 'Videos',
+	'PORTFOLIO_STAT_DOCUMENTS'		=> 'Documents',
 	'PORTFOLIO_STAT_ALBUMS'			=> 'Albums',
 	'PORTFOLIO_STAT_RATINGS'		=> 'Ratings',
 	'PORTFOLIO_STAT_COMMENTS'		=> 'Comments',
